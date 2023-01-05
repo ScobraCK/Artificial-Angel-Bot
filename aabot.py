@@ -10,6 +10,7 @@ import common
 from master_data import MasterData
 import character as chars
 
+# testing guild id's
 load_dotenv()
 MY_GUILD = discord.Object(id=os.getenv('GUILD_ID'))
 STORY_GUILD = discord.Object(id=os.getenv('STORY_ID'))
@@ -42,7 +43,7 @@ bot = MyBot(command_prefix='!', intents=intents)
 @commands.guild_only()
 @commands.is_owner()
 async def sync(
-  ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^", "$"]] = None) -> None:
+  ctx: commands.Context, guilds: commands.Greedy[discord.Object], spec: Optional[Literal["~", "*", "^"]] = None) -> None:
     if not guilds:
         if spec == "~":
             synced = await ctx.bot.tree.sync(guild=ctx.guild)
@@ -53,10 +54,6 @@ async def sync(
             ctx.bot.tree.clear_commands(guild=ctx.guild)
             await ctx.bot.tree.sync(guild=ctx.guild)
             synced = []
-        elif spec == "$":  # testing purposes
-            print('Synced to Story')
-            ctx.bot.tree.copy_global_to(guild=STORY_GUILD)
-            synced = await ctx.bot.tree.sync(guild=STORY_GUILD)
         else:
             synced = await ctx.bot.tree.sync()
 
@@ -139,7 +136,7 @@ async def awakening(interaction: discord.Interaction):
 
 @bot.tree.command()
 async def speed(interaction: discord.Interaction):
-    '''Character speeds in decreasing order'''
+    '''List character speeds in decreasing order'''
     text, speed_it = aabot_embeds.speed_text(bot.masterdata)
     embed = discord.Embed(
         title='Character Speeds',
