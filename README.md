@@ -6,7 +6,7 @@ The bot is not yet ready to be fully deployed in servers and I still need to fig
 
 To be used with https://github.com/ScobraCK/MementoMori-data
 
-Currently is dependent on being in the same folder as the data. Will also need to clean up the files into folders.
+Currently is dependent on being in the same folder as the data and need to change. Will also need to clean up the files into folders.
 
 # Current features
 - /idlist: Shows character ids
