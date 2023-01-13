@@ -6,7 +6,7 @@ The bot is not yet ready to be fully deployed in servers and I still need to fig
 
 To be used with https://github.com/ScobraCK/MementoMori-data
 
-Currently is dependent on being in the same folder as the data and need to change. Will also need to clean up the files into folders. Also planning to look into cogs.
+Currently is dependent on being in the same folder as the data and need to change.
 
 # Current features
 - /idlist: Shows character ids
@@ -14,6 +14,7 @@ Currently is dependent on being in the same folder as the data and need to chang
 - /skill: Shows character skills
 - /character: Searches a characters info
 - /awakening: Awakening cost chart
+- /soul_bonus: Shows sould affinity chart
 
 # To be added
 - Rune stuff
