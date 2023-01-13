@@ -101,22 +101,31 @@ char_list = {
     'primavera': 39,
     'carol': 40,
     'natasha': 41,
+    'the witch of mourning flowers': 41,
     'fortina': 42,
+    'the witch of sacred swords': 42,
     'cerberus': 43,
+    'the witch of wailing lightning': 43,
     'rusalka': 44,
+    'the witch of torrential sorrow': 44,
     'elfriede': 45,
+    'the witch of longinus': 45,
     'lunalynn': 46,
+    'the witch of snowy illusions': 46,
     'valeriede': 47,
+    'the witch of conflagration': 47,
     'aa': 48,
     'a.a.': 48,
     'best girl': 48,
+    'the witch of rust': 48,
     'ophelia': 49,
-    'armstrong': 50
+    'the witch of fallen crystals': 49,
+    'armstrong': 50,
+    'the witch of lost souls': 50
 }
 
 # for images
 raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets'
-awakening = 'https://cdn.discordapp.com/attachments/1032035546412875817/1033509806109102120/unknown-13.png'
 
 # character basic info
 basic_info = ["Id", "Element", 'Base Rarity', 'Class', 'Normal Attack', 'Base Speed','UW']

@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Iterable
+from typing import Iterable, Literal, Optional
 
 class MasterData():
     '''
@@ -9,12 +9,13 @@ class MasterData():
 
     Place in same file as Master (for now, TODO read from github or something)
     '''
-    def __init__(self) -> None:
+    def __init__(self, language: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> None:
         self.textdata = self.open_MB('TextResourceMB')  # is used most frequently
 
         # maybe make a data class inheriting dict
         # uses lazy loading for other jsons for now
-        self.data = {} 
+        self.data = {}
+        self.language = language
         
     def open_MB(self, dataMB: str):
         '''
@@ -43,7 +44,7 @@ class MasterData():
             self.data[dataMB] = self.open_MB(dataMB)
         return self.data[dataMB]
 
-    def search_string_key(self, text_key: str, language: str = 'enUS')->str:
+    def search_string_key(self, text_key: str, language: str = None)->str:
         '''
         Returns the text string for selected region
 
@@ -53,6 +54,8 @@ class MasterData():
             Korean - koKR
             Taiwanese - zhTW
         '''
+        if language is None:
+            language = self.language
 
         obj = filter(lambda x:x["StringKey"]==text_key, self.textdata)
         try:

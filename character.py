@@ -65,5 +65,7 @@ def speed_iter(masterdata: MasterData) -> Iterable:
 # testing
 if __name__ == "__main__":
     master = MasterData()
-    char = speed_iter(master)
-    print(char)
+    char_list = master.get_chardata()
+    for char in char_list:
+        if (key:=char['Name2Key']):
+            print(f"'{master.search_string_key(key).lower()}': {char['Id']}")
