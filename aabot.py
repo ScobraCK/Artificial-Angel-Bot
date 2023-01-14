@@ -8,8 +8,8 @@ import load_env
 from master_data import MasterData
 
 class MyBot(commands.Bot):
-    def __init__(self, command_prefix, intents: discord.Intents, owner_id: int):
-        super().__init__(command_prefix=command_prefix, intents=intents, owner_id=owner_id)
+    def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity):
+        super().__init__(command_prefix=command_prefix, intents=intents, owner_id=owner_id, activity=activity)
         self.masterdata = MasterData()
     
     async def on_ready(self):
@@ -30,7 +30,11 @@ if __name__ == "__main__":
     discord.utils.setup_logging()
     intents=discord.Intents.default()
     intents.message_content = True
+    activity = discord.Activity(
+        name='you auto click',
+        type=discord.ActivityType.watching)
+    
 
-    bot = MyBot(command_prefix='!', intents=intents, owner_id=load_env.OWNER_ID)
-
+    bot = MyBot(command_prefix='!', intents=intents, owner_id=load_env.OWNER_ID, activity=activity)
+    bot.masterdata.load_all()
     asyncio.run(main())

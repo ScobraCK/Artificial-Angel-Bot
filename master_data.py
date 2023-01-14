@@ -1,13 +1,12 @@
 import json
 import os
+import requests
 from typing import Iterable, Literal, Optional
 
 class MasterData():
     '''
     Class to help read the Master data.
     Use to search for the specific json objects or loading the json files
-
-    Place in same file as Master (for now, TODO read from github or something)
     '''
     def __init__(self, language: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> None:
         self.textdata = self.open_MB('TextResourceMB')  # is used most frequently
@@ -21,12 +20,24 @@ class MasterData():
         '''
         returns MB json(dict) object
         '''
-        path = os.path.dirname(os.path.realpath(__file__))  # dir of script
-        path = path + f'\\Master\\{dataMB}'
-        if not path.endswith('.json'):
-            path = path + '.json'
-        with open(path, encoding='utf-8') as f:
-            return json.load(f)             
+        url = 'https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Master'
+        url = url + f'/{dataMB}'
+        if not url.endswith('.json'):
+            url = url + '.json'
+        resp = requests.get(url)
+        data = json.loads(resp.text)
+        return data
+
+    def load_all(self):
+        '''
+        load all main json files
+        '''
+        self.__load_MB('CharacterMB')
+        self.__load_MB('EquipmentMB')
+        self.__load_MB('CharacterProfileMB')
+        self.__load_MB('ActiveSkillMB')
+        self.__load_MB('PassiveSkillMB')
+        self.__load_MB('EquipmentExclusiveSkillDescriptionMB')
 
     def get_textdata(self):
         return self.textdata
