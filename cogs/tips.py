@@ -22,7 +22,7 @@ class Tips(commands.Cog):
         )
 
     @app_commands.command()
-    async def soul_bonus(self, interaction: discord.Interaction):
+    async def soul_affinity(self, interaction: discord.Interaction):
         '''Soul affinity chart'''
         embed=discord.Embed()
         affinity = 'https://cdn.discordapp.com/attachments/1032035546412875817/1032035874982084708/20221018_135122.jpg'

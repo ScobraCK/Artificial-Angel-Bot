@@ -53,6 +53,8 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		extensions = self.bot.extensions
 		cog = convert_cog_string(cog)
+		if cog.lower() == 'cogs.dev_commands': # don't unload the dev commands accidently
+			return
 		if cog not in extensions:
 			await ctx.send("Cog is not loaded!")
 			return
