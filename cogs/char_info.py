@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from typing import List
+from typing import List, Optional
 
 import common
 import character as chars
@@ -19,18 +19,20 @@ def dict_to_embedtext(data: dict, whitelist: List)->str:
 
     return text
 
-def active_name_text(char, masterdata: MasterData):
+def active_name_text(char, masterdata: MasterData, lang=None):
     # returns skill name and cd
     text=''
-    for active_skill in skill.skill_info(char, common.Skill_Enum.ACTIVE, descriptions=False, masterdata=masterdata):
+    for active_skill in skill.skill_info(
+        char, common.Skill_Enum.ACTIVE, descriptions=False, masterdata=masterdata, lang=lang):
         text = text + f"{active_skill['Name']} **CD:** {active_skill['Cooldown']}\n"
     return text
 
-def passive_name_text(char, masterdata: MasterData):
+def passive_name_text(char, masterdata: MasterData, lang=None):
     # returns passive skill name
     if char[common.Skill_Enum.PASSIVE.value]:
         text=''
-        for passive_skill in skill.skill_info(char, common.Skill_Enum.PASSIVE, descriptions=False, masterdata=masterdata):
+        for passive_skill in skill.skill_info(
+            char, common.Skill_Enum.PASSIVE, descriptions=False, masterdata=masterdata, lang=lang):
             text = text + f"{passive_skill['Name']}\n"
         return text
     else:
@@ -63,11 +65,11 @@ def id_list_embed():
 
     return embed
 
-def char_info_embed(id: int, masterdata: MasterData)->discord.Embed:
+def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
     '''
     embed with basic character info
     '''
-    char = chars.get_character_info(id, masterdata)
+    char = chars.get_character_info(id, masterdata, lang=lang)
     name = f'{char["Name"]}'
     if char['Title']:
         name = name + f' [{char["Title"]}]'
@@ -78,13 +80,13 @@ def char_info_embed(id: int, masterdata: MasterData)->discord.Embed:
     # active skill
     embed.add_field(
         name='__Active Skills__',
-        value=active_name_text(char, masterdata),
+        value=active_name_text(char, masterdata, lang=lang),
         inline=False
     )
     # passive skills
     embed.add_field(
         name='__Passive Skills__',
-        value=passive_name_text(char, masterdata),
+        value=passive_name_text(char, masterdata, lang=lang),
         inline=False
     )
     # thumbnail
@@ -112,7 +114,7 @@ def skill_level_embeds(skill: dict, type: common.Skill_Enum, embed:discord.Embed
             inline=False
         )
 
-def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData):
+def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lang=None):
     '''
     Embed for skills, active or passive
     '''
@@ -120,7 +122,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData):
         title=f"{char['Name']}'s Skills",
         description=f"__**{type.value}**__")
 
-    for skill_description in skill.skill_info(char, type, masterdata=masterdata):
+    for skill_description in skill.skill_info(char, type, masterdata=masterdata, lang=lang):
         skill_level_embeds(skill_description, type, embed)
         
     if type is common.Skill_Enum.PASSIVE and \
@@ -133,7 +135,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData):
 
     return embed
 
-def uw_skill_embed(char: dict, masterdata: MasterData):
+def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
     '''
     Embed for only the skill descriptions of UW
     '''
@@ -141,7 +143,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData):
         title=f"{char['Name']}'s Skills",
         description=f"__**Unique Weapon Effects**__")
 
-    uw_description = equipment.get_uw_descriptions(char['Id'], masterdata)
+    uw_description = equipment.get_uw_descriptions(char['Id'], masterdata, lang=lang)
     embed.add_field(name='\u200b', value=uw_text(uw_description), inline=False)
 
     # thumbnail
@@ -205,12 +207,14 @@ class Character(commands.Cog):
     
     @app_commands.command()
     @app_commands.describe(
-    character='The name or id of the character'
+    character='The name or id of the character',
+    lang='Language (default: English)'
     )
     async def character(
         self,
         interaction: discord.Interaction,
-        character: app_commands.Transform[int, IdTransformer]):  # is an id
+        character: app_commands.Transform[int, IdTransformer], # is an id
+        lang: Optional[common.Language]=common.Language.English):  
         '''Searches a characters info'''
         if not chars.check_id(character):
             await interaction.response.send_message(
@@ -218,17 +222,19 @@ class Character(commands.Cog):
                 ephemeral=True
             )
         else:
-            embed = char_info_embed(character, self.bot.masterdata)
+            embed = char_info_embed(character, self.bot.masterdata, lang=lang.value)
             await interaction.response.send_message(embed=embed)
 
     @app_commands.command()
     @app_commands.describe(
-        character='The name or id of the character'
+        character='The name or id of the character',
+        lang='Language (default: English)'
     )
     async def skill(
         self,
         interaction: discord.Interaction,
-        character: app_commands.Transform[int, IdTransformer]):
+        character: app_commands.Transform[int, IdTransformer],
+        lang: Optional[common.Language]=common.Language.English):
         '''Shows character skills'''
         if not chars.check_id(character):
             await interaction.response.send_message(
@@ -236,12 +242,12 @@ class Character(commands.Cog):
                 ephemeral=True
             )
         else:
-            char = chars.get_character_info(character, self.bot.masterdata)
+            char = chars.get_character_info(character, self.bot.masterdata, lang=lang.value)
 
             embeds = [
-                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata),
-                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata),
-                uw_skill_embed(char, self.bot.masterdata)
+                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata, lang=lang.value),
+                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata, lang=lang.value),
+                uw_skill_embed(char, self.bot.masterdata, lang=lang.value)
             ]
             user = interaction.user
             view = Skill_View(user, embeds)
