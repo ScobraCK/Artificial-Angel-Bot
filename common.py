@@ -54,7 +54,7 @@ id_list = {
     49: 'Ophelia',
     50: 'Armstrong'
 }
-MAX_CHAR_ID = 50
+MAX_CHAR_ID = len(id_list)
 
 # for use in name matching
 char_list = {
@@ -123,6 +123,14 @@ char_list = {
     'armstrong': 50,
     'the witch of lost souls': 50
 }
+
+# language Enum
+class Language(Enum):
+    English = 'enUS'
+    Japanese = 'jaJP'
+    Korean = 'koKR'
+    Taiwanese = 'zhTW'
+
 
 # for images
 raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets'

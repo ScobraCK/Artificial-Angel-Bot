@@ -2,24 +2,25 @@ from master_data import MasterData
 import common
 import equipment
 from fuzzywuzzy import process, fuzz
-from typing import List, Tuple, Iterable
+from typing import List, Iterable, Literal, Optional
 
 
-def get_character_info(id: int, masterdata: MasterData=None) -> dict:
+def get_character_info(
+    id: int, masterdata: MasterData=None, lang: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> dict:
     if masterdata is None:
         masterdata = MasterData()
     char_data = next(masterdata.search_chars(id=id))
     char = {}
 
     char['Id'] = char_data['Id']
-    char['Title'] = masterdata.search_string_key(char_data['Name2Key'])
-    char['Name'] = masterdata.search_string_key(char_data['NameKey'])
+    char['Title'] = masterdata.search_string_key(char_data['Name2Key'], language=lang)
+    char['Name'] = masterdata.search_string_key(char_data['NameKey'], language=lang)
     char['Element'] = common.souls[char_data['ElementType']]
     char['Base Rarity'] = common.char_rarity[char_data['RarityFlags']]
     char['Class'] = common.job_map[char_data['JobFlags']]
     char['Base Speed'] = char_data['InitialBattleParameter']['Speed']
     char['Normal Attack'] = common.normal_skills[char_data["NormalSkillId"]]
-    char['UW'] = equipment.get_uw_name(id, masterdata)
+    char['UW'] = equipment.get_uw_name(id, masterdata, lang=lang)
 
     char['Active Skills'] = char_data["ActiveSkillIds"]
     char["Passive Skills"] = char_data["PassiveSkillIds"]
