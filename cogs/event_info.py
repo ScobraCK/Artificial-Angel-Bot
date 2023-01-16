@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from typing import List, Optional, Iterator, Dict
+from typing import List, Optional, Iterator, Dict, Tuple
 
 from my_view import My_View
 import events
@@ -60,7 +60,7 @@ def event_detail_embed(mm_event: events.MM_Event, master: MasterData, lang):
         mission_it = msn.get_Missions(mm_event.mission_list, master, lang)
         for text in event_mission_texts(mission_it):
             field_values.append(
-                {'name': 'Mission List',
+                {'name': '__Mission List__',
                 'value': text}
             )
 
@@ -72,16 +72,13 @@ def event_detail_embed(mm_event: events.MM_Event, master: MasterData, lang):
 class Event_View(My_View):
     def __init__(
         self, user: discord.User, ongoing_embed:discord.Embed, 
-        options:List[discord.SelectOption], event_list: List[events.MM_Event],
-        master: MasterData, lang: str):
+        options:List[discord.SelectOption], event_embeds: Dict[str, Tuple[discord.Embed, List[str]]]):
 
         super().__init__(user)
         self.ongoing_embed = ongoing_embed
         self.embed = ongoing_embed  # current showing embed
         self.event_menu.options=options
-        self.event_list = event_list
-        self.master = master
-        self.lang = lang
+        self.event_embeds = event_embeds
 
         self.fields = None
         self.current_page = 1
@@ -131,7 +128,7 @@ class Event_View(My_View):
         await self.btn_update()
         await interaction.response.edit_message(embed=self.embed, view=self)
 
-    @discord.ui.button(label=">", disabled=True)
+    @discord.ui.button(label=">>", disabled=True)
     async def right2_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.current_page += 10
         if self.current_page > self.max_page:
@@ -148,7 +145,8 @@ class Event_View(My_View):
             self.current_page = 1
             self.max_page = 1
         else: # value is index of event_list
-            self.embed, self.fields = event_detail_embed(self.event_list[int(value)], self.master, self.lang) 
+            self.embed = self.event_embeds.get(value)[0]
+            self.fields = self.event_embeds.get(value)[1]
             self.max_page = len(self.fields)
             self.current_page = 1
             
@@ -173,20 +171,26 @@ class Event_Commands(commands.Cog, name='Event Commands'):
         '''Shows ongoing event info'''
         event_list = events.get_all_events(self.bot.masterdata, language.value, server)  # ongoing event list
 
-        embed = ongoing_event_embed(event_list)
+        ongoing_embed = ongoing_event_embed(event_list)
         options = [discord.SelectOption(
             label='Ongoing Events'
         )]
+        event_embeds = {}
+        
+        await interaction.response.defer()
 
-        for i, mm_event in enumerate(event_list):  
+        for mm_event in event_list:  
             options.append(discord.SelectOption(
-                label=f"{mm_event.name}",
-                value=str(i)
+                label=f"{mm_event.name}"
             ))
+            # {event name: (embed, fields)}
+            event_embeds[mm_event.name] = event_detail_embed(
+                mm_event, self.bot.masterdata, language.value)
+            
         
         user = interaction.user
-        view = Event_View(user, embed, options, event_list, self.bot.masterdata, language.value)
-        await interaction.response.send_message(embed=embed, view=view)
+        view = Event_View(user, ongoing_embed, options, event_embeds)
+        await interaction.followup.send(embed=ongoing_embed, view=view)
         message = await interaction.original_response()
         view.message = message
 
