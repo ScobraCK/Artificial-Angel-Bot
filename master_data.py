@@ -1,7 +1,7 @@
 import json
 import os
 import requests
-from typing import Iterable, Literal, Optional
+from typing import Iterable, Literal, Optional, List, Union
 
 class MasterData():
     '''
@@ -44,6 +44,13 @@ class MasterData():
 
     def get_chardata(self):
         return self.__load_MB('CharacterMB')
+
+    def get_MB_iter(self, dataMB: str) -> Iterable:
+        '''
+        For reading all data in a MB file
+        Not meant to be used with large files
+        '''
+        return iter(self.__load_MB(dataMB))
 
     def __load_MB(self, dataMB: str):
         """
@@ -153,29 +160,10 @@ class MasterData():
             print(f'Item not found. Id: {id} Type: {type}')  # add later
         return item
 
-    def print_reward(self, reward: dict):
-        # to be changed or removed
-        '''
-        Input Reward obj
-        Reward{
-            ItemCount
-            ItemId
-            ItemType
-        }
-        '''
-        item = self.find_item(reward['ItemId'], reward['ItemType'])
-        if item is None:
-            return
-        item_name = self.search_string_key(item['NameKey'])
+    def search_missions(self, mission_list: Union[List, int]) -> Iterable:
+        if isinstance(mission_list, int):
+            mission_list = [mission_list]
 
-        if reward['ItemType'] == 14:  # runes
-            lv = str(item["Lv"])
-            item_name = item_name + ' Lv.' + lv
+        return filter(lambda x: x['Id'] in mission_list, self.__load_MB('MissionMB'))
+
         
-        print(f'{item_name} | {reward["ItemCount"]}')
-
-    def print_mission(self, mission: dict):
-        # to be changed or removed
-        print(self.search_string_key(mission['NameKey']))
-        for item in mission['RewardList']:
-            self.print_reward(item['Item'])

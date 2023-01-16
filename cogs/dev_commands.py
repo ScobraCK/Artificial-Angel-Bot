@@ -23,10 +23,8 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		return ctx.author.id == self.bot.owner_id
 
-	@commands.command(  # Decorator to declare where a command is.
-		name='reload',  # Name of the command, defaults to function name.
-		aliases=['rl']  # Aliases for the command.
-	)  
+	@commands.command(aliases=['rl'])
+	@commands.guild_only()
 	async def reload(self, ctx, cog):
 		'''
 		Reloads a cog.
@@ -46,7 +44,8 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 			else:
 				await ctx.send('Unknown Cog')  # If the cog isn't found/loaded.
 	
-	@commands.command(name="unload", aliases=['ul']) 
+	@commands.command(aliases=['ul'])
+	@commands.guild_only()
 	async def unload(self, ctx, cog):
 		'''
 		Unload a cog.
@@ -61,7 +60,8 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		await self.bot.unload_extension(cog)
 		await ctx.send(f"`{cog}` has successfully been unloaded.")
 	
-	@commands.command(name="load")
+	@commands.command()
+	@commands.guild_only()
 	async def load(self, ctx, cog):
 		'''
 		Loads a cog.
@@ -121,6 +121,29 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 				ret += 1
 
 		await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+
+	@commands.command(hidden=True)
+	@commands.guild_only()
+	async def stalk(
+		self,
+		ctx: commands.Context,
+		player: str=None,
+		level: str=None):
+		'''
+		Just a secret command I made for fun
+		'''
+		if player == 'stop':
+			activity = discord.Activity(name='you auto click',
+									type=discord.ActivityType.watching)
+			await self.bot.change_presence(activity=activity)
+		else:
+			if player is None:
+				player = 'haz'
+			if level is None:
+				level = ''
+			activity = discord.Activity(name=f'{player} auto click {level}',
+									type=discord.ActivityType.watching)
+			await self.bot.change_presence(activity=activity)						
 
 
 async def setup(bot):

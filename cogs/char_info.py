@@ -208,13 +208,13 @@ class Character(commands.Cog):
     @app_commands.command()
     @app_commands.describe(
     character='The name or id of the character',
-    lang='Language (default: English)'
+    language='Language (default: English)'
     )
     async def character(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer], # is an id
-        lang: Optional[common.Language]=common.Language.English):  
+        language: Optional[common.Language]=common.Language.English):  
         '''Searches a characters info'''
         if not chars.check_id(character):
             await interaction.response.send_message(
@@ -222,19 +222,19 @@ class Character(commands.Cog):
                 ephemeral=True
             )
         else:
-            embed = char_info_embed(character, self.bot.masterdata, lang=lang.value)
+            embed = char_info_embed(character, self.bot.masterdata, lang=language.value)
             await interaction.response.send_message(embed=embed)
 
     @app_commands.command()
     @app_commands.describe(
         character='The name or id of the character',
-        lang='Language (default: English)'
+        language='Language (default: English)'
     )
     async def skill(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        lang: Optional[common.Language]=common.Language.English):
+        language: Optional[common.Language]=common.Language.English):
         '''Shows character skills'''
         if not chars.check_id(character):
             await interaction.response.send_message(
@@ -242,12 +242,12 @@ class Character(commands.Cog):
                 ephemeral=True
             )
         else:
-            char = chars.get_character_info(character, self.bot.masterdata, lang=lang.value)
+            char = chars.get_character_info(character, self.bot.masterdata, lang=language.value)
 
             embeds = [
-                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata, lang=lang.value),
-                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata, lang=lang.value),
-                uw_skill_embed(char, self.bot.masterdata, lang=lang.value)
+                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata, lang=language.value),
+                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata, lang=language.value),
+                uw_skill_embed(char, self.bot.masterdata, lang=language.value)
             ]
             user = interaction.user
             view = Skill_View(user, embeds)

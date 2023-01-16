@@ -210,6 +210,22 @@ level_emoji = {
     4: '<:red_diamond:1060066217257341048>', 
 }
 
+# limited events
+event_type = {
+    1: {
+        'name': 'Tower Release Event',
+        'description': 'For a limited time, all Souls in the Tower of Infinity will be unlocked!'}
+}
+
+# timezones (hours in timedelta)
+class Timezone(Enum):
+    NA = -7
+    JP = 9
+    KR = 9
+    EU = 1
+    ASIA = 8
+    GLOBAL = 1
+
 # notes
 passive_skill_triggers = {
     0: 'not in battle',
