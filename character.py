@@ -4,7 +4,6 @@ import equipment
 from fuzzywuzzy import process, fuzz
 from typing import List, Iterable, Literal, Optional
 
-
 def get_character_info(
     id: int, masterdata: MasterData=None, lang: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> dict:
     if masterdata is None:
@@ -47,6 +46,10 @@ def check_id(id: int) -> bool:
     else:
         return False
 
+def get_name(id: int, master: MasterData, lang='enUS'):
+    char = next(master.search_chars(id=id))
+    name = master.search_string_key(char.get('NameKey'), language=lang)
+    return name
 
 def speed_iter(masterdata: MasterData) -> Iterable:
     '''
@@ -66,7 +69,5 @@ def speed_iter(masterdata: MasterData) -> Iterable:
 # testing
 if __name__ == "__main__":
     master = MasterData()
-    char_list = master.get_chardata()
-    for char in char_list:
-        if (key:=char['Name2Key']):
-            print(f"'{master.search_string_key(key).lower()}': {char['Id']}")
+    print(get_name(12, master))
+    

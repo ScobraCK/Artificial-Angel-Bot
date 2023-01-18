@@ -15,14 +15,14 @@ def get_utc(diff: int):
     else:
         return f"(UTC{diff})"
 
-def event_mission_texts(missions: Iterator[msn.Mission]):
+def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
     texts = []
     batch_it = msn.batched(missions, 7)  # batch into 7 missions
     for i, batch in enumerate(batch_it):
         texts.append('')  # new field
         for mission in batch:
             texts[i] += f"{mission}\n\n"
-
+            
     return texts
     
 
@@ -36,13 +36,13 @@ def event_list_embed(event_list: List[events.MM_Event]):
     for mm_event in event_list:
         state = mm_event.state()
         if state == 0:
-            ongoing_text += f":small_blue_diamond:**{mm_event.name}**\n\
+            ongoing_text += f"{mm_event.type_indication}**{mm_event.name}**\n\
                 Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
         elif state > 0:
-            future_text += f":small_blue_diamond:**{mm_event.name}**\n\
+            future_text += f"{mm_event.type_indication}**{mm_event.name}**\n\
                 Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
         else:
-            past_text += f":small_blue_diamond:**{mm_event.name}**\n\
+            past_text += f"{mm_event.type_indication}**{mm_event.name}**\n\
                 Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
 
     if past_text:
@@ -81,8 +81,14 @@ def event_detail_embed(mm_event: events.MM_Event, master: MasterData, lang):
 
     # missions
     if mm_event.has_mission:
+        char_name = None
+        if isinstance(mm_event, events.NewCharacterEvent):
+            char_name = mm_event.character
+
         mission_it = msn.get_Missions(mm_event.mission_list, master, lang)
         for text in event_mission_texts(mission_it):
+            if char_name:
+                text.replace('{0}', char_name)
             field_values.append(
                 {'name': '__Mission List__',
                 'value': text}

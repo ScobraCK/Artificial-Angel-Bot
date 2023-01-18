@@ -14,6 +14,7 @@ from typing import List
 
 from master_data import MasterData
 from emoji import emoji_list
+from character import get_name
 
 class MM_Event():
     '''
@@ -60,13 +61,14 @@ class NewCharacterEvent(MM_Event):
     def __init__(
         self, name: str,
         start: int, end: int,
-        force_start: int, mission_list: List) -> None:
+        force_start: int, mission_list: List, character: str) -> None:
 
         super().__init__(name, start, end)
         self.has_force_start = True
         self.has_mission = True
         self.force_start = force_start
         self.mission_list = mission_list
+        self.character = character
         self.type_indication = emoji_list.get('orange dia')
 
 class LimitedMission(MM_Event):
@@ -131,7 +133,10 @@ def get_NewCharacterMission(
         start = get_timestamp_jst(get_start(item))
         name = master.search_string_key(item.get('TitleTextKey'), language=lang)
         force_start = get_timestamp_jst(item.get("ForceStartTime"))
-        event = NewCharacterEvent(name, start, end, force_start, item.get("TargetMissionIdList"))
+        character = get_name(item.get("CharacterImageId"), master, lang)  # is character id
+
+        event = NewCharacterEvent(
+            name, start, end, force_start, item.get("TargetMissionIdList"), character)
         event_list.append(event)
     return event_list
 
@@ -170,5 +175,5 @@ if __name__ == "__main__":
     # events = get_all_events(MasterData(), get_past=True)
     # for e in events:
     #     pprint(e.__dict__)
-    ongoing_text = 'a'
-    print(ongoing_text if ongoing_text else "None")
+    text = 'ケルベロス登場記念ミッション'
+    print(text.split())
