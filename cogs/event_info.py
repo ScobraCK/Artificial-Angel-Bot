@@ -26,28 +26,52 @@ def event_mission_texts(missions: Iterator[msn.Mission]):
     return texts
     
 
-def ongoing_event_embed(event_list: List[events.MM_Event]):
+def event_list_embed(event_list: List[events.MM_Event]):
     embed = discord.Embed(
-        title='Ongoing Events'
+        title='Event List(WIP)'
     )
-
+    past_text = ''
+    ongoing_text = ''
+    future_text = ''
     for mm_event in event_list:
-        if mm_event.is_ongoing():
-            embed.add_field(
-                name=mm_event.name,
-                value=f"Date: {mm_event.start} ~ {mm_event.end} {get_utc(mm_event.utc_diff)}",
-                inline=False
-            )
+        state = mm_event.state()
+        if state == 0:
+            ongoing_text += f":small_blue_diamond:**{mm_event.name}**\n\
+                Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+        elif state > 0:
+            future_text += f":small_blue_diamond:**{mm_event.name}**\n\
+                Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+        else:
+            past_text += f":small_blue_diamond:**{mm_event.name}**\n\
+                Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
 
+    if past_text:
+        embed.add_field(
+            name='__Past Events__',
+            value=past_text,
+            inline=False
+        )
+
+    embed.add_field(
+        name='__Ongoing Events__',
+        value= (ongoing_text if ongoing_text else "None"),
+        inline=False
+    )
+    embed.add_field(
+        name='__Future Events__',
+        value= (future_text if future_text else "None"),
+        inline=False
+    )
+        
     return embed
 
 def event_detail_embed(mm_event: events.MM_Event, master: MasterData, lang):
     # basic
-    text=f"**Start Date**: {mm_event.start} {get_utc(mm_event.utc_diff)}\n\
-        **End Date**: {mm_event.end} {get_utc(mm_event.utc_diff)}\n"
+    text=f"**Start Date**: <t:{mm_event.start}>\n\
+        **End Date**: <t:{mm_event.end}>\n"
     # force start
     if mm_event.has_force_start:
-        text += f"**Force Start Date**: {mm_event.force_start} {get_utc(mm_event.utc_diff)}\n"
+        text += f"**Force Start Date**: <t:{mm_event.force_start}>\n"
     
     embed = discord.Embed(
         title=mm_event.name,
@@ -71,12 +95,12 @@ def event_detail_embed(mm_event: events.MM_Event, master: MasterData, lang):
 
 class Event_View(My_View):
     def __init__(
-        self, user: discord.User, ongoing_embed:discord.Embed, 
+        self, user: discord.User, main_embed:discord.Embed, 
         options:List[discord.SelectOption], event_embeds: Dict[str, Tuple[discord.Embed, List[str]]]):
 
         super().__init__(user)
-        self.ongoing_embed = ongoing_embed
-        self.embed = ongoing_embed  # current showing embed
+        self.main_embed = main_embed
+        self.embed = main_embed  # current showing embed
         self.event_menu.options=options
         self.event_embeds = event_embeds
 
@@ -140,8 +164,8 @@ class Event_View(My_View):
     @discord.ui.select()
     async def event_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
         value = select.values[0]
-        if value == 'Ongoing Events':
-            self.embed = self.ongoing_embed
+        if value == 'Event List':  # see event command
+            self.embed = self.main_embed
             self.current_page = 1
             self.max_page = 1
         else: # value is index of event_list
@@ -161,19 +185,17 @@ class Event_Commands(commands.Cog, name='Event Commands'):
 
     @app_commands.command()
     @app_commands.describe(
-    language='Language (default: English)',
-    server='Game Server (default: NA)'
+    language='Language (default: English)'
     )
     async def events(
         self, interaction: discord.Interaction,
-        language: Optional[common.Language]=common.Language.English,
-        server: Optional[common.Timezone]=common.Timezone.NA):
+        language: Optional[common.Language]=common.Language.English):
         '''Shows ongoing event info'''
-        event_list = events.get_all_events(self.bot.masterdata, language.value, server)  # ongoing event list
+        event_list = events.get_all_events(self.bot.masterdata, language.value)
 
-        ongoing_embed = ongoing_event_embed(event_list)
+        main_embed = event_list_embed(event_list)
         options = [discord.SelectOption(
-            label='Ongoing Events'
+            label='Event List'
         )]
         event_embeds = {}
         
@@ -189,8 +211,8 @@ class Event_Commands(commands.Cog, name='Event Commands'):
             
         
         user = interaction.user
-        view = Event_View(user, ongoing_embed, options, event_embeds)
-        await interaction.followup.send(embed=ongoing_embed, view=view)
+        view = Event_View(user, main_embed, options, event_embeds)
+        await interaction.followup.send(embed=main_embed, view=view)
         message = await interaction.original_response()
         view.message = message
 

@@ -9,11 +9,11 @@ BountyQuestEventMB
 LimitedLoginBonusRewardMB
 '''
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 
 from master_data import MasterData
-import common
+from emoji import emoji_list
 
 class MM_Event():
     '''
@@ -23,18 +23,35 @@ class MM_Event():
     def __init__(
         self, 
         name: str,
-        start: str, end: str, utc_diff: int) -> None:
+        start: int, end: int) -> None:
         self.name = name
         self.start = start
         self.end = end
-        self.utc_diff = utc_diff
+        self.type_indication = None # diamond Emoji for type
         # flags
         self.has_mission = False
         self.has_force_start = False
     
-    def is_ongoing(self) -> bool:
-        now = datetime.now() + timedelta(hours=self.utc_diff)
-        return get_date(self.start) <= now <= get_date(self.end)
+    def state(self) -> int:
+        '''
+        Returns event state.
+
+        -1: Past Event
+        0: Ongoing Event
+        1: Future Event
+        '''
+        now = datetime.utcnow().timestamp()
+        if self.end < now:
+            return -1
+        elif now < self.start:
+            return 1
+        else:
+            return 0
+        
+
+    def has_ended(self) -> bool:
+        now = datetime.utcnow().timestamp()
+        return self.end < now
 
 class NewCharacterEvent(MM_Event):
     '''
@@ -42,14 +59,15 @@ class NewCharacterEvent(MM_Event):
     '''
     def __init__(
         self, name: str,
-        start: str, end: str, utc_diff: int,
-        force_start: str, mission_list: List) -> None:
+        start: int, end: int,
+        force_start: int, mission_list: List) -> None:
 
-        super().__init__(name, start, end, utc_diff)
+        super().__init__(name, start, end)
         self.has_force_start = True
         self.has_mission = True
         self.force_start = force_start
         self.mission_list = mission_list
+        self.type_indication = emoji_list.get('orange dia')
 
 class LimitedMission(MM_Event):
     '''
@@ -57,12 +75,13 @@ class LimitedMission(MM_Event):
     '''
     def __init__(
         self, name: str,
-        start: str, end: str, utc_diff: int,
+        start: int, end: int,
         mission_list: List) -> None:
 
-        super().__init__(name, start, end, utc_diff)
+        super().__init__(name, start, end)
         self.has_mission = True
         self.mission_list = mission_list
+        self.type_indication = emoji_list.get('blue dia')
 
 def get_date_string(date: datetime):
     return datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
@@ -70,60 +89,86 @@ def get_date_string(date: datetime):
 def get_date(date: str)->datetime:
     return datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
 
+def get_timestamp_jst(date: str)->int:
+    '''returns unix timestamp from jst time string'''
+    return int(datetime.strptime(date, '%Y-%m-%d %H:%M:%S').timestamp() - 32400) # -9 hours
+
+def has_ended(end: int):
+    now = datetime.utcnow().timestamp()
+    return end < now
+
+
+# BOI changing json keys smh
+def get_start(mission_data):
+    '''
+    get "StartTime" or if None, "StartTimeFixJST"
+    '''
+    start = mission_data.get('StartTime')
+    if start is None:
+        start = mission_data.get('StartTimeFixJST')
+    return start
+
+def get_end(mission_data):
+    '''
+    get "EndTime" or if None, "EndTimeFixJST"
+    '''
+    end = mission_data.get('EndTime')
+    if end is None:
+        end = mission_data.get('EndTimeFixJST')
+    return end
+
 def get_NewCharacterMission(
-    master: MasterData, lang = 'enUS', timezone: common.Timezone=common.Timezone.NA, all=False)->List:
+    master: MasterData, lang = 'enUS', get_past: bool=False)->List:
     '''
     Returns a list of NewCharacterMission events
-
-    Returns all the events even old ones
     '''
-    utc_diff = timezone.value
     event_list = []
     data_it = master.get_MB_iter('NewCharacterMissionMB')
     for item in data_it:
+        end = get_timestamp_jst(get_end(item))
+        if has_ended(end) and not get_past: # skip passed events
+            continue
+        start = get_timestamp_jst(get_start(item))
         name = master.search_string_key(item.get('TitleTextKey'), language=lang)
-        start = item.get("StartTime")
-        end = item.get("EndTime")
-        force_start = item.get("ForceStartTime")
-        event = NewCharacterEvent(name, start, end, utc_diff, force_start, item.get("TargetMissionIdList"))
-        if all or event.is_ongoing():
-            event_list.append(event)
+        force_start = get_timestamp_jst(item.get("ForceStartTime"))
+        event = NewCharacterEvent(name, start, end, force_start, item.get("TargetMissionIdList"))
+        event_list.append(event)
     return event_list
 
 def get_LimitedMission(
-    master: MasterData, lang = 'enUS', timezone: common.Timezone=common.Timezone.NA, all=False)->List:
+    master: MasterData, lang = 'enUS', get_past:bool=False)->List:
     '''
     Returns a list of LimitedMission events
-
-    Returns all the events even old ones
     '''
-    utc_diff = timezone.value
     event_list = []
     data_it = master.get_MB_iter('LimitedMissionMB')
     for item in data_it:
+        end = get_timestamp_jst(get_end(item))
+        if has_ended(end) and not get_past: # skip passed events
+            continue
+        start = get_timestamp_jst(get_start(item))
         name = master.search_string_key(item.get('TitleTextKey'), language=lang)
-        start = item.get("StartTime")
-        end = item.get("EndTime")
-        event = LimitedMission(name, start, end, utc_diff, item.get("TargetMissionIdList"))
-        if all or event.is_ongoing():
-            event_list.append(event)
+        event = LimitedMission(name, start, end, item.get("TargetMissionIdList"))
+        event_list.append(event)
     return event_list
 
 # add more events later
 def get_all_events(
-    master: MasterData, lang = 'enUS', timezone: common.Timezone=common.Timezone.NA, all=False)->List[MM_Event]:
+    master: MasterData, lang = 'enUS', get_past:bool=False)->List[MM_Event]:
     '''
     Returns a list of all events
     '''
     event_list = []
-    event_list += get_LimitedMission(master,  lang, timezone, all)
-    event_list += get_NewCharacterMission(master, lang, timezone, all)
+    event_list += get_LimitedMission(master, lang, get_past)
+    event_list += get_NewCharacterMission(master, lang, get_past)
 
     return event_list
 
 
 if __name__ == "__main__":
     from pprint import pprint
-    events = get_all_events(MasterData(), all=True)
-    for e in events:
-        pprint(e.__dict__)
+    # events = get_all_events(MasterData(), get_past=True)
+    # for e in events:
+    #     pprint(e.__dict__)
+    ongoing_text = 'a'
+    print(ongoing_text if ongoing_text else "None")
