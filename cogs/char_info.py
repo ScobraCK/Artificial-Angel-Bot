@@ -90,7 +90,7 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
         inline=False
     )
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'/Character/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed

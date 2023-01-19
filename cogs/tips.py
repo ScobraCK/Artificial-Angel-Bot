@@ -15,7 +15,7 @@ class Tips(commands.Cog):
     async def awakening(self, interaction: discord.Interaction):
         '''Awakening cost chart'''
         embed=discord.Embed()
-        awakening = 'https://cdn.discordapp.com/attachments/1032035546412875817/1033509806109102120/unknown-13.png'
+        awakening = common.raw_asset_link_header + 'Bot/awakening_costs.png'
         embed.set_image(url=awakening)
         await interaction.response.send_message(
             embed=embed
@@ -26,7 +26,7 @@ class Tips(commands.Cog):
         '''Soul affinity chart'''
         embed=discord.Embed(
             description='Bonus damage is possibly 20% not 25%')
-        affinity = 'https://cdn.discordapp.com/attachments/1032035546412875817/1032035874982084708/20221018_135122.jpg'
+        affinity = common.raw_asset_link_header + 'Bot/soul_affinity.jpg'
         embed.set_image(url=affinity)
         await interaction.response.send_message(
             embed=embed
