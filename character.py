@@ -69,5 +69,5 @@ def speed_iter(masterdata: MasterData) -> Iterable:
 # testing
 if __name__ == "__main__":
     master = MasterData()
-    print(get_name(12, master))
+    print(get_name(find_id_from_name('ーリン'), master))
     
