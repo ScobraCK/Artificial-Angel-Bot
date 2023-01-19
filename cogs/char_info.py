@@ -90,7 +90,7 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
         inline=False
     )
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/Character/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'/Characters/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -130,7 +130,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lan
         embed.add_field(name='None', value='\u200b', inline=False)
 
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'/Characters/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -147,7 +147,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
     embed.add_field(name='\u200b', value=uw_text(uw_description), inline=False)
 
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'/Characters/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
