@@ -4,7 +4,7 @@ from discord.ext import commands
 from typing import List, Optional, Iterator, Dict, Tuple
 
 from my_view import My_View
-import events
+import events as evt
 import mission as msn
 import common
 from master_data import MasterData
@@ -26,9 +26,10 @@ def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
     return texts
     
 
-def event_list_embed(event_list: List[events.MM_Event]):
+def event_list_embed(event_list: List[evt.MM_Event], server: str):
     embed = discord.Embed(
-        title='Event List(WIP)'
+        title='Event List',
+        description=f"Server: {server}"
     )
     past_text = ''
     ongoing_text = ''
@@ -65,36 +66,49 @@ def event_list_embed(event_list: List[events.MM_Event]):
         
     return embed
 
-def event_detail_embed(mm_event: events.MM_Event, master: MasterData, lang):
+def event_detail_embed(mm_event: evt.MM_Event, master: MasterData, lang):
     # basic
-    text=f"**Start Date**: <t:{mm_event.start}>\n\
+    text=f"Server: {mm_event.server.name}\n\
+        **Start Date**: <t:{mm_event.start}>\n\
         **End Date**: <t:{mm_event.end}>\n"
     # force start
     if mm_event.has_force_start:
         text += f"**Force Start Date**: <t:{mm_event.force_start}>\n"
+    # ingame descriptions
+    if (desc := mm_event.description):
+        text += f"\n{desc}\n"
     
     embed = discord.Embed(
         title=mm_event.name,
         description=text
     )
-    field_values: List[Dict[str, str]] = []  # name and value
+    field_values: List[Dict[str, str]] = []  # name and value for embed
 
     # missions
     if mm_event.has_mission:
         char_name = None
-        if isinstance(mm_event, events.NewCharacterEvent):
+        if isinstance(mm_event, evt.NewCharacter):
             char_name = mm_event.character
 
         mission_it = msn.get_Missions(mm_event.mission_list, master, lang)
-        for text in event_mission_texts(mission_it):
+        for mission_text in event_mission_texts(mission_it):
             if char_name:
-                text.replace('{0}', char_name)
+                mission_text.replace('{0}', char_name)
             field_values.append(
                 {'name': '__Mission List__',
-                'value': text}
+                'value': mission_text}
             )
 
-        embed.add_field(**field_values[0])  # show first
+    if isinstance(mm_event, evt.BountyQuest): #Bounty Quests
+        item_text = f"**Bonus Multiplier**: {mm_event.multiplier}%\n\n"
+        for item in mm_event.targets:
+            item_text += f"**-{item}**\n"
+        field_values.append(
+            {'name': '__Target Items__',
+             'value': item_text}
+        )
+
+    embed.add_field(**field_values[0])  # show first
 
     return embed, field_values
 
@@ -191,20 +205,22 @@ class Event_Commands(commands.Cog, name='Event Commands'):
 
     @app_commands.command()
     @app_commands.describe(
-    language='Language (default: English)'
+    language='Language (default: English)',
+    server='Game Server (default: NA)'
     )
     async def events(
         self, interaction: discord.Interaction,
-        language: Optional[common.Language]=common.Language.English):
+        language: Optional[common.Language]=common.Language.English,
+        server: Optional[common.Server]=common.Server.NA):
         '''Shows ongoing event info'''
-        event_list = events.get_all_events(self.bot.masterdata, language.value)
+        event_list = evt.get_all_events(self.bot.masterdata, language.value, server)
 
-        main_embed = event_list_embed(event_list)
+        main_embed = event_list_embed(event_list, server.name)
         options = [discord.SelectOption(
             label='Event List'
         )]
         event_embeds = {}
-        
+
         await interaction.response.defer()
 
         for mm_event in event_list:  

@@ -1,6 +1,10 @@
 # from typing import List, TypedDict
 from enum import Enum
 
+############
+# Character id
+############
+
 # used in slash command limit
 id_list = {
     1: 'Monica',
@@ -181,16 +185,9 @@ char_list = {
     'アームストロング': 50
 }
 
-# language Enum
-class Language(Enum):
-    English = 'enUS'
-    Japanese = 'jaJP'
-    Korean = 'koKR'
-    Taiwanese = 'zhTW'
-
-
-# for images
-raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets'
+############
+# Dictionary maps
+############
 
 # character basic info
 basic_info = ["Id", "Element", 'Base Rarity', 'Class', 'Normal Attack', 'Base Speed','UW']
@@ -249,9 +246,19 @@ uw_rarity_skill_map = {
 
 uw_rarity_list = ['SSR', 'UR', 'LR']
 
-class Skill_Enum(Enum):
-    ACTIVE = 'Active Skills'
-    PASSIVE = 'Passive Skills'
+# limited events
+event_type = {
+    1: {
+        'name': 'Tower Release Event',
+        'description': 'For a limited time, all Souls in the Tower of Infinity will be unlocked!'}
+}
+
+############
+# Image/Emojis
+############
+
+# for images
+raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets'
 
 rarity_emoji = {
     'R': ':small_blue_diamond:',
@@ -267,21 +274,28 @@ level_emoji = {
     4: '<:red_diamond:1060066217257341048>', 
 }
 
-# limited events
-event_type = {
-    1: {
-        'name': 'Tower Release Event',
-        'description': 'For a limited time, all Souls in the Tower of Infinity will be unlocked!'}
-}
+
+
+############
+# Enums
+############
+class Skill_Enum(Enum):
+    ACTIVE = 'Active Skills'
+    PASSIVE = 'Passive Skills'
+
+# language Enum
+class Language(Enum):
+    English = 'enUS'
+    Japanese = 'jaJP'
+    Korean = 'koKR'
+    Taiwanese = 'zhTW'
 
 # timezones (hours in timedelta)
-class Timezone(Enum):
+class Server(Enum):
     NA = -7
-    JP = 9
-    KR = 9
-    EU = 1
+    JP_KR = 9
+    EU_GLOBAL = 1
     ASIA = 8
-    GLOBAL = 1
 
 # notes
 passive_skill_triggers = {

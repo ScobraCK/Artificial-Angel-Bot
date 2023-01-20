@@ -141,6 +141,9 @@ class MasterData():
             return None    
 
     def search_item(self, id: int, type: str):
+        '''
+        searches ItemMB
+        '''
         obj = filter(lambda x:x["ItemId"]==id and x['ItemType']==type,\
             self.__load_MB('ItemMB'))
         try:
@@ -148,16 +151,21 @@ class MasterData():
         except StopIteration:
             return None
 
-    def find_item(self, id: int, type: str) -> dict:
-        if type == 14: # runes
-            item = self.search_id(id, self.__load_MB('SphereMB'))
-        elif type == 17: # containers
-            item = self.search_id(id, self.__load_MB('TreasureChestMB'))
+    def find_item(self, ItemId: int, ItemType: str, **_) -> dict:
+        '''
+        find item by ItemId and ItemType from multiple MB files
+
+        **_ is to catch extra data if using **keyword arguments
+        '''
+        if ItemType == 14: # runes
+            item = self.search_id(ItemId, self.__load_MB('SphereMB'))
+        elif ItemType == 17: # containers
+            item = self.search_id(ItemId, self.__load_MB('TreasureChestMB'))
         else: # In ItemMB
-            item = self.search_item(id, type)
+            item = self.search_item(ItemId, ItemType)
 
         if item is None:
-            print(f'Item not found. Id: {id} Type: {type}')  # add later
+            print(f'Item not found. Id: {ItemId} Type: {ItemType}')  # add later
         return item
 
     def search_missions(self, mission_list: Union[List, int]) -> Iterable:
