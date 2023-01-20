@@ -2,13 +2,13 @@ from master_data import MasterData
 from typing import List, Iterator
 from itertools import islice
 
-import item
+import items
 
 class Mission():
     '''
     Basic mission data
     '''
-    def __init__(self, name:str, open: int, reward_list: List[item.Reward]) -> None:
+    def __init__(self, name:str, open: int, reward_list: List[items.Reward]) -> None:
         self.name = name
         self.open = open # opening period
         self.reward_list = reward_list
@@ -31,7 +31,7 @@ def get_Missions(mission_list, master: MasterData, lang = 'enUS') -> Iterator[Mi
             open = mission["OpeningPeriod"]
             reward_list = []
             for item in mission["RewardList"]:  # "RewardList":[{"Item":{}, "RarityFlags":0}]
-                reward_list.append(item.get_reward(item['Item'], master, lang))
+                reward_list.append(items.get_reward(item['Item'], master, lang))
             yield Mission(name, open, reward_list)
     except StopIteration:
         pass

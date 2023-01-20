@@ -38,6 +38,8 @@ class MasterData():
         self.__load_MB('ActiveSkillMB')
         self.__load_MB('PassiveSkillMB')
         self.__load_MB('EquipmentExclusiveSkillDescriptionMB')
+        self.__load_MB('ItemMB')
+        self.__load_MB('MissionMB')
 
     def get_textdata(self):
         return self.textdata

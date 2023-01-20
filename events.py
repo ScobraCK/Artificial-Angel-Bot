@@ -15,7 +15,7 @@ from typing import List, Literal
 from master_data import MasterData
 from emoji import emoji_list
 from character import get_name
-from item import get_item_name
+from items import get_item_name
 from common import Server
 
 class MM_Event():
@@ -221,7 +221,6 @@ def get_all_events(
 
 if __name__ == "__main__":
     from pprint import pprint
-    events = get_all_events(MasterData(), server=Server.NA,get_past=True)
+    events = get_all_events(MasterData(), server=Server.NA)
     for e in events:
-        if isinstance(e, BountyQuest):
-            pprint(e.__dict__)
+        pprint(e.__dict__)
