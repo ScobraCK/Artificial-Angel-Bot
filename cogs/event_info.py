@@ -29,7 +29,7 @@ def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
 def event_list_embed(event_list: List[evt.MM_Event], server: str):
     embed = discord.Embed(
         title='Event List',
-        description=f"Server: {server}"
+        description=f"**Server**: {server}"
     )
     past_text = ''
     ongoing_text = ''
@@ -63,12 +63,12 @@ def event_list_embed(event_list: List[evt.MM_Event], server: str):
         value= (future_text if future_text else "None"),
         inline=False
     )
-        
+
     return embed
 
 def event_detail_embed(mm_event: evt.MM_Event, master: MasterData, lang):
     # basic
-    text=f"Server: {mm_event.server.name}\n\
+    text=f"**Server**: {mm_event.server.name}\n\
         **Start Date**: <t:{mm_event.start}>\n\
         **End Date**: <t:{mm_event.end}>\n"
     # force start
