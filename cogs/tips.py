@@ -24,8 +24,7 @@ class Tips(commands.Cog):
     @app_commands.command()
     async def soul_affinity(self, interaction: discord.Interaction):
         '''Soul affinity chart'''
-        embed=discord.Embed(
-            description='Bonus damage is possibly 20% not 25%')
+        embed=discord.Embed()
         affinity = common.raw_asset_link_header + 'Bot/soul_affinity.jpg'
         embed.set_image(url=affinity)
         await interaction.response.send_message(
