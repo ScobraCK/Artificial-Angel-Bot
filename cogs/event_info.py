@@ -9,12 +9,6 @@ import mission as msn
 import common
 from master_data import MasterData
 
-def get_utc(diff: int):
-    if diff > 0:
-        return f"(UTC+{diff})"
-    else:
-        return f"(UTC{diff})"
-
 def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
     texts = []
     batch_it = msn.batched(missions, 7)  # batch into 7 missions
