@@ -1,8 +1,10 @@
+from typing import Optional
 from master_data import MasterData
+from common import Language
 
 class Reward():
     '''
-    Reward data
+    Reward data. Consists of name and count.
     '''
     def __init__(self, name, count) -> None:
         self.name = name
@@ -11,11 +13,11 @@ class Reward():
     def __str__(self) -> str:
         return f"{self.count}x {self.name}"
 
-def get_item_name(master: MasterData, item: dict, lang='enUS')->str:
+def get_item_name(master: MasterData, item: dict, lang: Optional[Language]='enUS')->str:
     '''
     gets item name from it's json data
     '''
-    if item is None:
+    if item is None:  # need to add the item in
         return '[null(not found)]'
     name = master.search_string_key(item['NameKey'], language=lang)
 
@@ -29,7 +31,7 @@ def get_reward(reward: dict, master: MasterData, lang) ->dict:
     '''
     Input Reward{ItemCount, ItemId, ItemType}
     
-    Output Reward{name, count}
+    Output Reward class
     '''
     item = master.find_item(**reward)
     item_name = get_item_name(master, item, lang)

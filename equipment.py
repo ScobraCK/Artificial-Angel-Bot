@@ -2,12 +2,13 @@
 Equipment data
 '''
 from master_data import MasterData
-from typing import Literal, Optional
+from typing import Optional
+from common import Language
 
 def get_uw_name(
-    char_id: int, masterdata: MasterData=None, lang: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS'):
-    if masterdata is None:
-        masterdata = MasterData()
+    char_id: int, 
+    masterdata: MasterData, 
+    lang: Optional[Language]='enUS'):
 
     equipment = masterdata.search_uw(char_id)  # get iter
     if equipment:
@@ -17,9 +18,9 @@ def get_uw_name(
         return None
 
 def get_uw_descriptions(
-    char_id: int, masterdata: MasterData=None, lang: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS'):
-    if masterdata is None:
-        masterdata = MasterData()
+    char_id: int, 
+    masterdata: MasterData, 
+    lang: Optional[Language]='enUS'):
     
     uw_data = masterdata.search_uw_description(char_id)
     if uw_data is None:

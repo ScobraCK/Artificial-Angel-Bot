@@ -1,12 +1,15 @@
 from master_data import MasterData
-from typing import List, Iterator
-from itertools import islice
+from typing import List, Iterator, Optional
 
+from common import Language
 import items
 
 class Mission():
     '''
-    Basic mission data
+    Basic mission data class
+
+    Parameters:
+        name, open, reward_list
     '''
     def __init__(self, name:str, open: int, reward_list: List[items.Reward]) -> None:
         self.name = name
@@ -22,7 +25,13 @@ class Mission():
             text+=f'{reward} '
         return text
 
-def get_Missions(mission_list, master: MasterData, lang = 'enUS') -> Iterator[Mission]:
+def get_Missions(
+        mission_list: List[int], 
+        master: MasterData, 
+        lang: Optional[Language]='enUS') -> Iterator[Mission]:
+    '''
+    Returns an iterator of Missions(class) from the mission list
+    '''
     mission_it = master.search_missions(mission_list)
     
     try:
@@ -36,21 +45,12 @@ def get_Missions(mission_list, master: MasterData, lang = 'enUS') -> Iterator[Mi
     except StopIteration:
         pass
 
-def batched(iterable, n):
-    "Batch data into lists of length n. The last batch may be shorter."
-    # batched('ABCDEFG', 3) --> ABC DEF G
-    it = iter(iterable)
-    while True:
-        batch = list(islice(it, n))
-        if not batch:
-            return
-        yield batch
-
 if __name__ == '__main__':
     ml = [723, 724, 725, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735]
     master = MasterData()
     missions = get_Missions(ml, master)
     from pprint import pprint
+    from helper import batched
     batch = batched(missions, 7)
     text = []
     for i, b in enumerate(batch):

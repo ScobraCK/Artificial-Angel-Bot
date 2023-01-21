@@ -19,20 +19,20 @@ def dict_to_embedtext(data: dict, whitelist: List)->str:
 
     return text
 
-def active_name_text(char, masterdata: MasterData, lang=None):
+def active_name_text(char, master: MasterData, lang=None):
     # returns skill name and cd
     text=''
     for active_skill in skill.skill_info(
-        char, common.Skill_Enum.ACTIVE, descriptions=False, masterdata=masterdata, lang=lang):
+        master, char, common.Skill_Enum.ACTIVE, descriptions=False, lang=lang):
         text = text + f"{active_skill['Name']} **CD:** {active_skill['Cooldown']}\n"
     return text
 
-def passive_name_text(char, masterdata: MasterData, lang=None):
+def passive_name_text(char, master: MasterData, lang=None):
     # returns passive skill name
     if char[common.Skill_Enum.PASSIVE.value]:
         text=''
         for passive_skill in skill.skill_info(
-            char, common.Skill_Enum.PASSIVE, descriptions=False, masterdata=masterdata, lang=lang):
+            master, char, common.Skill_Enum.PASSIVE, descriptions=False, lang=lang):
             text = text + f"{passive_skill['Name']}\n"
         return text
     else:
@@ -90,7 +90,7 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
         inline=False
     )
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/Characters/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -122,7 +122,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lan
         title=f"{char['Name']}'s Skills",
         description=f"__**{type.value}**__")
 
-    for skill_description in skill.skill_info(char, type, masterdata=masterdata, lang=lang):
+    for skill_description in skill.skill_info(char, type, master=masterdata, lang=lang):
         skill_level_embeds(skill_description, type, embed)
         
     if type is common.Skill_Enum.PASSIVE and \
@@ -130,7 +130,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lan
         embed.add_field(name='None', value='\u200b', inline=False)
 
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/Characters/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -147,7 +147,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
     embed.add_field(name='\u200b', value=uw_text(uw_description), inline=False)
 
     # thumbnail
-    image_link = common.raw_asset_link_header + f'/Characters/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed

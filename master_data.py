@@ -1,27 +1,28 @@
 import json
-import os
 import requests
 from typing import Iterable, Literal, Optional, List, Union
+from common import Language
 
 class MasterData():
     '''
     Class to help read the Master data.
-    Use to search for the specific json objects or loading the json files
+    Main API for reading the master data or searching for specific files
     '''
     def __init__(self, language: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> None:
         self.textdata = self.open_MB('TextResourceMB')  # is used most frequently
 
-        # maybe make a data class inheriting dict
-        # uses lazy loading for other jsons for now
+        # uses lazy loading for other jsons
         self.data = {}
         self.language = language
         
     def open_MB(self, dataMB: str):
         '''
-        returns MB json(dict) object
+        returns the MB json(dict) directly
+
+        Does not save the data in the class, refer to __load_MB.
         '''
-        url = 'https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Master'
-        url = url + f'/{dataMB}'
+        url = 'https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Master/'
+        url = url + f'{dataMB}'
         if not url.endswith('.json'):
             url = url + '.json'
         resp = requests.get(url)
@@ -30,7 +31,7 @@ class MasterData():
 
     def load_all(self):
         '''
-        load all main json files
+        loads all main json files into the class
         '''
         self.__load_MB('CharacterMB')
         self.__load_MB('EquipmentMB')
@@ -42,9 +43,15 @@ class MasterData():
         self.__load_MB('MissionMB')
 
     def get_textdata(self):
+        '''
+        returns a copy of TextResourceMB
+        '''
         return self.textdata
 
     def get_chardata(self):
+        '''
+        returns a copy of CharacterMB
+        '''
         return self.__load_MB('CharacterMB')
 
     def get_MB_iter(self, dataMB: str) -> Iterable:
@@ -58,13 +65,13 @@ class MasterData():
         """
         same as open_MB but also loads MB json into the class
 
-        to be used inside the class only
+        to be used inside the class
         """
         if dataMB not in self.data:
             self.data[dataMB] = self.open_MB(dataMB)
         return self.data[dataMB]
 
-    def search_string_key(self, text_key: str, language: str = None)->str:
+    def search_string_key(self, text_key: str, language: Union[str, Language]=None)->str:
         '''
         Returns the text string for selected region
 
@@ -76,6 +83,8 @@ class MasterData():
         '''
         if language is None:
             language = self.language
+        elif isinstance(language, Language):
+            language = language.value
 
         obj = filter(lambda x:x["StringKey"]==text_key, self.textdata)
         try:
@@ -87,8 +96,11 @@ class MasterData():
         except StopIteration:  # No key match
             return None
 
-    def search_id(self, id: int, data: dict) -> dict:
-        obj = filter(lambda x:x["Id"]==id, data)
+    def search_id(self, id: int, dataMB: str) -> dict:
+        '''
+        Searches a specific master file for a matching Id
+        '''
+        obj = filter(lambda x:x["Id"]==id, self.__load_MB(dataMB))
         try:
             return next(obj)
         except StopIteration:
@@ -98,6 +110,8 @@ class MasterData():
         id: int=None, type: int=None, rarity: int=None, job: int=None) -> Iterable:
         '''
         Returns a iterator of characters matching search conditions
+
+        may be subject to change after implementing other search features
         '''
         if id:  # unique
             char = filter(lambda x:x["Id"]==id, self.__load_MB('CharacterMB'))
@@ -118,7 +132,7 @@ class MasterData():
 
         returns None if char does not have uw
         '''
-        profile = self.search_id(char_id, self.__load_MB('CharacterProfileMB'))
+        profile = self.search_id(char_id, 'CharacterProfileMB')
         if (composite_id := profile['EquipmentCompositeId']):
             equipment = filter(
                 lambda x: x['CompositeId'] == composite_id,
@@ -127,18 +141,15 @@ class MasterData():
         else:
             return None
 
-    def search_active_skill(self, skill_id):
-        return self.search_id(skill_id, self.__load_MB('ActiveSkillMB'))
-
-    def search_passive_skill(self, skill_id):
-        return self.search_id(skill_id, self.__load_MB('PassiveSkillMB'))
-
     def search_uw_description(self, char_id):
+        '''
+        gets the UW descrription from a char id
+        '''
         equipment = self.search_uw(char_id)
         if equipment:
             equipment = next(equipment)
             uw_id = equipment['EquipmentExclusiveSkillDescriptionId']
-            return self.search_id(uw_id, self.__load_MB('EquipmentExclusiveSkillDescriptionMB'))
+            return self.search_id(uw_id, 'EquipmentExclusiveSkillDescriptionMB')
         else:
             return None    
 
@@ -157,12 +168,15 @@ class MasterData():
         '''
         find item by ItemId and ItemType from multiple MB files
 
+        ItemType 14: Runes
+        ItemType 17: Containers (Treasue Chests)
+
         **_ is to catch extra data if using **keyword arguments
         '''
-        if ItemType == 14: # runes
-            item = self.search_id(ItemId, self.__load_MB('SphereMB'))
-        elif ItemType == 17: # containers
-            item = self.search_id(ItemId, self.__load_MB('TreasureChestMB'))
+        if ItemType == 14:
+            item = self.search_id(ItemId, 'SphereMB')
+        elif ItemType == 17:
+            item = self.search_id(ItemId, 'TreasureChestMB')
         else: # In ItemMB
             item = self.search_item(ItemId, ItemType)
 
@@ -171,6 +185,9 @@ class MasterData():
         return item
 
     def search_missions(self, mission_list: Union[List, int]) -> Iterable:
+        '''
+        search mission('s) with id
+        '''
         if isinstance(mission_list, int):
             mission_list = [mission_list]
 

@@ -5,7 +5,7 @@ from enum import Enum
 # Character id
 ############
 
-# used in slash command limit
+# used to limit id
 id_list = {
     1: 'Monica',
     2: 'Illya',
@@ -258,7 +258,7 @@ event_type = {
 ############
 
 # for images
-raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets'
+raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets/'
 
 rarity_emoji = {
     'R': ':small_blue_diamond:',
@@ -296,56 +296,3 @@ class Server(Enum):
     JP_KR = 9
     EU_GLOBAL = 1
     ASIA = 8
-
-# notes
-passive_skill_triggers = {
-    0: 'not in battle',
-    1: 'turn start',
-    2: 'end turn',
-    5: 'amleth immortal trigger',
-    6: 'sonya , amour, rusalka (???)',
-    7: 'ally defeated',
-    8: 'attacked + after damage / self',
-    9: 'attack and trigger on attacked side',
-    10: 'ally attacked',
-    11: 'debuff applied to self / self',
-    19: 'death? (amour, rusalka)',
-    21: 'target defeated',
-    27: 'end of battle',
-    28: 'Battle start (speed buffs)',
-    29: 'carol, after ally attacked, I have no idea',
-    42: 'attacked + before damage / self',
-}
-'''
-1, 6
-"Sonya lets out a Viking’s cry of triumph. 
-At the start of the battle, this skill increases all allies’ ATK by 2%. 
-A target’s ATK is further increased by 2% for each ally other than Sonya who is alive.",
-    
-
-6, 19  (also rusalka)
-"enUS": "Until Amour finds her happy ending, 
-she won’t let this fairy tale come to an close. 
-If she is defeated, this skill revives Amour and restores HP equal to 30% of her max HP to her. 
-She doesn’t let anyone who defiles her story get away, 
-and also deals 1 direct attack equal to 10% of the total damage taken by her over the past 20 turns to the enemy directly in front of her. 
-If Amour is defeated by an effect from a debuff, this skill does not activate. 
-This skill activates only 1 time per battle.",
-
-+19
-"The targets of this skill become the enemy directly in front of Amour and 1 enemy adjacent to that target.",
-        
-amour max hp passive also triggers with 19 (death?)        
-'''
-
-# Thought this could be useful, not really needed
-
-# class Skill_Level(TypedDict):
-#     'Lv': int
-#     'Description': str
-#     'UW': str
-
-# class Skill(TypedDict):
-#     'Name': str
-#     'Cooldown': int
-#     'Descriptions': List[Skill_Level]

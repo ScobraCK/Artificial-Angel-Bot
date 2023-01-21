@@ -7,11 +7,12 @@ from my_view import My_View
 import events as evt
 import mission as msn
 import common
+from helper import batched
 from master_data import MasterData
 
 def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
     texts = []
-    batch_it = msn.batched(missions, 7)  # batch into 7 missions
+    batch_it = batched(missions, 7)  # batch into 7 missions
     for i, batch in enumerate(batch_it):
         texts.append('')  # new field
         for mission in batch:

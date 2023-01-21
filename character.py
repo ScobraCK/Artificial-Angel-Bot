@@ -2,14 +2,13 @@ from master_data import MasterData
 import common
 import equipment
 from fuzzywuzzy import process, fuzz
-from typing import List, Iterable, Literal, Optional
+from typing import Iterable, Literal, Optional
 
 def get_character_info(
-    id: int, masterdata: MasterData=None, lang: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> dict:
-    if masterdata is None:
-        masterdata = MasterData()
-    char_data = next(masterdata.search_chars(id=id))
-    char = {}
+    id: int, masterdata: MasterData, lang: Optional[common.Language]='enUS') -> dict:
+    
+    char_data = master.search_id(id, 'CharacterMB')
+    char = {}  # to be changed to class
 
     char['Id'] = char_data['Id']
     char['Title'] = masterdata.search_string_key(char_data['Name2Key'], language=lang)
@@ -28,6 +27,9 @@ def get_character_info(
 
 
 def find_id_from_name(char_str: str):
+    '''
+    uses fuzzy matching to find id from a string. Uses a separate dictionary for speed.
+    '''
     if (char:=char_str.lower()) in common.char_list:
         id = common.char_list[char]
     else:
@@ -46,8 +48,8 @@ def check_id(id: int) -> bool:
     else:
         return False
 
-def get_name(id: int, master: MasterData, lang='enUS'):
-    char = next(master.search_chars(id=id))
+def get_name(id: int, master: MasterData, lang: Optional[common.Language]='enUS'):
+    char = master.search_id(id, 'CharacterMB')
     name = master.search_string_key(char.get('NameKey'), language=lang)
     return name
 
@@ -56,8 +58,7 @@ def speed_iter(masterdata: MasterData) -> Iterable:
     returns an iterable with character speeds in decreasing order
     Element is a tuple of (id, speed)
     '''
-    if masterdata is None:
-        masterdata = MasterData()
+
     char_speed = {x['Id']: x['InitialBattleParameter']['Speed'] for x in masterdata.get_chardata()}
     sorted_char = sorted(
         char_speed.items(),
