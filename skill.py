@@ -24,15 +24,17 @@ def skill_info(
 
     if type is Skill_Enum.ACTIVE:
         skill_type = 'ActiveSkillInfos'
+        skill_MB = 'ActiveSkillMB'
     else:
         skill_type = 'PassiveSkillInfos'
+        skill_MB = 'PassiveSkillMB'
 
     skill_ids = char[type.value]
     skills = []
 
     for id in skill_ids:
         skill = {}
-        skill_data = master.search_id(id, skill_type)
+        skill_data = master.search_id(id, skill_MB)
         
         skill['Name'] = master.search_string_key(skill_data["NameKey"], language=lang)
         skill['Cooldown'] = skill_data.get('SkillMaxCoolTime')  # only useful for actives currently

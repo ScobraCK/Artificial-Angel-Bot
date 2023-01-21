@@ -5,20 +5,20 @@ from fuzzywuzzy import process, fuzz
 from typing import Iterable, Literal, Optional
 
 def get_character_info(
-    id: int, masterdata: MasterData, lang: Optional[common.Language]='enUS') -> dict:
+    id: int, master: MasterData, lang: Optional[common.Language]='enUS') -> dict:
     
     char_data = master.search_id(id, 'CharacterMB')
     char = {}  # to be changed to class
 
     char['Id'] = char_data['Id']
-    char['Title'] = masterdata.search_string_key(char_data['Name2Key'], language=lang)
-    char['Name'] = masterdata.search_string_key(char_data['NameKey'], language=lang)
+    char['Title'] = master.search_string_key(char_data['Name2Key'], language=lang)
+    char['Name'] = master.search_string_key(char_data['NameKey'], language=lang)
     char['Element'] = common.souls[char_data['ElementType']]
     char['Base Rarity'] = common.char_rarity[char_data['RarityFlags']]
     char['Class'] = common.job_map[char_data['JobFlags']]
     char['Base Speed'] = char_data['InitialBattleParameter']['Speed']
     char['Normal Attack'] = common.normal_skills[char_data["NormalSkillId"]]
-    char['UW'] = equipment.get_uw_name(id, masterdata, lang=lang)
+    char['UW'] = equipment.get_uw_name(id, master, lang=lang)
 
     char['Active Skills'] = char_data["ActiveSkillIds"]
     char["Passive Skills"] = char_data["PassiveSkillIds"]

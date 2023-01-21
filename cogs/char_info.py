@@ -23,7 +23,7 @@ def active_name_text(char, master: MasterData, lang=None):
     # returns skill name and cd
     text=''
     for active_skill in skill.skill_info(
-        master, char, common.Skill_Enum.ACTIVE, descriptions=False, lang=lang):
+        char, common.Skill_Enum.ACTIVE, master, descriptions=False, lang=lang):
         text = text + f"{active_skill['Name']} **CD:** {active_skill['Cooldown']}\n"
     return text
 
@@ -32,7 +32,7 @@ def passive_name_text(char, master: MasterData, lang=None):
     if char[common.Skill_Enum.PASSIVE.value]:
         text=''
         for passive_skill in skill.skill_info(
-            master, char, common.Skill_Enum.PASSIVE, descriptions=False, lang=lang):
+            char, common.Skill_Enum.PASSIVE, master, descriptions=False, lang=lang):
             text = text + f"{passive_skill['Name']}\n"
         return text
     else:
@@ -222,7 +222,7 @@ class Character(commands.Cog):
                 ephemeral=True
             )
         else:
-            embed = char_info_embed(character, self.bot.masterdata, lang=language.value)
+            embed = char_info_embed(character, self.bot.masterdata, lang=language)
             await interaction.response.send_message(embed=embed)
 
     @app_commands.command()
@@ -242,12 +242,12 @@ class Character(commands.Cog):
                 ephemeral=True
             )
         else:
-            char = chars.get_character_info(character, self.bot.masterdata, lang=language.value)
+            char = chars.get_character_info(character, self.bot.masterdata, lang=language)
 
             embeds = [
-                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata, lang=language.value),
-                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata, lang=language.value),
-                uw_skill_embed(char, self.bot.masterdata, lang=language.value)
+                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata, lang=language),
+                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata, lang=language),
+                uw_skill_embed(char, self.bot.masterdata, lang=language)
             ]
             user = interaction.user
             view = Skill_View(user, embeds)
