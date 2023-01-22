@@ -4,7 +4,7 @@ from discord.ext import commands
 
 import common
 
-class Tips(commands.Cog):
+class Tips(commands.Cog, name='Other Commands'):
     '''These are helpful tip commands'''
 
     def __init__(self, bot):
@@ -22,7 +22,7 @@ class Tips(commands.Cog):
         )
 
     @app_commands.command()
-    async def soul_affinity(self, interaction: discord.Interaction):
+    async def soulaffinity(self, interaction: discord.Interaction):
         '''Soul affinity chart'''
         embed=discord.Embed()
         affinity = common.raw_asset_link_header + 'Bot/soul_affinity.jpg'

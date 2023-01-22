@@ -24,7 +24,7 @@ def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
 def event_list_embed(event_list: List[evt.MM_Event], server: str):
     embed = discord.Embed(
         title='Event List',
-        description=f"**Server**: {server}"
+        description=f"**Server:** {server}"
     )
     past_text = ''
     ongoing_text = ''
@@ -63,12 +63,12 @@ def event_list_embed(event_list: List[evt.MM_Event], server: str):
 
 def event_detail_embed(mm_event: evt.MM_Event, master: MasterData, lang):
     # basic
-    text=f"**Server**: {mm_event.server.name}\n\
-        **Start Date**: <t:{mm_event.start}>\n\
-        **End Date**: <t:{mm_event.end}>\n"
+    text=f"**Server:** {mm_event.server.name}\n\
+        **Start Date:** <t:{mm_event.start}>\n\
+        **End Date:** <t:{mm_event.end}>\n"
     # force start
     if mm_event.has_force_start:
-        text += f"**Force Start Date**: <t:{mm_event.force_start}>\n"
+        text += f"**Force Start Date:** <t:{mm_event.force_start}>\n"
     # ingame descriptions
     if (desc := mm_event.description):
         text += f"\n{desc}\n"
@@ -95,7 +95,7 @@ def event_detail_embed(mm_event: evt.MM_Event, master: MasterData, lang):
             )
 
     if isinstance(mm_event, evt.BountyQuest): #Bounty Quests
-        item_text = f"**Bonus Multiplier**: {mm_event.multiplier}%\n\n"
+        item_text = f"**Bonus Multiplier:** {mm_event.multiplier}%\n\n"
         for item in mm_event.targets:
             item_text += f"**-{item}**\n"
         field_values.append(
@@ -200,14 +200,14 @@ class Event_Commands(commands.Cog, name='Event Commands'):
 
     @app_commands.command()
     @app_commands.describe(
-    language='Language (default: English)',
-    server='Game Server (default: NA)'
+    language='Text language. Defaults to English.',
+    server='Game server to calculate the timezone. Dedaults to NA.'
     )
     async def events(
         self, interaction: discord.Interaction,
         language: Optional[common.Language]=common.Language.English,
         server: Optional[common.Server]=common.Server.NA):
-        '''Shows ongoing event info'''
+        '''Shows ongoing and future event info'''
         event_list = evt.get_all_events(self.bot.masterdata, language.value, server)
 
         main_embed = event_list_embed(event_list, server.name)

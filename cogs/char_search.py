@@ -37,7 +37,7 @@ class Speed_View(My_View):
         self.embed.description += text
         await interaction.response.edit_message(embed=self.embed, view=self)
 
-class Character_Search(commands.Cog, name='Char Search'):
+class Character_Search(commands.Cog, name='Search Commands'):
     '''These are helpful tip commands'''
 
     def __init__(self, bot):

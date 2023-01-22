@@ -15,7 +15,7 @@ def dict_to_embedtext(data: dict, whitelist: List)->str:
     text = ''
     for key in data:
         if key in whitelist:
-            text = text + f'**{key}**: {data[key]}\n'
+            text = text + f'**{key}:** {data[key]}\n'
 
     return text
 
@@ -190,7 +190,7 @@ class IdTransformer(app_commands.Transformer):
         return id
 
 # character cog
-class Character(commands.Cog):
+class Character(commands.Cog, name='Character Commands'):
     '''These are helpful tip commands'''
 
     def __init__(self, bot):
@@ -208,14 +208,14 @@ class Character(commands.Cog):
     @app_commands.command()
     @app_commands.describe(
     character='The name or id of the character',
-    language='Language (default: English)'
+    language='Text language. Defaults to English.'
     )
     async def character(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer], # is an id
         language: Optional[common.Language]=common.Language.English):  
-        '''Searches a characters info'''
+        '''Shows a character's basic info'''
         if not chars.check_id(character):
             await interaction.response.send_message(
                 f"A character id of `{character}` does not exist.",
@@ -228,14 +228,14 @@ class Character(commands.Cog):
     @app_commands.command()
     @app_commands.describe(
         character='The name or id of the character',
-        language='Language (default: English)'
+        language='Text language. Defaults to English.'
     )
     async def skill(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer],
         language: Optional[common.Language]=common.Language.English):
-        '''Shows character skills'''
+        '''Shows character skills including unique weapon upgrade effects'''
         if not chars.check_id(character):
             await interaction.response.send_message(
                 f"A character id of `{character}` does not exist.",
