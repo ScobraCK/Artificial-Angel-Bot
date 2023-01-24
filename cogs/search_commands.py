@@ -62,9 +62,12 @@ def basic_enemy_field(master: MasterData, enemy: dict)->dict:
 def parameter_text(parameter: dict, parameter_map: dict)->str:
     text = '```json\n'
     for k, v in parameter_map.items():
-        stat_text = f"{k}: {parameter[v]}"
-        if k in common.battle_parameter_percentage:
-            stat_text += '%'
+        
+        if k in common.battle_parameter_percentage:  # % stats, stat/100(%)
+            stat_text = f"{k}: {parameter[v]/100}%"
+        else:
+            stat_text = f"{k}: {parameter[v]}"
+
         if k in common.battle_parameter_left:
             text += f"{stat_text:<27}"
         elif k in common.battle_parameter_right:
