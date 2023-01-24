@@ -52,10 +52,10 @@ def basic_enemy_field(master: MasterData, enemy: dict)->dict:
     soul = soul_emoji.get(enemy.get('ElementType'))
 
     name = f"[{rarity}] Lv.{enemy['EnemyRank']} {master.search_string_key(enemy['NameKey'])} {soul}"
-    value = f"**:crossed_swords:** {hf(batp['AttackPower'])} **:heart:** {hf(batp['HP'])} \
-        **:shield:** {hf(batp['Defense'])}\n**Speed:** {batp['Speed']}\n\
-        **{emoji_list['str']}** {hf(basp['Muscle'])} **{emoji_list['dex']}** {hf(basp['Energy'])} \
-        **{emoji_list['mag']}** {hf(basp['Intelligence'])} **{emoji_list['sta']}** {hf(basp['Health'])}"
+    value = f"**:crossed_swords:** {hf(batp['AttackPower'])} **:heart:** {hf(batp['HP'])} "\
+        + f"**:shield:** {hf(batp['Defense'])}\n**Speed:** {batp['Speed']}\n"\
+        + f"**{emoji_list['str']}** {hf(basp['Muscle'])} **{emoji_list['dex']}** {hf(basp['Energy'])} "\
+        + f"**{emoji_list['mag']}** {hf(basp['Intelligence'])} **{emoji_list['sta']}** {hf(basp['Health'])}"
     
     return {'name': name, 'value': value, 'inline': False}
 
@@ -66,11 +66,11 @@ def parameter_text(parameter: dict, parameter_map: dict)->str:
         if k in common.battle_parameter_percentage:
             stat_text += '%'
         if k in common.battle_parameter_left:
-            text += f"{stat_text:<25}"
+            text += f"{stat_text:<27}"
         elif k in common.battle_parameter_right:
-            text += f"{'':<25}{stat_text:<20}\n"
+            text += f"{'':<27}{stat_text:<22}\n"
         else:
-            text += f"{stat_text:<20}\n"
+            text += f"{stat_text:<22}\n"
 
     text += '```'
     return text
@@ -108,8 +108,8 @@ def detailed_enemy_embed(master: MasterData, enemy: dict)->discord.Embed:
 def quest_embed(master: MasterData, quest_data, bp)->discord.Embed:
     embed = discord.Embed(
         title=f"Stage {quests.convert_to_stage(quest_data['Id'])}",
-        description=f"**BP:** {bp:,}\n\
-            **Daily red orb gain:** {quest_data['PotentialJewelPerDay']}",
+        description=f"**BP:** {bp:,}\n"\
+            + f"**Daily red orb gain:** {quest_data['PotentialJewelPerDay']}",
         color=discord.Colour.red()
     )
 

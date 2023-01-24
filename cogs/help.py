@@ -44,17 +44,16 @@ def command_help_embed(cmd_name: str, cmd: app_commands.Command)->discord.Embed:
 
         embed = discord.Embed(
             title=f"{cmd_name.title()} Command",
-            description=f"{cmd.description}\n\n\
-                **Format:** {format_text}\n\n\
-                **Parameters:**\n\
-                {param_text}"
+            description=f"{cmd.description}\n\n"\
+                + f"**Format:** {format_text}\n\n"\
+                + f"**Parameters:**\n{param_text}"
         )
 
     else:
         embed = discord.Embed(
             title='Command Not found',
-            description=f'I could not find the command `{cmd_name}`. \
-                Check if you spelled it correctly, or if think this is a bug, dm Scobra#7120.'
+            description=f'I could not find the command `{cmd_name}`. '
+                + f'Check if you spelled it correctly, or if think this is a bug, dm Scobra#7120.'
         )
     return embed
 
@@ -74,8 +73,8 @@ class Help(commands.Cog, name='Help Commands'):
         if command is None:
             embed = discord.Embed(
                 title= "Mertillier's guide to A.A.",
-                description="For detailed help for a command, use **/help command**\n\
-                    If you find any problems with the bot, dm Scobra#7120 or ping @Scobra in the MementoMori unofficial Discord."
+                description="For detailed help for a command, use **/help command**\n"\
+                    + "If you find any problems with the bot, dm Scobra#7120 or ping @Scobra in the MementoMori unofficial Discord."
                 )
             for cog in self.bot.cogs:
                 if cog == 'Dev Commands':
