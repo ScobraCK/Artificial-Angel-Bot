@@ -32,7 +32,7 @@ def get_Missions(
     '''
     Returns an iterator of Missions(class) from the mission list
     '''
-    mission_it = master.search_missions(mission_list)
+    mission_it = master.search_id_list(mission_list, 'MissionMB')
     
     try:
         while(mission := next(mission_it)):
@@ -40,7 +40,7 @@ def get_Missions(
             open = mission["OpeningPeriod"]
             reward_list = []
             for item in mission["RewardList"]:  # "RewardList":[{"Item":{}, "RarityFlags":0}]
-                reward_list.append(items.get_reward(item['Item'], master, lang))
+                reward_list.append(items.get_reward(master, item['Item'], lang))
             yield Mission(name, open, reward_list)
     except StopIteration:
         pass

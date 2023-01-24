@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from master_data import MasterData
 from common import Language
 
@@ -11,7 +11,7 @@ class Reward():
         self.count = count
 
     def __str__(self) -> str:
-        return f"{self.count}x {self.name}"
+        return f"{self.count:,}x {self.name}"
 
 def get_item_name(master: MasterData, item: dict, lang: Optional[Language]='enUS')->str:
     '''
@@ -27,7 +27,7 @@ def get_item_name(master: MasterData, item: dict, lang: Optional[Language]='enUS
 
     return name
 
-def get_reward(reward: dict, master: MasterData, lang) ->dict:
+def get_reward(master: MasterData, reward: dict, lang: Optional[Language]='enUS')->Reward:
     '''
     Input Reward{ItemCount, ItemId, ItemType}
     
@@ -37,3 +37,10 @@ def get_reward(reward: dict, master: MasterData, lang) ->dict:
     item_name = get_item_name(master, item, lang)
 
     return Reward(item_name, reward['ItemCount'])
+
+def get_reward_list(master: MasterData, reward_list: List, lang: Optional[Language]='enUS')->List[Reward]:
+    rewards = []
+    if reward_list:
+        for item in reward_list:
+            rewards.append(get_reward(master, item, lang))
+    return rewards

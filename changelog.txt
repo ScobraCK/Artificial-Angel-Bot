@@ -1,2 +1,4 @@
+2023/01/24 Added tower, quest command to search for enemy data
+2023/01/24 Changed number formatting to include commas for long numbers in certain cases
 2023/01/23 Added help command
 2023/01/21 Added changelog for future changes

@@ -19,6 +19,8 @@ To be used with https://github.com/ScobraCK/MementoMori-data
 - /awakening: Awakening cost chart
 - /soul_bonus: Shows sould affinity chart
 - /events: Show events (WIP)
+- /quest: Searches quest and enemy data for specified stage
+- /tower: Searches enemy data for specified tower floor
 
 # To be added
 - Rune stuff

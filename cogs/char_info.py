@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from typing import List, Optional
+from typing import Iterable, List, Optional, Tuple
 
 import common
 import character as chars
@@ -9,8 +9,32 @@ import skill
 import equipment
 from master_data import MasterData
 from my_view import My_View
+import emoji
 
-# embed texts
+#########################
+# idlist
+#########################
+def id_list_embed():
+    text = ''
+    id_list = common.id_list
+    
+    embed = discord.Embed(
+        title='Character Id'
+    )
+    for i in range(1, common.MAX_CHAR_ID+1, 20):
+        text=''
+        for j in range(i, i+20):
+            if j > common.MAX_CHAR_ID:
+                break
+            text += f"{j}. {id_list[j]}\n"
+        embed.add_field(name='\u200b', value=text)
+
+    return embed
+
+#########################
+# character
+#########################
+
 def dict_to_embedtext(data: dict, whitelist: List)->str:
     text = ''
     for key in data:
@@ -43,27 +67,9 @@ def uw_text(uw_description):
         return 'None'
     text=''
     for rarity in common.uw_rarity_list:
-        text += f"__**{rarity} Weapon**__{common.rarity_emoji.get(rarity)}\n{uw_description.get(rarity)}\n"
+        text += f"__**{rarity} Weapon**__{emoji.rarity_emoji.get(rarity)}\n{uw_description.get(rarity)}\n"
 
     return text
-
-# embeds
-def id_list_embed():
-    text = ''
-    id_list = common.id_list
-    
-    embed = discord.Embed(
-        title='Character Id'
-    )
-    for i in range(1, common.MAX_CHAR_ID+1, 20):
-        text=''
-        for j in range(i, i+20):
-            if j > common.MAX_CHAR_ID:
-                break
-            text += f"{j}. {id_list[j]}\n"
-        embed.add_field(name='\u200b', value=text)
-
-    return embed
 
 def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
     '''
@@ -95,6 +101,10 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
 
     return embed
 
+#########################
+# skill
+#########################
+
 def skill_level_embeds(skill: dict, type: common.Skill_Enum, embed:discord.Embed) -> dict:
     '''
     adds embed field for skill levels
@@ -109,7 +119,7 @@ def skill_level_embeds(skill: dict, type: common.Skill_Enum, embed:discord.Embed
     for i, description in enumerate(skill['Descriptions'], 1):
         unlock_lv = f"Lv.{description['Lv']}"
         embed.add_field(
-            name=f"__**Skill Lv.{i}**__{common.level_emoji.get(i)} ({unlock_lv})",
+            name=f"__**Skill Lv.{i}**__{emoji.level_emoji.get(i)} ({unlock_lv})",
             value=description['Description'],
             inline=False
         )
@@ -152,7 +162,6 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
 
     return embed
 
-# views
 class Skill_View(My_View):
     def __init__(self, user: discord.User, embeds:List[discord.Embed]):
         super().__init__(user)
@@ -179,6 +188,42 @@ class Skill_View(My_View):
     async def uw_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.update_button(button)
         await interaction.response.edit_message(embed=self.embeds[2], view=self)
+
+#########################
+# speed
+#########################
+
+def speed_text(master: MasterData, max: int=20) -> Tuple[str, List]:
+    '''
+    get first 20(max) characters and also returns the speed iter
+    '''
+    speed_it = chars.speed_iter(master)
+    text = ''
+    try:
+        for i in range(1, max+1):
+            speed = next(speed_it)
+            text += f"**{i}.** {common.id_list[speed[0]]} {speed[1]}\n"
+    except StopIteration:
+        pass
+
+    return text, speed_it
+
+
+class Speed_View(My_View):
+    def __init__(self, user: discord.User, embed: discord.Embed, speed_it: Iterable):
+        super().__init__(user)
+        self.it = speed_it
+        self.embed = embed
+        
+    @discord.ui.button(label="Show All")
+    async def btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        button.disabled=True
+        text = ''
+        for i, speed in enumerate(self.it, 21):  # 20 is already shown
+            text += f"**{i}.** {common.id_list[speed[0]]} {speed[1]}\n"
+        self.embed.description += text
+        await interaction.response.edit_message(embed=self.embed, view=self)
+
 
 # transformer for id
 class IdTransformer(app_commands.Transformer):
@@ -254,6 +299,20 @@ class Character(commands.Cog, name='Character Commands'):
             await interaction.response.send_message(embed=embeds[0], view=view)
             message = await interaction.original_response()
             view.message = message
+
+    @app_commands.command()
+    async def speed(self, interaction: discord.Interaction):
+        '''List character speeds in decreasing order'''
+        text, speed_it = speed_text(self.bot.masterdata)
+        embed = discord.Embed(
+            title='Character Speeds',
+            description=text)
+        user = interaction.user
+        view = Speed_View(user, embed, speed_it)
+
+        await interaction.response.send_message(embed=embed, view=view)
+        message = await interaction.original_response()
+        view.message = message
 
 
 async def setup(bot):

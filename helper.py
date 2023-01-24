@@ -24,3 +24,10 @@ def batched(iterable, n):
         if not batch:
             return
         yield batch
+
+def human_format(num: int)->str:
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T'][magnitude])

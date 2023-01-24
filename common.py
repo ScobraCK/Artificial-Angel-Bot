@@ -216,7 +216,12 @@ char_rarity = {
     64: 'SSR+',
     128: 'UR',
     256: 'UR+',
-    512: 'LR'
+    512: 'LR',
+    1024: 'LR+1',
+    2048: 'LR+2',
+    4096: 'LR+3',
+    8192: 'LR+5',
+    16384: 'LR+6',
 }
 
 equip_rarity = {
@@ -246,6 +251,42 @@ uw_rarity_skill_map = {
 
 uw_rarity_list = ['SSR', 'UR', 'LR']
 
+base_parameter_map = {
+    'STR': 'Muscle',
+    'DEX': 'Energy',
+    'MAG': 'Intelligence',
+    'STA': 'Health'
+}
+
+battle_parameter_map1 = {
+    'HP': "HP",
+    'ATK': "AttackPower",
+    'DEF': "Defense",
+    'DEF Break': "DefensePenetration",
+    'SPD': "Speed",
+}
+
+battle_parameter_map2 = {
+    'PM.DEF Break': "DamageEnhance",
+    'P.DEF': "PhysicalDamageRelax",
+    'M.DEF': "MagicDamageRelax",
+    'ACC': "Hit",
+    'EVD': "Avoidance",
+    'CRIT': "Critical",
+    'CRIT RES': "CriticalResist",
+    'CRIT DMG Boost': "CriticalDamageEnhance",
+    'P.CRIT DMG Cut': "MagicCriticalDamageRelax",
+    'M.CRIT DMG Cut': "PhysicalCriticalDamageRelax",
+    'Debuff ACC': "DebuffHit",
+    'Debuff RES': "DebuffResist",
+    'Counter': "DamageReflect",
+    'HP Drain': "HpDrain"
+}
+
+battle_parameter_left = ['PM.DEF Break', 'ACC', 'CRIT', 'CRIT DMG Boost', 'Debuff ACC', 'Counter']
+battle_parameter_right = ['M.DEF', 'M.CRIT DMG Cut']
+battle_parameter_percentage = ['CRIT DMG Boost', 'P.CRIT DMG Cut', 'M.CRIT DMG Cut', 'Counter', 'HP Drain']
+
 # limited events
 event_type = {
     1: {
@@ -254,26 +295,11 @@ event_type = {
 }
 
 ############
-# Image/Emojis
+# Others
 ############
 
 # for images
 raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets/'
-
-rarity_emoji = {
-    'R': ':small_blue_diamond:',
-    'SR': ':small_orange_diamond:',
-    'SSR': '<:purple_diamond:1060066214723981394>',
-    'UR': '<:red_diamond:1060066217257341048>',
-    'LR': '<:black_diamond:1060067332589899866>'
-}
-level_emoji = {
-    1: ':small_blue_diamond:',
-    2: ':small_orange_diamond:',
-    3: '<:purple_diamond:1060066214723981394>',
-    4: '<:red_diamond:1060066217257341048>', 
-}
-
 
 
 ############
@@ -296,3 +322,11 @@ class Server(Enum):
     JP_KR = 9
     EU_GLOBAL = 1
     ASIA = 8
+
+# Towers
+class Tower(Enum):
+    Infinity = 1
+    Azure = 2
+    Crimson = 3
+    Emerald = 4
+    Amber = 5

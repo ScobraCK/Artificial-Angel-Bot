@@ -41,6 +41,8 @@ class MasterData():
         self.__load_MB('EquipmentExclusiveSkillDescriptionMB')
         self.__load_MB('ItemMB')
         self.__load_MB('MissionMB')
+        self.__load_MB('BossBattleEnemyMB')
+        self.__load_MB('TowerBattleEnemyMB')
 
     def get_textdata(self):
         '''
@@ -184,13 +186,30 @@ class MasterData():
             print(f'Item not found. Id: {ItemId} Type: {ItemType}')  # add later
         return item
 
-    def search_missions(self, mission_list: Union[List, int]) -> Iterable:
+    def search_id_list(self, id_list: Union[List, int], dataMB: str) -> Iterable:
         '''
-        search mission('s) with id
+        search data for multiple id's
+
+        returns an iterable
         '''
-        if isinstance(mission_list, int):
-            mission_list = [mission_list]
+        if isinstance(id_list, int):
+            id_list = [id_list]
 
-        return filter(lambda x: x['Id'] in mission_list, self.__load_MB('MissionMB'))
+        return filter(lambda x: x['Id'] in id_list, self.__load_MB(dataMB))
+    
+    def search_tower(self, type: int, floor: int=None)->Iterable:
+        '''
+        Returns tower data
+        Type data:
+        Infinity-1, Azure-2, Crimson-3, Emerald-4, Amber-5
 
+        Parameters:
+            type: type of tower
+            floor[Optional]: specify floor
+        '''
+        if floor:
+            return filter(
+                lambda x: x['TowerType']==type and x['Floor']==floor, self.__load_MB('TowerBattleQuestMB'))
+        else:
+            return filter(lambda x: x['TowerType']==type, self.__load_MB('TowerBattleQuestMB'))
         
