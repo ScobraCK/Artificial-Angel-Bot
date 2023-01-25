@@ -32,14 +32,20 @@ def event_list_embed(event_list: List[evt.MM_Event], server: str):
     for mm_event in event_list:
         state = mm_event.state()
         if state == 0:
-            ongoing_text += f"{mm_event.type_indication}**{mm_event.name}**\n"\
-                + f"Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+            ongoing_text += (
+                f"{mm_event.type_indication}**{mm_event.name}**\n"
+                f"Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+            )
         elif state > 0:
-            future_text += f"{mm_event.type_indication}**{mm_event.name}**\n"\
-                + f"Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+            future_text += (
+                f"{mm_event.type_indication}**{mm_event.name}**\n"
+                f"Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+            )
         else:
-            past_text += f"{mm_event.type_indication}**{mm_event.name}**\n"\
-                + f"Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+            past_text += (
+                f"{mm_event.type_indication}**{mm_event.name}**\n"
+                f"Date: <t:{mm_event.start}> ~ <t:{mm_event.end}>\n"
+            )
 
     if past_text:
         embed.add_field(
@@ -63,9 +69,11 @@ def event_list_embed(event_list: List[evt.MM_Event], server: str):
 
 def event_detail_embed(mm_event: evt.MM_Event, master: MasterData, lang):
     # basic
-    text=f"**Server:** {mm_event.server.name}\n"\
-        + f"**Start Date:** <t:{mm_event.start}>\n"\
-        + f"**End Date:** <t:{mm_event.end}>\n"
+    text=(
+        f"**Server:** {mm_event.server.name}\n"
+        f"**Start Date:** <t:{mm_event.start}>\n"
+        f"**End Date:** <t:{mm_event.end}>\n"
+    )
     # force start
     if mm_event.has_force_start:
         text += f"**Force Start Date:** <t:{mm_event.force_start}>\n"

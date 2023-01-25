@@ -48,7 +48,7 @@ def active_name_text(char, master: MasterData, lang=None):
     text=''
     for active_skill in skill.skill_info(
         char, common.Skill_Enum.ACTIVE, master, descriptions=False, lang=lang):
-        text = text + f"{active_skill['Name']} **CD:** {active_skill['Cooldown']}\n"
+        text += f"{active_skill['Name']} **CD:** {active_skill['Cooldown']}\n"
     return text
 
 def passive_name_text(char, master: MasterData, lang=None):
@@ -57,7 +57,7 @@ def passive_name_text(char, master: MasterData, lang=None):
         text=''
         for passive_skill in skill.skill_info(
             char, common.Skill_Enum.PASSIVE, master, descriptions=False, lang=lang):
-            text = text + f"{passive_skill['Name']}\n"
+            text += f"{passive_skill['Name']}\n"
         return text
     else:
         return 'None'
