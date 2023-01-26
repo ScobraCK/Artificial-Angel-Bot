@@ -2,10 +2,6 @@
 
 Discord bot for Memento Mori. My aim is to make a bot that can easily display the game data from discord.
 
-The bot is currently hosted using replit and seeing how that goes. Main code on replit is altered so it can be run from the site.
-https://replit.com/@ScobraCK/Artificial-Angel-Bot
-
-
 DM Scobra#7120 or ping me in the MementoMori Unofficial discord if you want to use the bot.
 
 To be used with https://github.com/ScobraCK/MementoMori-data
