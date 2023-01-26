@@ -235,17 +235,16 @@ class Search(commands.Cog, name='Search Commands'):
         # show min max defense resonance
         resonance = ' | <:resonance:1067010707561926696>'
         if len(def_list) > 1:
-            def_index = sorted(range(len(def_list)), key=def_list.__getitem__, reverse=True)
-            max = def_index[0]
-            min_field = embed.fields[min]
+            min_ind = def_list.index(min(def_list))
+            min_field = embed.fields[min_ind]
             embed.set_field_at(
-                min, name=min_field.name+resonance, 
+                min_ind, name=min_field.name+resonance, 
                 value=min_field.value, inline=min_field.inline)
 
-            max = def_index[-1]
-            max_field = embed.fields[max]
+            max_ind = def_list.index(max(def_list))
+            max_field = embed.fields[max_ind]
             embed.set_field_at(
-                max, name=max_field.name+resonance, 
+                max_ind, name=max_field.name+resonance, 
                 value=max_field.value, inline=max_field.inline)
 
         embed.set_thumbnail(url=get_bonus_url(soul_list))
