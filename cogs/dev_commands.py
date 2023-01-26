@@ -143,7 +143,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 				level = ''
 			activity = discord.Activity(name=f'{player} auto click {level}',
 									type=discord.ActivityType.watching)
-			await self.bot.change_presence(activity=activity)						
+			await self.bot.change_presence(activity=activity)
 
 
 async def setup(bot):
