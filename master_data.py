@@ -44,6 +44,11 @@ class MasterData():
         self.__load_MB('BossBattleEnemyMB')
         self.__load_MB('TowerBattleEnemyMB')
 
+    def reload_all(self):
+        self.textdata = self.open_MB('TextResourceMB')
+        self.data.clear()
+        self.load_all()
+
     def get_textdata(self):
         '''
         returns a copy of TextResourceMB

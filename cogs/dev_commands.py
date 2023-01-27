@@ -122,28 +122,16 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 
 		await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
-	@commands.command(hidden=True)
+	@commands.command()
 	@commands.guild_only()
-	async def stalk(
+	async def reload_data(
 		self,
-		ctx: commands.Context,
-		player: str=None,
-		level: str=None):
+		ctx: commands.Context):
 		'''
-		Just a secret command I made for fun
+		Reloads all master data
 		'''
-		if player == 'stop':
-			activity = discord.Activity(name='you auto click',
-									type=discord.ActivityType.watching)
-			await self.bot.change_presence(activity=activity)
-		else:
-			if player is None:
-				player = 'haz'
-			if level is None:
-				level = ''
-			activity = discord.Activity(name=f'{player} auto click {level}',
-									type=discord.ActivityType.watching)
-			await self.bot.change_presence(activity=activity)
+		self.bot.masterdata.reload_all()
+		await ctx.send(f"Reloaded all data")
 
 
 async def setup(bot):
