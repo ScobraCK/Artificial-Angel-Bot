@@ -132,4 +132,3 @@ dmypy.json
 # custom
 old/
 test.py
-load_env.py
