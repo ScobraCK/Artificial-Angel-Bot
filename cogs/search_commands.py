@@ -142,6 +142,22 @@ def tower_embed(master: MasterData, quest_data: dict, tower_type: str, bp: int)-
 
     return embed
 
+def add_resonance(embed:discord.Embed, def_list: List):
+    '''adds resonance indication to the enemy embed'''
+    resonance = ' | <:resonance:1067010707561926696>'
+    if len(def_list) > 1:
+        min_ind = def_list.index(min(def_list))
+        min_field = embed.fields[min_ind]
+        embed.set_field_at(
+            min_ind, name=min_field.name+resonance+' (Low)', 
+            value=min_field.value, inline=min_field.inline)
+
+        max_ind = def_list.index(max(def_list))
+        max_field = embed.fields[max_ind]
+        embed.set_field_at(
+            max_ind, name=max_field.name+resonance+' (High)', 
+            value=max_field.value, inline=max_field.inline)
+
 class Enemy_View(My_View):
     def __init__(self, user: discord.User, main_embed: discord.Embed, embeds:List[discord.Embed]):
         super().__init__(user)
@@ -232,20 +248,7 @@ class Search(commands.Cog, name='Search Commands'):
             embed.add_field(**basic_enemy_field(self.bot.masterdata, enemy))
             detail_embeds.append(detailed_enemy_embed(self.bot.masterdata, enemy))
         
-        # show min max defense resonance
-        resonance = ' | <:resonance:1067010707561926696>'
-        if len(def_list) > 1:
-            min_ind = def_list.index(min(def_list))
-            min_field = embed.fields[min_ind]
-            embed.set_field_at(
-                min_ind, name=min_field.name+resonance, 
-                value=min_field.value, inline=min_field.inline)
-
-            max_ind = def_list.index(max(def_list))
-            max_field = embed.fields[max_ind]
-            embed.set_field_at(
-                max_ind, name=max_field.name+resonance, 
-                value=max_field.value, inline=max_field.inline)
+        add_resonance(embed, def_list)  #add resonance indication
 
         embed.set_thumbnail(url=get_bonus_url(soul_list))
 
@@ -299,20 +302,7 @@ class Search(commands.Cog, name='Search Commands'):
             embed.add_field(**basic_enemy_field(self.bot.masterdata, enemy))
             detail_embeds.append(detailed_enemy_embed(self.bot.masterdata, enemy))
         
-        # show min max defense resonance
-        resonance = ' | <:resonance:1067010707561926696>'
-        if len(def_list) > 1:
-            min_ind = def_list.index(min(def_list))
-            min_field = embed.fields[min_ind]
-            embed.set_field_at(
-                min_ind, name=min_field.name+resonance, 
-                value=min_field.value, inline=min_field.inline)
-
-            max_ind = def_list.index(max(def_list))
-            max_field = embed.fields[max_ind]
-            embed.set_field_at(
-                max_ind, name=max_field.name+resonance, 
-                value=max_field.value, inline=max_field.inline)
+        add_resonance(embed, def_list)  #add resonance indication
 
         embed.set_thumbnail(url=get_bonus_url(soul_list))
 
