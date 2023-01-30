@@ -5,7 +5,7 @@ from enum import Enum
 # Character id
 ############
 
-# used to limit id
+# used to limit id and faster id search
 id_list = {
     1: 'Monica',
     2: 'Illya',
@@ -56,7 +56,8 @@ id_list = {
     47: 'Valeriede',
     48: 'A.A.',
     49: 'Ophelia',
-    50: 'Armstrong'
+    50: 'Armstrong',
+    # 51: 'Sophia'
 }
 MAX_CHAR_ID = len(id_list)
 
@@ -132,6 +133,7 @@ char_list = {
     'the witch of fallen crystals': 49,
     'armstrong': 50,
     'the witch of lost souls': 50,
+    # 'sophia': 51,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -240,7 +242,7 @@ equip_rarity = {
 job_map = {
     1: 'Warrior',
     2: 'Sniper',
-    4: 'Socerer'
+    4: 'Sorcerer'
 }
 
 uw_rarity_skill_map = {
@@ -306,8 +308,8 @@ raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-da
 # Enums
 ############
 class Skill_Enum(Enum):
-    ACTIVE = 'Active Skills'
-    PASSIVE = 'Passive Skills'
+    Active = '[SkillCategoryActive]'
+    Passive = '[SkillCategoryPassive]'
 
 # language Enum
 class Language(Enum):

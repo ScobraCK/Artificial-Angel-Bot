@@ -1,14 +1,14 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Dict
 
 import common
 import character as chars
 import skill
 import equipment
 from master_data import MasterData
-from my_view import My_View
+from my_view import My_View, Button_View
 import emoji
 
 #########################
@@ -47,16 +47,16 @@ def active_name_text(char, master: MasterData, lang=None):
     # returns skill name and cd
     text=''
     for active_skill in skill.skill_info(
-        char, common.Skill_Enum.ACTIVE, master, descriptions=False, lang=lang):
+        char, common.Skill_Enum.Active, master, descriptions=False, lang=lang):
         text += f"{active_skill['Name']} **CD:** {active_skill['Cooldown']}\n"
     return text
 
 def passive_name_text(char, master: MasterData, lang=None):
     # returns passive skill name
-    if char[common.Skill_Enum.PASSIVE.value]:
+    if char['Passive Skills']:
         text=''
         for passive_skill in skill.skill_info(
-            char, common.Skill_Enum.PASSIVE, master, descriptions=False, lang=lang):
+            char, common.Skill_Enum.Passive, master, descriptions=False, lang=lang):
             text += f"{passive_skill['Name']}\n"
         return text
     else:
@@ -96,7 +96,7 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
         inline=False
     )
     # thumbnail
-    image_link = common.raw_asset_link_header + f'Characters/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -110,7 +110,7 @@ def skill_level_embeds(skill: dict, type: common.Skill_Enum, embed:discord.Embed
     adds embed field for skill levels
     '''
     title_text = f"**{skill['Name']}**"
-    if type is common.Skill_Enum.ACTIVE:  # for actives
+    if type is common.Skill_Enum.Active:  # for actives
         title_text += f' | **CD:** {skill["Cooldown"]}'
 
     embed.add_field(name='\u200b', value=title_text, inline=False)
@@ -130,17 +130,17 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lan
     '''
     embed = discord.Embed(
         title=f"{char['Name']}'s Skills",
-        description=f"__**{type.value}**__")
+        description=f"__**{masterdata.search_string_key(type.value)}**__")
 
     for skill_description in skill.skill_info(char, type, master=masterdata, lang=lang):
         skill_level_embeds(skill_description, type, embed)
         
-    if type is common.Skill_Enum.PASSIVE and \
-        not char[common.Skill_Enum.PASSIVE.value]:  # 'Passive Skills'
+    if type is common.Skill_Enum.Passive and \
+        not char['Passive Skills']:  # 'Passive Skills'
         embed.add_field(name='None', value='\u200b', inline=False)
 
     # thumbnail
-    image_link = common.raw_asset_link_header + f'Characters/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -157,7 +157,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
     embed.add_field(name='\u200b', value=uw_text(uw_description), inline=False)
 
     # thumbnail
-    image_link = common.raw_asset_link_header + f'Characters/CHR_000{char["Id"]:03}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_000{char["Id"]:03}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -222,6 +222,115 @@ class Speed_View(My_View):
         for i, speed in enumerate(self.it, 21):  # 20 is already shown
             text += f"**{i}.** {common.id_list[speed[0]]} {speed[1]}\n"
         self.embed.description += text
+        await interaction.response.edit_message(embed=self.embed, view=self)
+
+#########################
+# skill detail (skill revamp)
+#########################
+
+def subskill_embed(subskill: skill.Subskill, type: common.Skill_Enum, embed: discord.Embed)->None:
+    '''helper function to modify embed for subset skills'''
+    # common field
+    embed.add_field(
+        name='Details',
+        value=(
+        f"```json\n"
+        f"Order Number: {subskill.skill_level}\n"
+        f"Character Level: {subskill.unlock_level}\n"
+        f"Equipment Rarity: {subskill.uw_rarity if subskill.uw_rarity else 'None'}```"
+        ),
+        inline=False
+    )
+    if type is common.Skill_Enum.Active:
+        active_subset_text = '\n'.join(map(str, subskill.subsetskills))
+        embed.add_field(
+            name='Sub Set Skills',
+            value=f"```json\n{active_subset_text}```",
+            inline=False
+        )
+    else:  # passives
+        passive_subset_text=''
+        for subset in subskill.subsetskills:
+            passive_subset_text += (
+                f"```json\n"
+                f"Passive Trigger: {subset.get('PassiveTrigger')}\n"
+                f"Initial CD: {subset.get('SkillCoolTime')}\n"
+                f"Max CD: {subset.get('SkillMaxCoolTime')}\n"
+                f"Sub Set Skill Id: {subset.get('SubSetSkillId')}```"
+                )
+            
+        embed.add_field(
+            name='Sub Set Skills',
+            value=passive_subset_text,
+            inline=False
+        )
+        
+
+def skill_detail_embeds(skill_info: skill.Skill, master: MasterData, lang) -> List[discord.Embed]:
+    icon_url = common.raw_asset_link_header + f"Characters/Skills/{skill_info.icon}"
+
+    description = f"__{skill_info.type_name}__\n"
+    
+    if skill_info.type is common.Skill_Enum.Active:
+        description += f"**CD: ** {skill_info.max_cd}"
+
+    embed = discord.Embed(
+        title=f"{skill_info.name}",
+        description= description,
+        color=discord.Colour.blue()
+    )
+    detail_embeds = []  # for subskill details
+    for subskill in skill_info.subskills:
+        # main embed
+        if not subskill.uw_rarity: # Normal unlock skill
+            name = f"__**Skill Lv.{subskill.skill_level}**__{subskill.emoji} (Lv.{subskill.unlock_level})"
+        else:  # UW skill 
+            name = f"__{subskill.uw_rarity} Unique Weapon__{subskill.emoji}"
+        embed.add_field(
+            name=name,
+            value=subskill.description,
+            inline=False)
+        
+        # detail embed
+        detail_embed = discord.Embed(
+            title=f"{skill_info.name}",
+            description=subskill.description,
+            color=discord.Colour.blue())
+        
+        if skill_info.type is common.Skill_Enum.Active: 
+            # cooldown info for active only
+            detail_embed.add_field(
+                name='Cooldown Info',
+                value=f"```json\nInit CD: {skill_info.init_cd}\nMax CD: {skill_info.max_cd}```",
+                inline=False
+            )
+        subskill_embed(subskill, skill_info.type, detail_embed)
+        detail_embed.set_thumbnail(url=icon_url)
+        detail_embeds.append(detail_embed)
+
+    embed.set_thumbnail(url=icon_url)
+
+    return [embed] + detail_embeds
+
+class Skill_Detail_View(Button_View):
+    def __init__(self, user: discord.User, embeds: List[discord.Embed],
+                 skills: Dict[str, skill.Skill], options: List[discord.SelectOption],
+                 master: MasterData, lang: common.Language):
+        super().__init__(user, embeds)
+        self.skills = skills
+        self.skill_menu.options = options
+        self.master = master
+        self.lang = lang
+
+    @discord.ui.select()
+    async def skill_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
+        value = select.values[0]
+        self.embeds = skill_detail_embeds(self.skills.get(value), self.master, self.lang)
+        self.max_page = len(self.embeds)
+        self.current_page = 1
+        self.embed = self.embeds[0]
+
+        await self.btn_update()
         await interaction.response.edit_message(embed=self.embed, view=self)
 
 
@@ -290,8 +399,8 @@ class Character(commands.Cog, name='Character Commands'):
             char = chars.get_character_info(character, self.bot.masterdata, lang=language)
 
             embeds = [
-                skill_embed(char, common.Skill_Enum.ACTIVE, self.bot.masterdata, lang=language),
-                skill_embed(char, common.Skill_Enum.PASSIVE, self.bot.masterdata, lang=language),
+                skill_embed(char, common.Skill_Enum.Active, self.bot.masterdata, lang=language),
+                skill_embed(char, common.Skill_Enum.Passive, self.bot.masterdata, lang=language),
                 uw_skill_embed(char, self.bot.masterdata, lang=language)
             ]
             user = interaction.user
@@ -313,6 +422,42 @@ class Character(commands.Cog, name='Character Commands'):
         await interaction.response.send_message(embed=embed, view=view)
         message = await interaction.original_response()
         view.message = message
+
+    
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        language='Text language. Defaults to English.'
+    )
+    async def skilldetails(
+        self,
+        interaction: discord.Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: Optional[common.Language]=common.Language.English):
+        '''Shows character skills and details'''
+        if not chars.check_id(character):
+            await interaction.response.send_message(
+                f"A character id of `{character}` does not exist.",
+                ephemeral=True
+            )
+        else:
+
+            skill_list = skill.skill_detail_info(character, self.bot.masterdata, language)
+
+            skill_dict = {}
+            options = []
+            for skill_info in skill_list:
+                options.append(discord.SelectOption(label=skill_info.name))
+                skill_dict[skill_info.name] = skill_info
+
+            embeds = skill_detail_embeds(skill_list[0], self.bot.masterdata, language)  #initial S1 embed
+            user = interaction.user
+            view = Skill_Detail_View(user, embeds, skill_dict, options, self.bot.masterdata, language)
+            await view.btn_update()
+
+            await interaction.response.send_message(embed=embeds[0], view=view)
+            message = await interaction.original_response()
+            view.message = message
 
 
 async def setup(bot):

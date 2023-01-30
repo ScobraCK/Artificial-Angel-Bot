@@ -101,13 +101,13 @@ def detailed_enemy_embed(master: MasterData, enemy: dict)->discord.Embed:
         inline=False)
     if (icontype := enemy["UnitIconType"]) == 0:
         embed.set_thumbnail(
-            url=common.raw_asset_link_header+f"Characters/CHR_000{enemy['UnitIconId']:03}_00_s.png")
+            url=common.raw_asset_link_header+f"Characters/Sprites/CHR_000{enemy['UnitIconId']:03}_00_s.png")
     elif icontype == 1:
         embed.set_thumbnail(
             url=common.raw_asset_link_header+f"Enemy/ENE_000{enemy['UnitIconId']:03}.png")
     else:
         embed.set_thumbnail(
-            url=common.raw_asset_link_header+f"Characters/CHR_000{enemy['UnitIconId']:03}_01_s.png")
+            url=common.raw_asset_link_header+f"Characters/Sprites/CHR_000{enemy['UnitIconId']:03}_01_s.png")
     return embed
 
 def quest_embed(master: MasterData, quest_data, bp)->discord.Embed:

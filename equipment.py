@@ -21,6 +21,9 @@ def get_uw_descriptions(
     char_id: int, 
     masterdata: MasterData, 
     lang: Optional[Language]='enUS'):
+    '''
+    {SSR: desc1, UR: desc2, LR: desc3}
+    '''
     
     uw_data = masterdata.search_uw_description(char_id)
     if uw_data is None:
