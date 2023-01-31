@@ -57,7 +57,7 @@ id_list = {
     48: 'A.A.',
     49: 'Ophelia',
     50: 'Armstrong',
-    # 51: 'Sophia'
+    51: 'Sophia'
 }
 MAX_CHAR_ID = len(id_list)
 
@@ -133,7 +133,7 @@ char_list = {
     'the witch of fallen crystals': 49,
     'armstrong': 50,
     'the witch of lost souls': 50,
-    # 'sophia': 51,
+    'sophia': 51,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -184,7 +184,8 @@ char_list = {
     'ヴァルリーデ': 47,
     'Ａ．Ａ．': 48,
     'オフィーリア': 49,
-    'アームストロング': 50
+    'アームストロング': 50,
+    'ソフィア': 51
 }
 
 ############

@@ -29,6 +29,10 @@ class MasterData():
         data = json.loads(resp.text)
         return data
 
+        # path = "D:/Datamining Stuff/Memento Mori/MementoMori-data/Master/" + dataMB +'.json'
+        # with open(path, 'r', encoding='utf-8') as f:
+        #     return json.load(f)
+
     def load_all(self):
         '''
         loads all main json files into the class
