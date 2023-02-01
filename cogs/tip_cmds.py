@@ -31,6 +31,16 @@ class Tips(commands.Cog, name='Other Commands'):
             embed=embed
         )
 
+    @app_commands.command()
+    async def enhancecost(self, interaction: discord.Interaction):
+        '''Equipment enhancement cost chart'''
+        embed=discord.Embed()
+        enhance = common.raw_asset_link_header + 'Bot/enhance.png'
+        embed.set_image(url=enhance)
+        await interaction.response.send_message(
+            embed=embed
+        )
+
 
 async def setup(bot):
 	await bot.add_cog(Tips(bot))

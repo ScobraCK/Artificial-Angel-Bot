@@ -1,3 +1,4 @@
+2023/02/01 Added enhance cost chart
 2023/01/31 Added simple changelog command
 2023/01/30 Added additional skill command /skilldetails that can view data more closer to the original
 2023/01/28 Added extra indication for mimi resonace targets for high/lowest defense
