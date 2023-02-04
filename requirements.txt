@@ -1,0 +1,4 @@
+python-dotenv
+discord
+requests
+fuzzywuzzy[speedup]
