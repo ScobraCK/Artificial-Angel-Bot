@@ -40,6 +40,8 @@ def skill_info(
         skill_data = master.search_id(id, skill_MB)
         
         skill['Name'] = master.search_string_key(skill_data["NameKey"], language=lang)
+        if not skill['Name']:
+            skill['Name'] = 'Unnamed Skill'
         skill['Cooldown'] = skill_data.get('SkillMaxCoolTime')
         
         if descriptions:
