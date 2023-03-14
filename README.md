@@ -1,6 +1,6 @@
 # Artificial-Angel-Bot
 
-Discord bot for Memento Mori. My aim is to make a bot that can easily display the game data from discord.
+Discord bot for Memento Mori. My aim is to make a bot that can easily display the in-game data from discord.
 
 DM Scobra#7120 or ping me in the MementoMori Unofficial discord if you want to use the bot.
 
