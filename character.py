@@ -43,7 +43,7 @@ def check_id(id: int) -> bool:
     '''
     Returns if an id is a valid id
     '''
-    if 1 <= id <= common.MAX_CHAR_ID:
+    if id in common.id_list.keys():
         return True
     else:
         return False
@@ -66,6 +66,10 @@ def speed_iter(masterdata: MasterData) -> Iterable:
         reverse=True
     )
     return iter(sorted_char)
+
+
+# character parameters
+
 
 # testing
 if __name__ == "__main__":
