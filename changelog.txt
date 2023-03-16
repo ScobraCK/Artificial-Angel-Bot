@@ -1,3 +1,4 @@
+2023/03/16 Reworked /idlist and added language support
 2023/02/21 Added set effect chart
 2023/02/01 Added enhance cost chart
 2023/01/31 Added simple changelog command

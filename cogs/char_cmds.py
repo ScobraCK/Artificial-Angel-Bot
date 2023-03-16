@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from typing import Iterable, List, Optional, Tuple, Dict
+from io import StringIO
 
 import common
 import character as chars
@@ -14,20 +15,22 @@ import emoji
 #########################
 # idlist
 #########################
-def id_list_embed():
+def id_list_embed(master: MasterData, lang: Optional[common.Language]):
     text = ''
     id_list = common.id_list
     
     embed = discord.Embed(
-        title='Character Id'
+        title='Character Id',
+        color=discord.Color.green()
     )
-    for i in range(1, common.MAX_CHAR_ID+1, 20):
-        text=''
-        for j in range(i, i+20):
-            if j > common.MAX_CHAR_ID:
-                break
-            text += f"{j}. {id_list[j]}\n"
-        embed.add_field(name='\u200b', value=text)
+
+    text = StringIO()
+    max = len(id_list)
+    for i, k in enumerate(id_list.keys(), 1):
+        text.write(f"{k}: {chars.get_name(k, master, lang)}\n")  # not the most efficient way to get ALL names
+        if i % 20 == 0 or i == max:
+            embed.add_field(name='\u200b', value=text.getvalue())
+            text = StringIO()
 
     return embed
 
@@ -351,11 +354,17 @@ class Character(commands.Cog, name='Character Commands'):
         self.bot = bot
 
     @app_commands.command()
-    async def idlist(self, interaction: discord.Interaction):
+    @app_commands.describe(
+    language='Language to show character names. Defaults to English.'
+    )
+    async def idlist(
+        self, 
+        interaction: discord.Interaction,
+        language: Optional[common.Language]=common.Language.English):
         '''
         Shows character ids
         '''
-        embed = id_list_embed()
+        embed = id_list_embed(self.bot.masterdata, language)
 
         await interaction.response.send_message(embed=embed)
     
