@@ -263,23 +263,23 @@ class Search(commands.Cog, name='Search Commands'):
     @app_commands.command()
     @app_commands.describe(
         floor='The floor of the tower',
-        tower="The tower type. Defaults to the Tower of Infinity"
+        towertype="The tower type. Defaults to the Tower of Infinity"
     )
     async def tower(
         self, interaction: discord.Interaction, 
         floor: int, 
-        tower: Optional[common.Tower]=common.Tower.Infinity):
+        towertype: Optional[common.Tower]=common.Tower.Infinity):
         '''
         Searches enemy data for specified tower floor
 
         Shows an overview as the main page and can select to see in detail
         '''
-        quest_data = quests.get_tower_floor(self.bot.masterdata, floor, tower)
+        quest_data = quests.get_tower_floor(self.bot.masterdata, floor, towertype)
 
         if not quest_data:  # invalid stage
             embed = discord.Embed(
                 title='Floor not Found',
-                description=f'Could not find Tower of {tower.name} floor {floor}',
+                description=f'Could not find Tower of {towertype.name} floor {floor}',
                 color=discord.Colour.red()
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -291,7 +291,7 @@ class Search(commands.Cog, name='Search Commands'):
         for enemy in quest_enemy_list:
             bp += enemy['BattlePower']
 
-        embed = tower_embed(self.bot.masterdata, quest_data, tower.name, bp)
+        embed = tower_embed(self.bot.masterdata, quest_data, towertype.name, bp)
 
         def_list = []  # for mimi resonance
         soul_list = [] # for soul bonus
