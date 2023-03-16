@@ -57,7 +57,8 @@ id_list = {
     48: 'A.A.',
     49: 'Ophelia',
     50: 'Armstrong',
-    51: 'Sophia'
+    51: 'Sophia',
+    53: 'Veela'
 }
 MAX_CHAR_ID = len(id_list)
 
@@ -134,6 +135,8 @@ char_list = {
     'armstrong': 50,
     'the witch of lost souls': 50,
     'sophia': 51,
+    'veela': 53,
+    'fish': 53,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -185,7 +188,8 @@ char_list = {
     'Ａ．Ａ．': 48,
     'オフィーリア': 49,
     'アームストロング': 50,
-    'ソフィア': 51
+    'ソフィア': 51,
+    'ウィーラ': 53
 }
 
 ############
@@ -225,6 +229,7 @@ char_rarity = {
     4096: 'LR+3',
     8192: 'LR+5',
     16384: 'LR+6',
+    32768: 'LR+7',
 }
 
 equip_rarity = {
@@ -254,6 +259,38 @@ uw_rarity_skill_map = {
 
 uw_rarity_list = ['SSR', 'UR', 'LR']
 
+base_parameter_key_map = {
+    1: '[BaseParameterTypeMuscle]',
+    2: '[BaseParameterTypeEnergy]',
+    3: '[BaseParameterTypeIntelligence]',
+    4: '[BaseParameterTypeHealth]'
+}
+
+battle_parameter_key_map = {
+    1: '[BattleParameterTypeHp]',
+    2: '[BattleParameterTypeAttackPower]',
+    3: '[BattleParameterTypePhysicalDamageRelax]',
+    4: '[BattleParameterTypeMagicDamageRelax]',
+    5: '[BattleParameterTypeHit]',
+    6: '[BattleParameterTypeAvoidance]',
+    7: '[BattleParameterTypeCritical]',
+    8: '[BattleParameterTypeCriticalResist]',
+    9: '[BattleParameterTypeCriticalDamageEnhance]',
+    10: '[BattleParameterTypePhysicalCriticalDamageRelax]',
+    11: '[BattleParameterTypeMagicCriticalDamageRelax]',
+    12: '[BattleParameterTypeDefensePenetration]',
+    13: '[BattleParameterTypeDefense]',
+    14: '[BattleParameterTypeDamageEnhance]',
+    15: '[BattleParameterTypeDebuffHit]',
+    16: '[BattleParameterTypeDebuffResist]',
+    17: '[BattleParameterTypeDamageReflect]',
+    18: '[BattleParameterTypeHpDrain]',
+    19: '[BattleParameterTypeSpeed]'
+}
+
+battle_parameter_percentage_id = [9, 10, 11, 17, 18]
+
+# need to move to keymap
 base_parameter_map = {
     'STR': 'Muscle',
     'DEX': 'Energy',
@@ -320,6 +357,7 @@ class Language(Enum):
     Taiwanese = 'zhTW'
 
 # timezones (hours in timedelta)
+# to be renamed
 class Server(Enum):
     NA = -7
     JP_KR = 9
