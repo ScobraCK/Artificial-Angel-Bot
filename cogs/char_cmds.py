@@ -196,35 +196,66 @@ class Skill_View(My_View):
 # speed
 #########################
 
-def speed_text(master: MasterData, max: int=20) -> Tuple[str, List]:
+#TODO rework to named tuple
+def speed_text(speedtuple: Tuple[int, int], buff: int=0) -> Tuple[str, List]:
     '''
-    get first 20(max) characters and also returns the speed iter
-    '''
-    speed_it = chars.speed_iter(master)
-    text = ''
-    try:
-        for i in range(1, max+1):
-            speed = next(speed_it)
-            text += f"**{i}.** {common.id_list[speed[0]]} {speed[1]}\n"
-    except StopIteration:
-        pass
+    output speed text for single character from speed tuple
+    ''' 
+    text = f"{common.id_list[speedtuple[0]]} {speedtuple[1]*(1+buff/100):.0f}\n"
 
-    return text, speed_it
+    return text
+
+def speed_listing(speed_list, count: int ,buff: int=0) -> str:
+    '''
+    output speed text for multiple characters
+    '''
+    text = StringIO()
+    for i, speed in enumerate(speed_list, 1):
+        text.write(f"**{i}.** {speed_text(speed, buff)}")
+        if i == count:
+            break
+    return text.getvalue()
 
 
 class Speed_View(My_View):
-    def __init__(self, user: discord.User, embed: discord.Embed, speed_it: Iterable):
+    def __init__(self, user: discord.User, embed: discord.Embed, speed_list: List):
         super().__init__(user)
-        self.it = speed_it
+        self.speed_list = speed_list
         self.embed = embed
+        self.showall = False
+        self.count = 20 # current view state (not button state)
+        self.buff = 0
+
+    @discord.ui.button(label="Default")
+    async def default_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.buff = 0
+        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
+        await interaction.response.edit_message(embed=self.embed, view=self)
+       
+    @discord.ui.button(label="10%")
+    async def btn10(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.buff = 10
+        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
+        await interaction.response.edit_message(embed=self.embed, view=self)
+
+    @discord.ui.button(label="15%")
+    async def btn15(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.buff = 15
+        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
+        await interaction.response.edit_message(embed=self.embed, view=self)
+
+    @discord.ui.button(label="Show All", row=2)
+    async def show_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.showall:
+            self.showall = False
+            button.label = "Show All"
+            self.count = 20
+        else:
+            self.showall = True
+            button.label = "Show Less"
+            self.count = 0  # 0 count shows all
         
-    @discord.ui.button(label="Show All")
-    async def btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        button.disabled=True
-        text = ''
-        for i, speed in enumerate(self.it, 21):  # 20 is already shown
-            text += f"**{i}.** {common.id_list[speed[0]]} {speed[1]}\n"
-        self.embed.description += text
+        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
         await interaction.response.edit_message(embed=self.embed, view=self)
 
 #########################
@@ -421,12 +452,15 @@ class Character(commands.Cog, name='Character Commands'):
     @app_commands.command()
     async def speed(self, interaction: discord.Interaction):
         '''List character speeds in decreasing order'''
-        text, speed_it = speed_text(self.bot.masterdata)
+        speed_list = list(chars.speed_iter(self.bot.masterdata))
+
         embed = discord.Embed(
             title='Character Speeds',
-            description=text)
+            description=speed_listing(speed_list, 20),
+            color=discord.Colour.orange())
+        
         user = interaction.user
-        view = Speed_View(user, embed, speed_it)
+        view = Speed_View(user, embed, speed_list)
 
         await interaction.response.send_message(embed=embed, view=view)
         message = await interaction.original_response()
