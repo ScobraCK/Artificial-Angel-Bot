@@ -507,7 +507,7 @@ class Character(commands.Cog, name='Character Commands'):
     @app_commands.describe(
         startlevel='current level the character is at'
     )
-    async def levelink(
+    async def levellink(
         self,
         interaction: discord.Interaction,
         startlevel: int):
