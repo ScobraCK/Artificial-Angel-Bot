@@ -502,6 +502,67 @@ class Character(commands.Cog, name='Character Commands'):
             message = await interaction.original_response()
             view.message = message
 
+    
+    @app_commands.command()
+    @app_commands.describe(
+        startlevel='current level the character is at'
+    )
+    async def levelink(
+        self,
+        interaction: discord.Interaction,
+        startlevel: int):
+        '''
+        Temporary command to search level link costs.
+        '''
+
+        if startlevel < 240:
+            await interaction.response.send_message(
+                "The current command is WIP so only levellink(240+) is supported.",
+                ephemeral=True
+            )
+
+        elif startlevel >= 500:
+            await interaction.response.send_message(
+                "level should be between 240 and 500.",
+                ephemeral=True
+            )
+
+        else:
+            base, sublevel = divmod(startlevel, 10)
+            diff = 10-sublevel
+            link_data_MB = self.bot.masterdata.get_MB_iter("LevelLinkMB")
+            levels = []  # gold gorbs rorb
+            for level_data in link_data_MB:
+                if level_data['PartySubLevel'] != 9:
+                    continue
+                if (lv := level_data['PartyLevel']) >= startlevel and lv//10 == base:
+                    levels.append(level_data['RequiredLevelUpItems'])
+                if lv == startlevel+diff:
+                    break  # early break
+            total_gold = 0
+            total_gorb = 0
+            total_rorb = 0
+            for gold, gorb, rorb in levels:
+                total_gold += gold["ItemCount"]*10
+                total_gorb += gorb["ItemCount"]*10
+                total_rorb += rorb["ItemCount"]
+            
+            embed = discord.Embed(
+                title='Level Link Costs',
+                description=(
+                    f"**__{startlevel} -> {startlevel+diff}__**\n"
+                    f"Gold: {total_gold:,d}\n"
+                    f"Green Orbs: {total_gorb:,d}\n"
+                    f"Red Orbs: {total_rorb:,d}\n"
+                )
+            )
+            embed.set_footer(
+                text="This is a WIP command and only has the bare minimum of features to help with link tree costs. "
+            )
+
+            await interaction.response.send_message(embed=embed)
+
+
 
 async def setup(bot):
 	await bot.add_cog(Character(bot))
