@@ -58,9 +58,10 @@ id_list = {
     49: 'Ophelia',
     50: 'Armstrong',
     51: 'Sophia',
-    53: 'Veela'
+    53: 'Veela',
+    55: 'Lea',
 }
-MAX_CHAR_ID = len(id_list)
+MAX_CHAR_ID = len(id_list)  #TODO remove references
 
 # for use in name matching
 char_list = {
@@ -137,6 +138,7 @@ char_list = {
     'sophia': 51,
     'veela': 53,
     'fish': 53,
+    'lea': 55,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -189,7 +191,8 @@ char_list = {
     'オフィーリア': 49,
     'アームストロング': 50,
     'ソフィア': 51,
-    'ウィーラ': 53
+    'ウィーラ': 53,
+    'レア': 55,
 }
 
 ############
