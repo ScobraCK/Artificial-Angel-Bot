@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 from dacite import from_dict
-from table2ascii import table2ascii as t2a, PresetStyle
+from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -13,8 +13,17 @@ from my_view import Button_View
 class Region(Enum): #temp solution
     JP = 1
     NA = 4
+    EU = 5
 
 na_list = [1, 2, 3, 4, 5, 6, 10, 11, 12]
+jp_list = [5, 12, 18, 47, 54, 55, 57, 63, 72, 75, 76]
+eu_list = [1, 2, 3, 4, 5, 6]
+
+region_map = {
+    1: jp_list,
+    4: na_list,
+    5: eu_list
+}
 
 temple_type = {
     1: 'Green Orb',
@@ -33,10 +42,10 @@ class GuildData():
     stock: int
 
     def list_bp(self):
-        return [self.name, self.bp, self.world]
+        return [self.bp, self.world,self.name]
 
-def fetch_guildlist(world: int):
-    world_id = f"4{world:03}"
+def fetch_guildlist(server: int, world: int):
+    world_id = f"{server}{world:03}"
     url = f"https://api.mentemori.icu/{world_id}/guild_ranking/latest"
     resp = requests.get(url)
     data = json.loads(resp.content.decode('utf-8'))
@@ -53,11 +62,22 @@ def guildlist_to_ascii(guild_list: List[GuildData], start: int=1):
         ranking.append([rank] + guild.list_bp())
 
     output = t2a(
-        header=["Rank", "Name", "BP", "World"],
+        header=["Rank", "BP", "World", "Name",],
         body=ranking,
         style=PresetStyle.thin_compact
     )
     return output
+
+async def world_autocomplete(
+    interaction: discord.Interaction, 
+    current: str) -> List[app_commands.Choice[int]]:
+    worlds = region_map.get(interaction.namespace.server)
+    worlds_str = [str(world) for world in worlds]
+    return [
+        app_commands.Choice(name=choice, value=int(choice))
+        for choice in worlds_str if choice.startswith(current)
+    ]
+
 
 class Info(commands.Cog, name='Info Commands'):
     '''Commands that fetch ingame info'''
@@ -65,69 +85,66 @@ class Info(commands.Cog, name='Info Commands'):
     def __init__(self, bot):
         self.bot = bot
     
-    
     @app_commands.command()
     @app_commands.describe(
         server='The region your world is in',
-        world='The world number in the server (only supports JP-72, NA-1,2,3,4,5,6,10,11,12 currently)'
     )
+    @app_commands.autocomplete(world=world_autocomplete)
     async def temple(self, interaction: discord.Interaction,
                      server: Region,
                      world: int):
         '''View Temple prototype'''
         
-        if world not in [1, 2, 3, 4, 5, 6, 10, 11, 12, 72]:
-            await interaction.response.send_message(
-                "The current world is not supported."
-                "Contact Scobra#7120 for more info if you wish to help add your world."
-            )
-        else:
-            embed=discord.Embed(
-                 title='Temple (Prototype command)'
-            )
-            world_id = f"{server.value}{world:03}"
-            url = f"https://api.mentemori.icu/{world_id}/temple/latest"
-            resp = requests.get(url)
-            data = json.loads(resp.text)
-            quest_ids = data['data']['quest_ids']
+        embed=discord.Embed(
+                title='Temple (Prototype command)'
+        )
+        world_id = f"{server.value}{world:03}"
+        url = f"https://api.mentemori.icu/{world_id}/temple/latest"
+        resp = requests.get(url)
+        data = json.loads(resp.text)
+        quest_ids = data['data']['quest_ids']
 
-            text = f'Lv. {int(str(quest_ids[0])[1:4])}\n\n'
-            for quest in quest_ids:
-                quest_id_str = str(quest)
-                text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
+        text = f'Lv. {int(str(quest_ids[0])[1:4])}\n\n'
+        for quest in quest_ids:
+            quest_id_str = str(quest)
+            text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
 
-            embed.description = text
-            await interaction.response.send_message(
-                embed=embed
-            )
+        embed.description = text
+        await interaction.response.send_message(
+            embed=embed
+        )
 
     @app_commands.command()
-    async def guildrankings(self, interaction: discord.Interaction):
+    @app_commands.describe(
+        server='The region your world is in',
+    )
+    async def guildrankings(self, interaction: discord.Interaction, server: Region):
         '''Guild rankings prototype'''
+
+        await interaction.response.defer()
+
         guildlist = []
-        for world in na_list:
-            guildlist += fetch_guildlist(world)
+        world_list = region_map.get(server.value)
+        for world in world_list:
+            guildlist += fetch_guildlist(server.value, world)
         sorted_guildlist = sorted(guildlist, key=lambda x: x.bp, reverse=True)
 
-        text1 = f'```{guildlist_to_ascii(sorted_guildlist[:50])}```'
-        embed1 = discord.Embed(
-            title='Top 100 Guild Rankings by BP',
-            description=text1
-        )
-        embed1.set_footer(text='Only contains NA world 1-6, 10-12')
+        embeds = []
 
-        text2 = f'```{guildlist_to_ascii(sorted_guildlist[50:100], 51)}```'
-        embed2 = discord.Embed(
-            title='Top 100 Guild Rankings by BP',
-            description=text2
-        )
-        embed2.set_footer(text='Only contains NA world 1-6, 10-12')
+        for i in range(0, 100, 50):
+            text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
+            embed = discord.Embed(
+                title=f'Top 100 Guild Rankings by BP({server.name})',
+                description=text
+            )
+            embed.set_footer(text=f'Only contains {server.name} worlds {str(world_list)}')
+            embeds.append(embed)
 
         user = interaction.user
-        view = Button_View(user, [embed1, embed2])
+        view = Button_View(user, embeds)
         await view.btn_update()
 
-        await interaction.response.send_message(embed=embed1, view=view)
+        await interaction.followup.send(embed=embeds[0], view=view)
         message = await interaction.original_response()
         view.message = message
 
