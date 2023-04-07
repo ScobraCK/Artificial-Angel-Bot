@@ -96,7 +96,7 @@ class Info(commands.Cog, name='Info Commands'):
         '''View Temple prototype'''
         
         embed=discord.Embed(
-                title='Temple (Prototype command)'
+                title=f'Temple {server.name} W{world}'
         )
         world_id = f"{server.value}{world:03}"
         url = f"https://api.mentemori.icu/{world_id}/temple/latest"
@@ -118,6 +118,8 @@ class Info(commands.Cog, name='Info Commands'):
                 text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
 
             embed.description = text
+
+            embed.set_footer(text='Prototype command')
             await interaction.response.send_message(
                 embed=embed
             )
