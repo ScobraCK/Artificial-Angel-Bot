@@ -106,7 +106,7 @@ class Info(commands.Cog, name='Info Commands'):
         if data['status'] == 404:
             await interaction.response.send_message(
                 'The current world may not be supported for this command.'
-                'Contact Scobra#7120 or pind @Scobra in the MementoMoriUnofficial discord for more details.',
+                'Contact Scobra#7120 or ping @Scobra in the MementoMori Unofficial discord for more details.',
                 ephemeral=True
             )
         else:
