@@ -102,17 +102,24 @@ class Info(commands.Cog, name='Info Commands'):
         url = f"https://api.mentemori.icu/{world_id}/temple/latest"
         resp = requests.get(url)
         data = json.loads(resp.text)
-        quest_ids = data['data']['quest_ids']
 
-        text = f'Lv. {int(str(quest_ids[0])[1:4])}\n\n'
-        for quest in quest_ids:
-            quest_id_str = str(quest)
-            text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
+        if data['status'] == 404:
+            await interaction.response.send_message(
+                'The current world may not be supported for this command.'
+                'Contact Scobra#7120 or pind @Scobra in the MementoMoriUnofficial discord for more details.'
+            )
+        else:
+            quest_ids = data['data']['quest_ids']
 
-        embed.description = text
-        await interaction.response.send_message(
-            embed=embed
-        )
+            text = f'Lv. {int(str(quest_ids[0])[1:4])}\n\n'
+            for quest in quest_ids:
+                quest_id_str = str(quest)
+                text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
+
+            embed.description = text
+            await interaction.response.send_message(
+                embed=embed
+            )
 
     @app_commands.command()
     @app_commands.describe(
