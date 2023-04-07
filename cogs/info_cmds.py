@@ -15,7 +15,7 @@ class Region(Enum): #temp solution
     NA = 4
     EU = 5
 
-na_list = [1, 2, 3, 4, 5, 6, 10, 11, 12]
+na_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 jp_list = [5, 12, 18, 47, 54, 55, 57, 63, 72, 75, 76]
 eu_list = [1, 2, 3, 4, 5, 6]
 
@@ -139,7 +139,7 @@ class Info(commands.Cog, name='Info Commands'):
 
         embeds = []
 
-        for i in range(0, 100, 50):
+        for i in range(0, 100, 50):  # top 100
             text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
             embed = discord.Embed(
                 title=f'Top 100 Guild Rankings by BP({server.name})',
