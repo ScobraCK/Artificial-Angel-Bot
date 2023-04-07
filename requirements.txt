@@ -2,3 +2,5 @@ python-dotenv
 discord
 requests
 fuzzywuzzy[speedup]
+dacite
+table2ascii

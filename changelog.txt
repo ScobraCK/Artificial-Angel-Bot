@@ -1,3 +1,4 @@
+2023/04/07 Added guild ranking and temple (prototype) commands
 2023/03/22 Added a temporary /levellink command for easy link calculations
 2023/03/18 Reworked /speed command
 2023/03/16 Reworked /idlist and added language support
