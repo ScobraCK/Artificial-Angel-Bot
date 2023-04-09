@@ -1,7 +1,3 @@
-from dataclasses import dataclass
-from typing import List
-from dacite import from_dict
-from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -9,20 +5,28 @@ from discord.ext import commands
 import requests, json
 from enum import Enum
 from my_view import Button_View
+from dataclasses import dataclass
+from typing import List
+from dacite import from_dict
+from table2ascii import table2ascii as t2a, PresetStyle, Alignment
+from io import StringIO
 
 class Region(Enum): #temp solution
     JP = 1
     NA = 4
     EU = 5
+    GL = 6
 
 na_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 jp_list = [5, 12, 18, 47, 54, 55, 57, 63, 72, 75, 76]
 eu_list = [1, 2, 3, 4, 5, 6]
+gl_list = [1, 9, 10 ,12]
 
 region_map = {
     1: jp_list,
     4: na_list,
-    5: eu_list
+    5: eu_list,
+    6: gl_list
 }
 
 temple_type = {
@@ -145,7 +149,8 @@ class Info(commands.Cog, name='Info Commands'):
             text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
             embed = discord.Embed(
                 title=f'Top 100 Guild Rankings by BP({server.name})',
-                description=text
+                description=text,
+                colour=discord.Colour.orange()
             )
             embed.set_footer(text=f'Only contains {server.name} worlds {str(world_list)}')
             embeds.append(embed)
@@ -157,6 +162,40 @@ class Info(commands.Cog, name='Info Commands'):
         await interaction.followup.send(embed=embeds[0], view=view)
         message = await interaction.original_response()
         view.message = message
+
+    @app_commands.command()
+    async def checktemple(self, interaction: discord.Interaction):
+        '''Shows which worlds have /temple command available'''
+
+        url = f"https://api.mentemori.icu/worlds"
+        resp = requests.get(url)
+        data = json.loads(resp.text)
+        worlds = data['data']
+
+        text = StringIO()
+        
+        current_server = ''
+        for world in worlds:
+            if world['server'] != current_server:
+                current_server = world['server']             
+                text.write(f'\n**{current_server.upper()}: **')
+            id = int(str(world['world_id'])[-2:])
+            if world['temple']:
+                text.write(f' {id}')
+
+        embed = discord.Embed(
+            title='Worlds with temple command unlocked',
+            colour=discord.Colour.orange(),
+            description=text.getvalue()
+        )
+
+        embed.set_footer(text=(
+            'Due to current code, the world may be listed here but not shown as an option. ' 
+            'Ignore the option choice and input the world in this case. '
+            'Regard the worlds listed here as most up-to-date.'
+        ))
+
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
