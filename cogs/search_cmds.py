@@ -10,6 +10,7 @@ from master_data import MasterData
 from helper import human_format as hf
 from emoji import emoji_list, soul_emoji
 from my_view import My_View
+from items import get_item_name
 
 # soul bonus
 def get_bonus_url(soul_list):
@@ -313,6 +314,26 @@ class Search(commands.Cog, name='Search Commands'):
         await interaction.response.send_message(embed=embed, view=view)
         message = await interaction.original_response()
         view.message = message
+
+    @app_commands.command()
+    @app_commands.describe(
+        id='Item id',
+        type="Item type",
+        language="Text language. Defaults to English."
+    )
+    async def finditem(
+        self, interaction: discord.Interaction, 
+        id: int, 
+        type: int,
+        language: Optional[common.Language]=common.Language.English):
+        '''
+        Command for quick searching from ItemId and ItemType
+        '''
+
+        item = self.bot.masterdata.find_item(id, type)
+        name = get_item_name(self.bot.masterdata, item, language)
+        await interaction.response.send_message(name)
+
 
 
 async def setup(bot):
