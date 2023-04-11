@@ -23,6 +23,7 @@ def get_dailyinfo(server: timezones.ServerUTC):
     text.write(f'<t:{local(info.guild_war_start, server)}:t>~<t:{local(info.guild_war_end, server)}:t> Guild Battle: War Phase\n\n')
     text.write(f'<t:{local(info.grand_strategy_start, server)}:t>~<t:{local(info.grand_strategy_end, server)}:t> Grand Battle: Strategy Phase\n')
     text.write(f'<t:{local(info.grand_war_start, server)}:t>~<t:{local(info.grand_war_end, server)}:t> Grand Battle: War Phase\n\n')
+    text.write(f'<t:{local(info.grand_first_strategy, server)}:t>~<t:{local(info.grand_strategy_end, server)}:t> Grand Battle: Strategy Phase **[Start of Season]**\n\n')
 
     return text.getvalue()
 

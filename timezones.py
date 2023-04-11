@@ -23,7 +23,7 @@ class DailyEvents():
     guild_strategy_end = 1680813000
     guild_war_start = 1680813900
     guild_war_end = 1680816600
-    #grand_first_strategy = 1680808500
+    grand_first_strategy = 1680808500
     grand_strategy_start = 1680853500
     grand_strategy_end = 1680813900
     grand_war_start = 1680817500
