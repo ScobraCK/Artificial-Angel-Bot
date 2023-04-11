@@ -209,7 +209,7 @@ class Event_Commands(commands.Cog, name='Event Commands'):
     @app_commands.command()
     @app_commands.describe(
     language='Text language. Defaults to English.',
-    server='Game server to calculate the timezone. Dedaults to NA.'
+    server='Game server to calculate the timezone. Defaults to NA.'
     )
     async def events(
         self, interaction: discord.Interaction,
