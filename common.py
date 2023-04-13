@@ -59,6 +59,7 @@ id_list = {
     50: 'Armstrong',
     51: 'Sophia',
     53: 'Veela',
+    54: 'Chiffon',
     55: 'Lea',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
@@ -138,6 +139,7 @@ char_list = {
     'sophia': 51,
     'veela': 53,
     'fish': 53,
+    'chiffon': 54,
     'lea': 55,
     # japanese
     'モニカ': 1, 
@@ -192,6 +194,7 @@ char_list = {
     'アームストロング': 50,
     'ソフィア': 51,
     'ウィーラ': 53,
+    'シフォン': 54,
     'レア': 55,
 }
 
