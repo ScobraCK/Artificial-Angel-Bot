@@ -79,6 +79,10 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
     embed with basic character info
     '''
     char = chars.get_character_info(id, masterdata, lang=lang)
+
+    if not char:  # TEMP
+        return discord.Embed(description='Character data invalid.', )
+
     name = f'{char["Name"]}'
     if char['Title']:
         name = name + f' [{char["Title"]}]'
@@ -417,6 +421,11 @@ class Character(commands.Cog, name='Character Commands'):
             )
         else:
             embed = char_info_embed(character, self.bot.masterdata, lang=language)
+
+            if not embed.title:  #TEMP
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
             await interaction.response.send_message(embed=embed)
 
     @app_commands.command()
@@ -437,7 +446,10 @@ class Character(commands.Cog, name='Character Commands'):
             )
         else:
             char = chars.get_character_info(character, self.bot.masterdata, lang=language)
-
+            if not char:  # TEMP
+                embed = discord.Embed(description='Character data invalid.')
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
             embeds = [
                 skill_embed(char, common.Skill_Enum.Active, self.bot.masterdata, lang=language),
                 skill_embed(char, common.Skill_Enum.Passive, self.bot.masterdata, lang=language),
@@ -502,7 +514,7 @@ class Character(commands.Cog, name='Character Commands'):
             message = await interaction.original_response()
             view.message = message
 
-    
+    # need to move cogs
     @app_commands.command()
     @app_commands.describe(
         startlevel='current level the character is at'
