@@ -29,7 +29,8 @@ async def main():  # code to run the bot
         await bot.start(load_env.TOKEN)
 
 if __name__ == "__main__":
-    discord.utils.setup_logging()
+    # import logging
+    # discord.utils.setup_logging(level=logging.DEBUG)
     intents=discord.Intents.default()
     intents.message_content = True
     activity = discord.Activity(
