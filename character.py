@@ -8,6 +8,8 @@ def get_character_info(
     id: int, master: MasterData, lang: Optional[common.Language]='enUS') -> dict:
     
     char_data = master.search_id(id, 'CharacterMB')
+    if not char_data:
+        return None
     char = {}  # to be changed to class
 
     char['Id'] = char_data['Id']
@@ -50,7 +52,10 @@ def check_id(id: int) -> bool:
 
 def get_name(id: int, master: MasterData, lang: Optional[common.Language]='enUS'):
     char = master.search_id(id, 'CharacterMB')
-    name = master.search_string_key(char.get('NameKey'), language=lang)
+    if char:
+        name = master.search_string_key(char.get('NameKey'), language=lang)
+    else:
+        name = None
     return name
 
 def speed_iter(masterdata: MasterData) -> Iterable:
