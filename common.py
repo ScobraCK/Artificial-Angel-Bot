@@ -140,6 +140,7 @@ char_list = {
     'veela': 53,
     'fish': 53,
     'chiffon': 54,
+    'cake': 54,
     'lea': 55,
     # japanese
     'モニカ': 1, 
