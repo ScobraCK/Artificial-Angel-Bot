@@ -58,6 +58,7 @@ id_list = {
     49: 'Ophelia',
     50: 'Armstrong',
     51: 'Sophia',
+    52: 'Sivi',
     53: 'Veela',
     54: 'Chiffon',
     55: 'Lea',
