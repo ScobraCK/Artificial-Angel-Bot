@@ -13,6 +13,8 @@ from io import StringIO
 
 class Region(Enum): #temp solution
     JP = 1
+    KR = 2
+    AS = 3
     NA = 4
     EU = 5
     GL = 6
