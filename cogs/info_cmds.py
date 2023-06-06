@@ -17,13 +17,15 @@ class Region(Enum): #temp solution
     EU = 5
     GL = 6
 
-na_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+na_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 jp_list = [5, 12, 18, 47, 54, 55, 57, 63, 72, 75, 76]
 eu_list = [1, 2, 3, 4, 5, 6]
 gl_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 region_map = {
     1: jp_list,
+    2: list(range(1,16)),
+    3: list(range(1,14)),
     4: na_list,
     5: eu_list,
     6: gl_list
