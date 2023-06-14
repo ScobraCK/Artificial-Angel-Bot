@@ -110,7 +110,6 @@ char_list = {
     'dezzy': 34,
     'macaron': 34,
     'mimi': 35,
-    'cheese': 35,
     'tropon': 36,
     'hathor': 37,
     'olivia': 38,
@@ -146,6 +145,7 @@ char_list = {
     'cake': 54,
     'lea': 55,
     'artie': 58,
+    'richesse': 67,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -203,6 +203,7 @@ char_list = {
     'シフォン': 54,
     'レア': 55,
     'アーティ': 58,
+    'リシェス': 67,
 }
 
 ############
@@ -367,7 +368,7 @@ class Language(Enum):
     English = 'enUS'
     Japanese = 'jaJP'
     Korean = 'koKR'
-    Taiwanese = 'zhTW'
+    Chinese = 'zhTW'
 
 # timezones (hours in timedelta)
 # to be renamed
