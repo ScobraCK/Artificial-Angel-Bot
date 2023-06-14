@@ -63,7 +63,7 @@ id_list = {
     54: 'Chiffon',
     55: 'Lea',
     58: 'Artie',
-    67: 'Richesse'
+    67: 'Richesse',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
