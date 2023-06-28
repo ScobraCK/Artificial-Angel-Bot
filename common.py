@@ -63,7 +63,7 @@ id_list = {
     54: 'Chiffon',
     55: 'Lea',
     58: 'Artie',
-    67: 'Richesse',
+    66: 'Richesse',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -366,10 +366,10 @@ class Skill_Enum(Enum):
 
 # language Enum
 class Language(Enum):
-    English = 'enUS'
-    Japanese = 'jaJP'
-    Korean = 'koKR'
-    Chinese = 'zhTW'
+    English = 'EnUs'
+    Japanese = 'JaJp'
+    Korean = 'KoKr'
+    Chinese = 'ZhTw'
 
 # timezones (hours in timedelta)
 # to be renamed

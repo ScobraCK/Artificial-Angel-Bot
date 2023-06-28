@@ -1,6 +1,6 @@
 import json
 import requests
-from typing import Iterable, Literal, Optional, List, Union
+from typing import Iterable, Iterator, Literal, Optional, List, Union
 from common import Language
 
 class MasterData():
@@ -9,8 +9,6 @@ class MasterData():
     Main API for reading the master data or searching for specific files
     '''
     def __init__(self, language: Optional[Literal['enUS', 'jaJP', 'koKR', 'zhTW']]='enUS') -> None:
-        self.textdata = self.open_MB('TextResourceMB')  # is used most frequently
-
         # uses lazy loading for other jsons
         self.data = {}
         self.language = language
@@ -29,7 +27,7 @@ class MasterData():
         data = json.loads(resp.text)
         return data
 
-        # path = "D:/Datamining Stuff/Memento Mori/MementoMori-data/Master/" + dataMB +'.json'
+        # path = "C:/Projects/MementoMori-data/Master/" + dataMB +'.json'
         # with open(path, 'r', encoding='utf-8') as f:
         #     return json.load(f)
 
@@ -37,6 +35,7 @@ class MasterData():
         '''
         loads all main json files into the class
         '''
+        self.__load_MB('TextResourceEnUsMB')
         self.__load_MB('CharacterMB')
         self.__load_MB('EquipmentMB')
         self.__load_MB('CharacterProfileMB')
@@ -97,9 +96,12 @@ class MasterData():
         elif isinstance(language, Language):
             language = language.value
 
-        obj = filter(lambda x:x["StringKey"]==text_key, self.textdata)
+        if language == 'enUS':  # smh hardcoded language option fail
+            language = 'EnUs'
+
+        obj = filter(lambda x:x["StringKey"]==text_key, self.__load_MB(f'TextResource{language}MB'))
         try:
-            text =  next(obj)[language]
+            text =  next(obj)['Text']
             if text is None:
                 return "null" # Key match but null data
             else:
@@ -164,7 +166,7 @@ class MasterData():
         else:
             return None    
 
-    def search_item(self, id: int, type: str):
+    def search_item(self, id: int, type: int):
         '''
         searches ItemMB
         '''
@@ -175,7 +177,7 @@ class MasterData():
         except StopIteration:
             return None
 
-    def find_item(self, ItemId: int, ItemType: str, **_) -> dict:
+    def find_item(self, ItemId: int, ItemType: int, **_) -> dict:
         '''
         find item by ItemId and ItemType from multiple MB files
 
@@ -221,4 +223,21 @@ class MasterData():
                 lambda x: x['TowerType']==type and x['Floor']==floor, self.__load_MB('TowerBattleQuestMB'))
         else:
             return filter(lambda x: x['TowerType']==type, self.__load_MB('TowerBattleQuestMB'))
+        
+    def __find_arcana_group(self, collection: int)->List[dict]:
+        arcana_bonus = self.__load_MB('CharacterCollectionLevelMB')
+        return list(filter(lambda x: x['CollectionId'] == collection), arcana_bonus)
+        
+    def search_arcana(self, char_id:int = None)->Iterator:
+        '''
+        Returns an iterable of lists of an arcana group
+
+        If chars is none, fetch all arcana
+        '''
+        arcana_chars = self.__load_MB('CharacterCollectionMB')
+        
+        for arcana in arcana_chars:
+            if char_id is None or (char_id in arcana['RequiredCharacterIds']):
+                yield self.__find_arcana_group(arcana['Id'])
+
         
