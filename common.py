@@ -64,6 +64,7 @@ id_list = {
     55: 'Lea',
     58: 'Artie',
     66: 'Richesse',
+    70: 'Sabrina(Swimsuit)'
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -147,6 +148,10 @@ char_list = {
     'lea': 55,
     'artie': 58,
     'richesse': 67,
+    'ssabrina': 70,
+    'summer sabrina': 70,
+    'sabrina swimsuit': 70,
+    'doldier of summer breeze': 70,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -205,6 +210,8 @@ char_list = {
     'レア': 55,
     'アーティ': 58,
     'リシェス': 67,
+    '水着サブリナ': 70,
+    '涼風の軍神': 70,
 }
 
 ############
