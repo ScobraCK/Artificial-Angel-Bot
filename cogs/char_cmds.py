@@ -85,7 +85,7 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
 
     name = f'{char["Name"]}'
     if char['Title']:
-        name = name + f' [{char["Title"]}]'
+        name = f'[{char["Title"]}] ' + name
     embed = discord.Embed(
         title=name,
         description=dict_to_embedtext(char, common.basic_info))
