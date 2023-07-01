@@ -125,6 +125,8 @@ class Info(commands.Cog, name='Info Commands'):
                 quest_id_str = str(quest)
                 text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
 
+            time = str(data["timestamp"])
+            text += f'\nLast update: <t:{time}:R>'
             embed.description = text
 
             embed.set_footer(text='Prototype command')
