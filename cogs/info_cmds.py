@@ -11,27 +11,61 @@ from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
 
+
+# testing database ################################### (temp)
+import sqlite3
+
+class GuildDB():
+    def __init__(self) -> None:
+        self.con = sqlite3.connect('guild.db')
+        self.cur = self.con.cursor()
+
+        self.cur.execute("""
+        CREATE TABLE IF NOT EXISTS guilds (
+            id varchar(12) PRIMARY KEY,
+            name text,
+            bp int,
+            level int,
+            world int,
+            server int)
+        """)
+
+    def insert_guilds(self, guilds: dict, server: int, world: int, ):
+        for guild in guilds:
+            guild['world'] = world
+            guild['server'] = server
+            self.cur.execute("INSERT OR REPLACE INTO guilds (id, name, bp, level, world, server)"
+                             "VALUES (:id, :name, :bp, :level, :world, :server)",
+                             guild)
+        self.con.commit()
+
+    def get_server_ranking(self, server):
+        res = self.cur.execute(
+            "SELECT bp, world, name FROM guilds WHERE server = (?) ORDER BY bp DESC", (server, )
+        )
+        return res.fetchmany(200)
+    
+    def close(self):
+        self.con.close()
+
+def fetch_guildlist(server: int, world: int):
+    world_id = f"{server}{world:03}"
+    url = f"https://api.mentemori.icu/{world_id}/guild_ranking/latest"
+    resp = requests.get(url)
+    data = json.loads(resp.content.decode('utf-8'))
+
+    return data
+
+
+##################################################
+
 class Region(Enum): #temp solution
     JP = 1
     KR = 2
-    AS = 3
+    AP = 3
     NA = 4
     EU = 5
     GL = 6
-
-na_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-jp_list = [5, 12, 18, 47, 54, 55, 57, 63, 72, 75, 76]
-eu_list = [1, 2, 3, 4, 5, 6]
-gl_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-
-region_map = {
-    1: jp_list,
-    2: list(range(1,16)),
-    3: list(range(1,15)),
-    4: na_list,
-    5: eu_list,
-    6: gl_list
-}
 
 temple_type = {
     1: 'Green Orb',
@@ -47,27 +81,14 @@ class GuildData():
     bp: int
     name: str
     level: int
-    stock: int
 
     def list_bp(self):
-        return [self.bp, self.world,self.name]
+        return [self.bp, self.world, self.name]
 
-def fetch_guildlist(server: int, world: int):
-    world_id = f"{server}{world:03}"
-    url = f"https://api.mentemori.icu/{world_id}/guild_ranking/latest"
-    resp = requests.get(url)
-    data = json.loads(resp.content.decode('utf-8'))
-    guilds = []
-    for guild_data in data['data']['rankings']['bp']:
-        guild_data['world'] = world
-        guild = from_dict(data_class=GuildData, data=guild_data)
-        guilds.append(guild)
-    return guilds
-
-def guildlist_to_ascii(guild_list: List[GuildData], start: int=1):
+def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     ranking = []
     for rank, guild in enumerate(guild_list, start):
-        ranking.append([rank] + guild.list_bp())
+        ranking.append([rank] + list(guild))
 
     output = t2a(
         header=["Rank", "BP", "World", "Name",],
@@ -76,15 +97,15 @@ def guildlist_to_ascii(guild_list: List[GuildData], start: int=1):
     )
     return output
 
-async def world_autocomplete(
-    interaction: discord.Interaction, 
-    current: str) -> List[app_commands.Choice[int]]:
-    worlds = region_map.get(interaction.namespace.server)
-    worlds_str = [str(world) for world in worlds]
-    return [
-        app_commands.Choice(name=choice, value=int(choice))
-        for choice in worlds_str if choice.startswith(current)
-    ]
+# async def world_autocomplete(
+#     interaction: discord.Interaction, 
+#     current: str) -> List[app_commands.Choice[int]]:
+#     worlds = region_map.get(interaction.namespace.server)
+#     worlds_str = [str(world) for world in worlds]
+#     return [
+#         app_commands.Choice(name=choice, value=int(choice))
+#         for choice in worlds_str if choice.startswith(current)
+#     ]
 
 
 class Info(commands.Cog, name='Info Commands'):
@@ -97,7 +118,6 @@ class Info(commands.Cog, name='Info Commands'):
     @app_commands.describe(
         server='The region your world is in',
     )
-    @app_commands.autocomplete(world=world_autocomplete)
     async def temple(self, interaction: discord.Interaction,
                      server: Region,
                      world: int):
@@ -113,8 +133,7 @@ class Info(commands.Cog, name='Info Commands'):
 
         if data['status'] == 404:
             await interaction.response.send_message(
-                'The current world may not be supported for this command. '
-                'Contact Scobra#7120 or ping @Scobra in the MementoMori Unofficial discord for more details.',
+                f'{server.name} {world}: World not found',
                 ephemeral=True
             )
         else:
@@ -136,38 +155,39 @@ class Info(commands.Cog, name='Info Commands'):
 
     @app_commands.command()
     @app_commands.describe(
-        server='The region your world is in',
+        server='The region your world is in'
     )
     async def guildrankings(self, interaction: discord.Interaction, server: Region):
         '''Guild rankings prototype'''
 
-        await interaction.response.defer()
+        if self.bot.block_guilddb:
+            await interaction.response.send_message(message='Updating data, please try again in a short while.', ephemeral=True) 
 
-        guildlist = []
-        world_list = region_map.get(server.value)
-        for world in world_list:
-            guildlist += fetch_guildlist(server.value, world)
-        sorted_guildlist = sorted(guildlist, key=lambda x: x.bp, reverse=True)
+        else:
+            db = GuildDB()
+            sorted_guildlist = db.get_server_ranking(server.value)
+            db.close()
 
-        embeds = []
+            embeds = []
+            for i in range(0, 200, 50):  # top 100
+                if server == Region.EU and i > 100:
+                    break
 
-        for i in range(0, 100, 50):  # top 100
-            text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
-            embed = discord.Embed(
-                title=f'Top 100 Guild Rankings by BP({server.name})',
-                description=text,
-                colour=discord.Colour.orange()
-            )
-            embed.set_footer(text=f'Only contains {server.name} worlds {str(world_list)}')
-            embeds.append(embed)
+                text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
+                embed = discord.Embed(
+                    title=f'Top 100 Guild Rankings by BP({server.name})',
+                    description=text,
+                    colour=discord.Colour.orange()
+                )
+                embeds.append(embed)
 
-        user = interaction.user
-        view = Button_View(user, embeds)
-        await view.btn_update()
+            user = interaction.user
+            view = Button_View(user, embeds)
+            await view.btn_update()
 
-        await interaction.followup.send(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+            await interaction.response.send_message(embed=embeds[0], view=view)
+            message = await interaction.original_response()
+            view.message = message
 
     @app_commands.command()
     async def checktemple(self, interaction: discord.Interaction):
