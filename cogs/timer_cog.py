@@ -80,7 +80,7 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
             data = fetch_guildlist(server, world)
             if data['status'] != 200:
                 continue
-            
+            print(world_data['world_id'])
             guilds = data['data']['rankings']['bp']
             db.insert_guilds(guilds, server, world)
 
