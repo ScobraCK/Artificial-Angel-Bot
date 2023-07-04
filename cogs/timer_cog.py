@@ -61,10 +61,10 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         self.my_task.start()
         self.bot.block_guilddb = False
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.my_task.cancel()
 
-    def cog_load(self):  # temporary measure to initiate
+    async def cog_load(self):  # temporary measure to initiate
         self.bot.block_guilddb = True
         time.sleep(1)  # in case there is other use, need further error checking implemented
 
