@@ -175,7 +175,7 @@ class Info(commands.Cog, name='Info Commands'):
 
                 text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
                 embed = discord.Embed(
-                    title=f'Top 100 Guild Rankings by BP({server.name})',
+                    title=f'Top Guild Rankings by BP({server.name})',
                     description=text,
                     colour=discord.Colour.orange()
                 )
