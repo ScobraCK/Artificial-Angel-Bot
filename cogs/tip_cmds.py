@@ -4,9 +4,10 @@ from discord.ext import commands
 
 import common
 import timezones
-from typing import Optional
+from typing import Optional, Tuple
 from io import StringIO
 from my_view import My_View
+from itertools import dropwhile
 
 def get_dailyinfo(server: timezones.ServerUTC):
     text = StringIO()
@@ -36,6 +37,28 @@ def daily_embed(server: timezones.ServerUTC):
         color=discord.Colour.blue()
         )
     return embed
+
+########## levellink #################
+def get_sublevel(level: float)->Tuple[int, int]:
+    level = str(level)
+    try:
+        base, sub = level.split('.')
+        base = int(base)
+        sub = int(sub[0])
+    except ValueError:
+        base = int(level)
+        sub = 0
+
+    return base, sub
+
+def level_predicate(leveldata, base, sub):
+    if leveldata['PartyLevel'] < base:
+        return True
+    if leveldata['PartySubLevel'] < sub:
+        return True
+    return False
+
+#######################################
 
 class DailyView(My_View):
     def __init__(self, user: discord.User):
@@ -140,6 +163,74 @@ class Tips(commands.Cog, name='Other Commands'):
 
         message = await interaction.original_response()
         view.message = message
+
+    @app_commands.command()
+    @app_commands.describe(
+        startlevel='specify sublevel if required. 240(=240.0), 240.1, 240.9',
+        endlevel='rounds to the next power of 10 if empty (sublevel is 0)'
+    )
+    async def levellink(
+        self,
+        interaction: discord.Interaction,
+        startlevel: float,
+        endlevel: Optional[float]):
+        '''
+        Calculate level link costs.
+        '''
+
+        startbase, startsub = get_sublevel(startlevel)
+        if endlevel:
+            endbase, endsub = get_sublevel(endlevel)
+        else:
+            endlevel = endbase = int((startbase+10) / 10) * 10
+            endsub = 0
+
+        if startlevel < 240:
+            await interaction.response.send_message(
+                "Currently only levellink(240+) is supported.",
+                ephemeral=True
+            )
+
+        elif startlevel > endlevel:
+            await interaction.response.send_message(
+                f"startlevel should be lower than baselevel. Got `{startlevel}` and `{endlevel}`.",
+                ephemeral=True
+            )
+
+        elif endbase > 500:
+            await interaction.response.send_message(
+                "level should be between 240 and 500.",
+                ephemeral=True
+            )        
+
+        else:
+            link_data_MB = self.bot.masterdata.get_MB_iter("LevelLinkMB")
+            link_iter = iter(link_data_MB)
+            level_data = dropwhile(lambda x: level_predicate(x, startbase, startsub), link_iter)
+            total_gold = 0
+            total_gorb = 0
+            total_rorb = 0
+            for level in level_data:
+                if level['PartyLevel'] == endbase and level['PartySubLevel'] == endsub:
+                    break
+                costs = level['RequiredLevelUpItems']
+                total_gold += costs[0]["ItemCount"]  # gold
+                total_gorb += costs[1]["ItemCount"]  # green orbs
+                if len(costs) == 3:
+                    total_rorb += costs[2]["ItemCount"]  # red orbs               
+            
+            embed = discord.Embed(
+                title='Level Link Costs',
+                description=(
+                    f"**__{startbase}.{startsub} -> {endbase}.{endsub}__**\n"
+                    f"Gold: {total_gold:,d}\n"
+                    f"Green Orbs: {total_gorb:,d}\n"
+                    f"Red Orbs: {total_rorb:,d}\n"
+                ),
+                color=discord.Color.dark_gold()
+            )
+
+            await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
