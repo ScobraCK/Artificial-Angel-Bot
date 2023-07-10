@@ -38,7 +38,7 @@ def find_id_from_name(char_str: str):
         id = common.char_list[char]
     else:
         chars = common.char_list.keys()
-        char,_ = process.extractOne(char_str, chars, scorer=fuzz.partial_ratio)
+        char,_ = process.extractOne(char_str, chars, scorer=fuzz.ratio)
         id = common.char_list[char]
 
     return id
@@ -93,6 +93,6 @@ def speed_iter(masterdata: MasterData) -> Iterable:
 # testing
 if __name__ == "__main__":
     master = MasterData()
-    id = 'summer (sabrine)'
+    id = 'summer sabrina'
     print(id, get_name(find_id_from_name(id), master), find_id_from_name(id))
     
