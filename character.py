@@ -3,6 +3,7 @@ import common
 import equipment
 from fuzzywuzzy import process, fuzz
 from typing import Iterable, Literal, Optional
+import re
 
 def get_character_info(
     id: int, master: MasterData, lang: Optional[common.Language]='enUS') -> dict:
@@ -32,7 +33,8 @@ def find_id_from_name(char_str: str):
     '''
     uses fuzzy matching to find id from a string. Uses a separate dictionary for speed.
     '''
-    if (char:=char_str.lower()) in common.char_list:
+    char = re.sub('[^A-Za-z0-9]+', '', char_str).lower()
+    if char in common.char_list:
         id = common.char_list[char]
     else:
         chars = common.char_list.keys()
@@ -58,6 +60,18 @@ def get_name(id: int, master: MasterData, lang: Optional[common.Language]='enUS'
         name = None
     return name
 
+def get_full_name(id: int, master: MasterData, lang: Optional[common.Language]='enUS'):
+    char = master.search_id(id, 'CharacterMB')
+    if char:
+        name = master.search_string_key(char.get('NameKey'), language=lang)
+        title = master.search_string_key(char.get('Name2Key'), language=lang)
+        if title:
+            name = f'[{title}] {name}'
+    else:
+        name = None
+
+    return name
+
 def speed_iter(masterdata: MasterData) -> Iterable:
     '''
     returns an iterable with character speeds in decreasing order
@@ -79,5 +93,6 @@ def speed_iter(masterdata: MasterData) -> Iterable:
 # testing
 if __name__ == "__main__":
     master = MasterData()
-    print(get_name(find_id_from_name('ーリン'), master))
+    id = 'summer (sabrine)'
+    print(id, get_name(find_id_from_name(id), master), find_id_from_name(id))
     

@@ -150,8 +150,10 @@ char_list = {
     'richesse': 67,
     'ssabrina': 70,
     'summer sabrina': 70,
+    'sabrina summer': 70,
     'sabrina swimsuit': 70,
-    'doldier of summer breeze': 70,
+    'swimsuit sabrina': 70,
+    'soldier of summer breeze': 70,
     # japanese
     'モニカ': 1, 
     'イリア': 2,

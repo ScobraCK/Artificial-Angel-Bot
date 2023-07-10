@@ -19,20 +19,21 @@ def id_list_embed(master: MasterData, lang: Optional[common.Language]):
     text = ''
     id_list = common.id_list
     
-    embed = discord.Embed(
-        title='Character Id',
-        color=discord.Color.green()
-    )
-
     text = StringIO()
     max = len(id_list)
+    embeds = []
     for i, k in enumerate(id_list.keys(), 1):
-        text.write(f"{k}: {chars.get_name(k, master, lang)}\n")  # not the most efficient way to get ALL names
+        text.write(f"{k}: {chars.get_full_name(k, master, lang)}\n")  # not the most efficient way to get ALL names
         if i % 20 == 0 or i == max:
-            embed.add_field(name='\u200b', value=text.getvalue())
+            embed = discord.Embed(
+                title='Character Id',
+                color=discord.Color.green(),
+                description=text.getvalue()
+            )
+            embeds.append(embed)
             text = StringIO()
 
-    return embed
+    return embeds
 
 #########################
 # character
@@ -399,9 +400,15 @@ class Character(commands.Cog, name='Character Commands'):
         '''
         Shows character ids
         '''
-        embed = id_list_embed(self.bot.masterdata, language)
+        embeds = id_list_embed(self.bot.masterdata, language)
+        user = interaction.user
+        view = Button_View(user, embeds)
+        await view.btn_update()
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
+
     
     @app_commands.command()
     @app_commands.describe(
