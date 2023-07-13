@@ -148,10 +148,16 @@ char_list = {
     'lea': 55,
     'artie': 58,
     'richesse': 67,
+    'ccsabrina': 70,
     'ssabrina': 70,
     'sabrina summer': 70,
     'sabrina swimsuit': 70,
     'soldier of summer breeze': 70,
+    'ccmoddey': 71,
+    'smoddey': 71,
+    'moddey summer': 71,
+    'moddey swimsuit': 71,
+    'Gravekeepers summer holiday': 71,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -212,6 +218,8 @@ char_list = {
     'リシェス': 67,
     '水着サブリナ': 70,
     '涼風の軍神': 70,
+    '墓守の夏休み':71,
+    '水着モーザ': 71,
 }
 
 ############
