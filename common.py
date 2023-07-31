@@ -63,6 +63,7 @@ id_list = {
     54: 'Chiffon',
     55: 'Lea',
     58: 'Artie',
+    60: 'Fia',
     67: 'Richesse',
     70: 'Sabrina(Summer)',
     71: 'Moddey(Summer)'
@@ -148,6 +149,7 @@ char_list = {
     'cake': 54,
     'lea': 55,
     'artie': 58,
+    'fia': 60,
     'richesse': 67,
     'ccsabrina': 70,
     'ssabrina': 70,
@@ -216,6 +218,7 @@ char_list = {
     'シフォン': 54,
     'レア': 55,
     'アーティ': 58,
+    'フィアー': 60,
     'リシェス': 67,
     '水着サブリナ': 70,
     '涼風の軍神': 70,
