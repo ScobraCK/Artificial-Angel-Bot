@@ -325,7 +325,7 @@ class Search(commands.Cog, name='Search Commands'):
         self, interaction: discord.Interaction, 
         id: int, 
         type: int,
-        language: Optional[common.Language]=common.Language.English):
+        language: Optional[common.Language]=common.Language.EnUs):
         '''
         Command for quick searching from ItemId and ItemType
         '''

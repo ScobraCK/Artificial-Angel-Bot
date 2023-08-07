@@ -386,10 +386,21 @@ class Skill_Enum(Enum):
 
 # language Enum
 class Language(Enum):
-    English = 'EnUs'
-    Japanese = 'JaJp'
-    Korean = 'KoKr'
-    Chinese = 'ZhTw'
+    EnUs = 'EnUs'
+    JaJp = 'JaJp'
+    KoKR = 'KoKr'
+    ZhTw = 'ZhTw'
+    ArEg = 'ArEg'
+    DeDe = 'DeDe'
+    EsMx = 'EsMx'
+    FrFr = 'FrFr'
+    IdId = 'IdId'
+    PtBr = 'Ptbr'
+    RuRu = 'RuRu'
+    ThTh = 'ThTh'
+    ViVn = 'ViVn'
+    ZhCn = 'ZhCn'
+
 
 # timezones (hours in timedelta)
 # to be renamed

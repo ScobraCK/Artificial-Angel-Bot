@@ -396,7 +396,7 @@ class Character(commands.Cog, name='Character Commands'):
     async def idlist(
         self, 
         interaction: discord.Interaction,
-        language: Optional[common.Language]=common.Language.English):
+        language: Optional[common.Language]=common.Language.EnUs):
         '''
         Shows character ids
         '''
@@ -419,7 +419,7 @@ class Character(commands.Cog, name='Character Commands'):
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer], # is an id
-        language: Optional[common.Language]=common.Language.English):  
+        language: Optional[common.Language]=common.Language.EnUs):  
         '''Shows a character's basic info'''
         if not chars.check_id(character):
             await interaction.response.send_message(
@@ -444,7 +444,7 @@ class Character(commands.Cog, name='Character Commands'):
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[common.Language]=common.Language.English):
+        language: Optional[common.Language]=common.Language.EnUs):
         '''Shows character skills including unique weapon upgrade effects'''
         if not chars.check_id(character):
             await interaction.response.send_message(
@@ -495,7 +495,7 @@ class Character(commands.Cog, name='Character Commands'):
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[common.Language]=common.Language.English):
+        language: Optional[common.Language]=common.Language.EnUs):
         '''Shows character skills and details'''
         if not chars.check_id(character):
             await interaction.response.send_message(
