@@ -166,6 +166,8 @@ char_list = {
     'cordie yukata': 72,
     'summers reverb cordie': 72,
     'cccordie': 72,
+    'scordie': 72,
+    'ycordie': 72,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
