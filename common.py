@@ -66,7 +66,8 @@ id_list = {
     60: 'Fia',
     67: 'Richesse',
     70: 'Sabrina(Summer)',
-    71: 'Moddey(Summer)'
+    71: 'Moddey(Summer)',
+    72: 'Cordie(Yukata)',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -160,7 +161,11 @@ char_list = {
     'smoddey': 71,
     'moddey summer': 71,
     'moddey swimsuit': 71,
-    'Gravekeepers summer holiday': 71,
+    'gravekeepers summer holiday': 71,
+    'cordie summer': 72,
+    'cordie yukata': 72,
+    'summers reverb cordie': 72,
+    'cccordie': 72,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -224,6 +229,7 @@ char_list = {
     '涼風の軍神': 70,
     '墓守の夏休み':71,
     '水着モーザ': 71,
+    '夏の残響コルディ': 72,
 }
 
 ############
