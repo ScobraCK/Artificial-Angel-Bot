@@ -89,7 +89,6 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
 
     @tasks.loop(time=cur_time)
     async def my_task(self):
-        self.bot.block_guilddb = True
         time.sleep(1)  # in case there is other use, need further error checking implemented
 
         db = GuildDB()
@@ -109,7 +108,6 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
             db.insert_guilds(guilds, server, world)
 
         db.close()
-        self.bot.block_guilddb = False
 
      
 async def setup(bot):
