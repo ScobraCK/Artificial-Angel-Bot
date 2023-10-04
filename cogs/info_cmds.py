@@ -5,59 +5,12 @@ from discord.ext import commands
 import requests, json
 from enum import Enum
 from my_view import Button_View
-from dataclasses import dataclass
 from typing import List
 from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
 
-
-# testing database ################################### (temp)
-import sqlite3
-
-class GuildDB():
-    def __init__(self) -> None:
-        self.con = sqlite3.connect('guild.db')
-        self.cur = self.con.cursor()
-
-        self.cur.execute("""
-        CREATE TABLE IF NOT EXISTS guilds (
-            id varchar(12) PRIMARY KEY,
-            name text,
-            bp int,
-            level int,
-            world int,
-            server int)
-        """)
-
-    def insert_guilds(self, guilds: dict, server: int, world: int, ):
-        for guild in guilds:
-            guild['world'] = world
-            guild['server'] = server
-            self.cur.execute("INSERT OR REPLACE INTO guilds (id, name, bp, level, world, server)"
-                             "VALUES (:id, :name, :bp, :level, :world, :server)",
-                             guild)
-        self.con.commit()
-
-    def get_server_ranking(self, server):
-        res = self.cur.execute(
-            "SELECT bp, world, name FROM guilds WHERE server = (?) ORDER BY bp DESC", (server, )
-        )
-        return res.fetchmany(200)
-    
-    def close(self):
-        self.con.close()
-
-def fetch_guildlist(server: int, world: int):
-    world_id = f"{server}{world:03}"
-    url = f"https://api.mentemori.icu/{world_id}/guild_ranking/latest"
-    resp = requests.get(url)
-    data = json.loads(resp.content.decode('utf-8'))
-
-    return data
-
-
-##################################################
+from guilddb import fetch_group_list
 
 class Region(Enum): #temp solution
     JP = 1
@@ -75,16 +28,6 @@ temple_type = {
     5: 'Rune Tickets'
 }
 
-@dataclass
-class GuildData():
-    world: int
-    bp: int
-    name: str
-    level: int
-
-    def list_bp(self):
-        return [self.bp, self.world, self.name]
-
 def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     ranking = []
     for rank, guild in enumerate(guild_list, start):
@@ -97,16 +40,27 @@ def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     )
     return output
 
-# async def world_autocomplete(
-#     interaction: discord.Interaction, 
-#     current: str) -> List[app_commands.Choice[int]]:
-#     worlds = region_map.get(interaction.namespace.server)
-#     worlds_str = [str(world) for world in worlds]
-#     return [
-#         app_commands.Choice(name=choice, value=int(choice))
-#         for choice in worlds_str if choice.startswith(current)
-#     ]
+def in_range(num, start, end):
+    if num == '':
+        return True
+    num = int(num)
+    if start <= num <= end:
+        return True
+    if (start//10) <= num <= (end//10):
+        return True
+    if (start//100) <= num <= (end//100):
+        return True
+    return False
 
+async def group_autocomplete(
+        interaction: discord.Interaction, 
+        current: str) -> List[app_commands.Choice[str]]:
+    group_list = fetch_group_list(interaction.namespace.server)  # [(id, start, end), ...]
+
+    return [
+        app_commands.Choice(name=f'{choice[1]}-{choice[2]}', value=f'{choice[1]}-{choice[2]}')
+        for choice in group_list if in_range(current, choice[1], choice[2])
+    ]
 
 class Info(commands.Cog, name='Info Commands'):
     '''Commands that fetch ingame info'''
@@ -155,39 +109,64 @@ class Info(commands.Cog, name='Info Commands'):
 
     @app_commands.command()
     @app_commands.describe(
-        server='The region your world is in'
+        server='The region your world is in',
+        group='The group your world is in'
     )
-    async def guildrankings(self, interaction: discord.Interaction, server: Region):
-        '''Guild rankings prototype'''
-
-        if self.bot.block_guilddb:
-            await interaction.response.send_message(message='Updating data, please try again in a short while.', ephemeral=True) 
-
+    @app_commands.autocomplete(group=group_autocomplete)
+    async def grouprankings(self, 
+                            interaction: discord.Interaction, 
+                            server: Region,
+                            group: str):
+        '''Guild rankings by group'''
+        if group.isnumeric():
+            group_id = self.bot.gdb.get_group_id(server.value, int(group))
         else:
-            db = GuildDB()
-            sorted_guildlist = db.get_server_ranking(server.value)
-            db.close()
+            group_id = self.bot.gdb.get_group_id(server.value, int(group.split('-')[0]))
 
-            embeds = []
-            for i in range(0, 200, 50):  # top 100
-                if server == Region.EU and i > 100:
-                    break
-
-                text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
-                embed = discord.Embed(
-                    title=f'Top Guild Rankings by BP({server.name})',
-                    description=text,
+        if group_id is None:
+            await interaction.response.send_message(
+                f"Group Id of `{group}` on server `{server.name}` was not found",
+                ephemeral=True
+            )
+        else:
+            group_id = group_id[0]
+            rankings = self.bot.gdb.get_group_ranking(server.value, group_id)
+            start, end = self.bot.gdb.get_group_worlds(group_id)
+            embed = discord.Embed(
+                    title=f'Guild Rankings({server.name} {start}-{end})',
+                    description=f'```{guildlist_to_ascii(rankings)}```',
                     colour=discord.Colour.orange()
                 )
-                embeds.append(embed)
+            
+            await interaction.response.send_message(embed=embed)
 
-            user = interaction.user
-            view = Button_View(user, embeds)
-            await view.btn_update()
+    @app_commands.command()
+    @app_commands.describe(server='The region your world is in')
+    async def guildrankings(self, interaction: discord.Interaction, server: Region):
+        '''Guild rankings prototype'''
+    
+        sorted_guildlist = self.gdb.get_server_ranking(server.value)
 
-            await interaction.response.send_message(embed=embeds[0], view=view)
-            message = await interaction.original_response()
-            view.message = message
+        embeds = []
+        for i in range(0, 200, 50):  # top 100
+            if server == Region.EU and i > 100:
+                break
+
+            text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
+            embed = discord.Embed(
+                title=f'Top Guild Rankings by BP({server.name})',
+                description=text,
+                colour=discord.Colour.orange()
+            )
+            embeds.append(embed)
+
+        user = interaction.user
+        view = Button_View(user, embeds)
+        await view.btn_update()
+
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
 
     @app_commands.command()
     async def checktemple(self, interaction: discord.Interaction):
@@ -227,7 +206,3 @@ class Info(commands.Cog, name='Info Commands'):
 async def setup(bot):
 	await bot.add_cog(Info(bot))
         
-
-if __name__ == "__main__":
-    from pprint import pprint
-    pprint(fetch_guildlist(11))

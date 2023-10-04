@@ -147,6 +147,21 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		self.bot.masterdata.reload_all()
 		await ctx.send(f"Reloaded all data")
 
+	@commands.command()
+	@commands.guild_only()
+	async def update_group(
+		self,
+		ctx: commands.Context):
+		'''
+		Updates world groups
+		'''
+		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
+		try:
+			self.bot.gdb.update_group(group_iter)
+			await ctx.send(f"Updated world groups")
+		except Exception as e:
+			await ctx.send(f"Failed to update: {e}")
+
 
 async def setup(bot):
 	await bot.add_cog(DevCommands(bot), guild=MY_GUILD)

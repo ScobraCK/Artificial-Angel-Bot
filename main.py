@@ -8,11 +8,13 @@ import asyncio
 
 import load_env
 from master_data import MasterData
+from guilddb import GuildDB
 
 class MyBot(commands.Bot):  # include masterdata in the class
     def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity):
         super().__init__(command_prefix=command_prefix, intents=intents, owner_id=owner_id, activity=activity)
         self.masterdata = MasterData()
+        self.gdb = GuildDB()
     
     async def on_ready(self):
         await self.wait_until_ready()
