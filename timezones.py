@@ -1,5 +1,6 @@
 from enum import Enum
 from datetime import datetime, timezone
+import pytz
 
 class ServerUTC(Enum):
     NA = -7
@@ -54,7 +55,7 @@ def unix_to_local(timestamp: datetime.timestamp, server: ServerUTC):
 
 def get_cur_time():
     '''Returns current time'''
-    return convert_date_string(datetime.now(timezone('Asia/Seoul')))
+    return convert_date_string(datetime.now(pytz.timezone('Asia/Seoul')))
 
 if __name__ == "__main__":
     a = [1680821100, 1680780600, 1680781500, 1680784200, 1680776100, 1680821100, 1680781500,
