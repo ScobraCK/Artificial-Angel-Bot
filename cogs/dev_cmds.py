@@ -175,7 +175,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		ch = self.bot.get_channel(LOG_CHANNEL)
 		msg = get_cur_time()
 		msg += update_rankings(self.bot.gdb) 
-		embed = discord.Embed(msg)
+		embed = discord.Embed(description=msg)
 
 		await ch.send(embed=embed)
 
