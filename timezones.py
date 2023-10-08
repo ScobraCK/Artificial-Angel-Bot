@@ -52,6 +52,10 @@ def unix_to_local(timestamp: datetime.timestamp, server: ServerUTC):
     '''converts unix timestamp to local time'''
     return timestamp - server.value*3600
 
+def get_cur_time():
+    '''Returns current time'''
+    return convert_date_string(datetime.now(timezone('Asia/Seoul')))
+
 if __name__ == "__main__":
     a = [1680821100, 1680780600, 1680781500, 1680784200, 1680776100, 1680821100, 1680781500,
          1680785100, 1680787800]

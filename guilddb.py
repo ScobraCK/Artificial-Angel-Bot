@@ -135,3 +135,26 @@ def fetch_group_list(server):
     data = db.get_group_list(server)
     db.close()
     return data
+
+def update_rankings(gdb: GuildDB):
+    worlds = fetch_worlddata()
+    if worlds:
+        try:
+            for world_data in worlds:
+                server = int(str(world_data['world_id'])[0])
+                world = int(str(world_data['world_id'])[1:])
+
+                if world_data['ranking'] == False:
+                    continue
+
+                data = fetch_guildlist(server, world)
+                if not data:
+                    continue
+                
+                guilds = data['data']['rankings']['bp']
+                gdb.insert_guilds(guilds, server, world)
+            return "Updated rankings"
+        except Exception as e:
+            return e
+    else:
+        return "API fail"

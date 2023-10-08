@@ -3,8 +3,10 @@
 
 import discord
 from discord.ext import commands
-from load_env import MY_GUILD
+from load_env import MY_GUILD, LOG_CHANNEL
 from typing import Optional, Literal
+from guilddb import update_rankings
+from timezones import get_cur_time
 
 def convert_cog_string(cog: str):
 	if not cog.startswith('cogs.'):
@@ -161,6 +163,21 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 			await ctx.send(f"Updated world groups")
 		except Exception as e:
 			await ctx.send(f"Failed to update: {e}")
+
+	@commands.command()
+	@commands.guild_only()
+	async def update_ranking(
+		self,
+		ctx: commands.Context):
+		'''
+		Updates guild rankings
+		'''
+		ch = self.bot.get_channel(LOG_CHANNEL)
+		msg = get_cur_time()
+		msg += update_rankings(self.bot.gdb) 
+		embed = discord.Embed(msg)
+
+		await ch.send(embed=embed)
 
 
 async def setup(bot):

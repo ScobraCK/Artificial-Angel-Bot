@@ -1,7 +1,9 @@
-import datetime, time, sqlite3
-import requests, json
+import datetime, discord
 from discord.ext import commands, tasks
-from guilddb import fetch_guildlist, fetch_worlddata
+
+from guilddb import update_rankings
+from load_env import LOG_CHANNEL
+from timezones import get_cur_time
 
 utc = datetime.timezone.utc
 
@@ -42,23 +44,12 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
 
     @tasks.loop(time=cur_time)
     async def my_task(self):
-        time.sleep(1)  # in case there is other use, need further error checking implemented
+        ch = self.bot.get_channel(LOG_CHANNEL)
+        msg = get_cur_time()
+        msg += update_rankings(self.bot.gdb) 
+        embed = discord.Embed(msg)
 
-        worlds = fetch_worlddata()
-        if worlds:
-            for world_data in worlds:
-                server = int(str(world_data['world_id'])[0])
-                world = int(str(world_data['world_id'])[1:])
-
-                if world_data['ranking'] == False:
-                    continue
-
-                data = fetch_guildlist(server, world)
-                if not data:
-                    continue
-                
-                guilds = data['data']['rankings']['bp']
-                self.gdb.insert_guilds(guilds, server, world)
+        await ch.send(embed=embed)
      
 async def setup(bot):
 	await bot.add_cog(TimerCog(bot))
