@@ -145,7 +145,7 @@ class Info(commands.Cog, name='Info Commands'):
     async def guildrankings(self, interaction: discord.Interaction, server: Region):
         '''Guild rankings prototype'''
     
-        sorted_guildlist = self.gdb.get_server_ranking(server.value)
+        sorted_guildlist = self.bot.gdb.get_server_ranking(server.value)
 
         embeds = []
         for i in range(0, 200, 50):  # top 100
