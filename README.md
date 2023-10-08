@@ -7,6 +7,9 @@ DM Scobra#7120 or ping me in the MementoMori Unofficial discord if you want to u
 To be used with https://github.com/ScobraCK/MementoMori-data
 
 
+I need to update this readme and rework all the files into packages...
+
+(outdated readme)
 # Current features
 - /idlist: Shows character ids
 - /speed: List character speeds in decreasing order
