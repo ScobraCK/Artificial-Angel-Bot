@@ -28,6 +28,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         self.bot = bot
 
     @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
     async def joinvc(self, interaction: discord.Interaction):
         """Joins a voice channel"""
         if voice := interaction.user.voice:
@@ -38,6 +39,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
                                                     ephemeral=True)
 
     @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
     async def leavevc(self, interaction: discord.Interaction):
         """Leaves a voice channel"""
         voice_client = interaction.guild.voice_client
@@ -49,6 +51,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
 
 
     @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
     @app_commands.describe(
         character='The name or id of the character',
         language='EN or JP'
