@@ -65,7 +65,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         voice_client: discord.VoiceClient = interaction.guild.voice_client
         if voice_client:
             if voice_client.is_playing():
-                await voice_client.stop()
+                voice_client.stop()
                 await interaction.response.send_message('Stopped')
             else:
                 await interaction.response.send_message('Bot is not playing', ephemeral=True)
@@ -80,7 +80,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         voice_client: discord.VoiceClient = interaction.guild.voice_client
         if voice_client:
             if voice_client.is_playing():
-                await voice_client.pause()
+                voice_client.pause()
                 await interaction.response.send_message('Paused')
             else:
                 await interaction.response.send_message('Bot is not playing', ephemeral=True)
@@ -95,7 +95,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         voice_client: discord.VoiceClient = interaction.guild.voice_client
         if voice_client:
             if voice_client.is_paused():
-                await voice_client.resume()
+                voice_client.resume()
                 await interaction.response.send_message('Resumed')
             else:
                 await interaction.response.send_message('Bot is not paused', ephemeral=True)
