@@ -32,7 +32,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
     async def joinvc(self, interaction: discord.Interaction):
         """Joins a voice channel"""
         if (voice := interaction.user.voice):
-            await voice.voice_client.connect()
+            await voice.channel.connect()
             await interaction.response.send_message('Connected')
         else:
             await interaction.response.send_message("You must be in a voice channel",
