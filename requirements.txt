@@ -5,3 +5,4 @@ fuzzywuzzy[speedup]
 dacite
 table2ascii
 pytz
+pynacl
