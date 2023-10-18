@@ -21,7 +21,7 @@ def convert_from_stage(quest: str)->int:
     except ValueError:
         return None
     
-    if not (0 < stage <= 28):
+    if not (0 < stage <= 40):
         return None
     if chap == 1:
         return (stage if stage <= 12 else None)
@@ -29,8 +29,10 @@ def convert_from_stage(quest: str)->int:
         return (stage + 12 if stage <= 20 else None) 
     elif chap == 3:
         return (stage + 32 if stage <= 24 else None)
-    else:
+    elif chap < 27:
         return (chap-2) * 28 + stage  # 1-3 is 28*2 stages
+    else:
+        return 700 + (chap-27)*40 + stage  # 26-28 is 700
 
 def convert_to_stage(quest_id: int)->str:
     '''
@@ -41,8 +43,15 @@ def convert_to_stage(quest_id: int)->str:
     Chapter 2: 20
     Chapter 3: 24
     Chapter 4+: 28
+    Chapter 27+: 40
     '''
-    if quest_id > 56:
+    if quest_id > 700:
+        chap, stage = divmod(quest_id-700, 40)
+        if stage==0:
+            chap += -1
+            stage = 40
+        return f"{chap+27}-{stage}"
+    elif quest_id > 56:
         chap, stage = divmod(quest_id, 28)
         if stage==0:
             chap += -1
