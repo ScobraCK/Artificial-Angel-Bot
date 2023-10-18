@@ -90,7 +90,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
             
     @app_commands.command()
     @app_commands.checks.bot_has_permissions(connect=True, speak=True)
-    async def pause(self, interaction: discord.Interaction):
+    async def resume(self, interaction: discord.Interaction):
         """Resumes playing"""
         voice_client: discord.VoiceClient = interaction.guild.voice_client
         if voice_client:
@@ -99,18 +99,6 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
                 await interaction.response.send_message('Resumed')
             else:
                 await interaction.response.send_message('Bot is not paused', ephemeral=True)
-        else:
-            await interaction.response.send_message("The bot is not connected to a voice channel.",
-                                                    ephemeral=True)
-
-    @app_commands.command()
-    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
-    async def stop(self, interaction: discord.Interaction):
-        """Leaves a voice channel"""
-        voice_client: discord.VoiceClient = interaction.guild.voice_client
-        if voice_client:
-            await voice_client.stop()
-            await interaction.response.send_message('Disonnected')
         else:
             await interaction.response.send_message("The bot is not connected to a voice channel.",
                                                     ephemeral=True)
