@@ -47,7 +47,8 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
             await voice_client.disconnect()
             await interaction.response.send_message('Disonnected')
         else:
-            await interaction.response.send_message("The bot is not connected to a voice channel.")
+            await interaction.response.send_message("The bot is not connected to a voice channel.",
+                                                    ephemeral=True)
 
 
     @app_commands.command()
@@ -74,7 +75,8 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
             voice_client.play(source, after=None)
             await interaction.response.send_message(f'Playing {song}')
         else:
-            await interaction.response.send_message("The bot is not connected to a voice channel.")
+            await interaction.response.send_message("The bot is not connected to a voice channel.",
+                                                    ephemeral=True)
             
         
 async def setup(bot):
