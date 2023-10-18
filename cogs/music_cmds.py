@@ -70,6 +70,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         
         if voice_client.is_connected():
             source = discord.FFmpegPCMAudio(music_url, executable="ffmpeg")
+            source.read()
             voice_client.play(source, after=None)
             await interaction.response.send_message(f'Playing {song}')
         else:
