@@ -187,7 +187,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		clients = self.bot.voice_clients
 		for client in clients:
-			client.disconnect()
+			await client.disconnect()
 
 
 async def setup(bot):
