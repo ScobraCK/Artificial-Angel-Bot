@@ -43,7 +43,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
     async def leavevc(self, interaction: discord.Interaction):
         """Leaves a voice channel"""
         voice_client = interaction.guild.voice_client
-        if voice_client and voice_client.is_connected():
+        if voice_client:
             await voice_client.disconnect()
             await interaction.response.send_message('Disonnected')
         else:
