@@ -32,8 +32,16 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
     async def joinvc(self, interaction: discord.Interaction):
         """Joins a voice channel"""
         if (voice := interaction.user.voice):
-            await voice.channel.connect()
-            await interaction.response.send_message('Connected')
+            channel = voice.channel
+            if channel.permissions_for(interaction.guild.me).connect:
+                if voice_client := interaction.guild.voice_client:
+                    await voice_client.move_to(voice.channel)
+                    await interaction.response.send_message('Moved Channels')
+                else:
+                    await voice.channel.connect()
+                    await interaction.response.send_message('Connected')
+            else:
+                await interaction.response.send_message('Bot does not have permission for that channel', ephemeral=True)
         else:
             await interaction.response.send_message("You must be in a voice channel",
                                                     ephemeral=True)
@@ -42,9 +50,66 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
     @app_commands.checks.bot_has_permissions(connect=True, speak=True)
     async def leavevc(self, interaction: discord.Interaction):
         """Leaves a voice channel"""
-        voice_client = interaction.guild.voice_client
+        voice_client: discord.VoiceClient = interaction.guild.voice_client
         if voice_client:
             await voice_client.disconnect()
+            await interaction.response.send_message('Disonnected')
+        else:
+            await interaction.response.send_message("The bot is not connected to a voice channel.",
+                                                    ephemeral=True)
+            
+    @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
+    async def stop(self, interaction: discord.Interaction):
+        """Stops playing"""
+        voice_client: discord.VoiceClient = interaction.guild.voice_client
+        if voice_client:
+            if voice_client.is_playing():
+                await voice_client.stop()
+                await interaction.response.send_message('Stopped')
+            else:
+                await interaction.response.send_message('Bot is not playing', ephemeral=True)
+        else:
+            await interaction.response.send_message("The bot is not connected to a voice channel.",
+                                                    ephemeral=True)
+            
+    @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
+    async def pause(self, interaction: discord.Interaction):
+        """Pauses playing"""
+        voice_client: discord.VoiceClient = interaction.guild.voice_client
+        if voice_client:
+            if voice_client.is_playing():
+                await voice_client.pause()
+                await interaction.response.send_message('Paused')
+            else:
+                await interaction.response.send_message('Bot is not playing', ephemeral=True)
+        else:
+            await interaction.response.send_message("The bot is not connected to a voice channel.",
+                                                    ephemeral=True)
+            
+    @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
+    async def pause(self, interaction: discord.Interaction):
+        """Resumes playing"""
+        voice_client: discord.VoiceClient = interaction.guild.voice_client
+        if voice_client:
+            if voice_client.is_paused():
+                await voice_client.resume()
+                await interaction.response.send_message('Resumed')
+            else:
+                await interaction.response.send_message('Bot is not paused', ephemeral=True)
+        else:
+            await interaction.response.send_message("The bot is not connected to a voice channel.",
+                                                    ephemeral=True)
+
+    @app_commands.command()
+    @app_commands.checks.bot_has_permissions(connect=True, speak=True)
+    async def stop(self, interaction: discord.Interaction):
+        """Leaves a voice channel"""
+        voice_client: discord.VoiceClient = interaction.guild.voice_client
+        if voice_client:
+            await voice_client.stop()
             await interaction.response.send_message('Disonnected')
         else:
             await interaction.response.send_message("The bot is not connected to a voice channel.",
