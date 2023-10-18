@@ -179,16 +179,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 
 		await ch.send(embed=embed)
 
-	@commands.command()
-	@commands.guild_only()
-	async def force_leave_vc(self, ctx: commands.Context):
-		'''
-		Force leaves bot from all VC
-		'''
-		clients = self.bot.voice_clients
-		for client in clients:
-			await client.disconnect()
-
 
 async def setup(bot):
 	await bot.add_cog(DevCommands(bot), guild=MY_GUILD)
