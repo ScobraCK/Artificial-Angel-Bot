@@ -31,7 +31,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
     @app_commands.checks.bot_has_permissions(connect=True, speak=True)
     async def joinvc(self, interaction: discord.Interaction):
         """Joins a voice channel"""
-        if voice := interaction.message.author.voice:
+        if voice := interaction.guild.voice_client:
             await voice.voice_client.connect()
             await interaction.response.send_message('Connected')
         else:
