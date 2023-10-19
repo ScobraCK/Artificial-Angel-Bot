@@ -135,7 +135,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
                 source = discord.FFmpegPCMAudio(music_url, executable="ffmpeg")
                 source.read()
                 voice_client.play(source, after=None)
-                await interaction.response.send_message(f'Playing {song}')
+                await interaction.response.send_message(f'Playing {song} (Some songs may not exist and currently there are no checks)')
         else:
             await interaction.response.send_message("The bot is not connected to a voice channel.",
                                                     ephemeral=True)
