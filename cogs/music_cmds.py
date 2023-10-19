@@ -52,8 +52,12 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         """Leaves a voice channel"""
         voice_client: discord.VoiceClient = interaction.guild.voice_client
         if voice_client:
-            await voice_client.disconnect()
-            await interaction.response.send_message('Disonnected')
+            if voice_client.is_connected():
+                await voice_client.disconnect()
+                await interaction.response.send_message('Disonnected')
+            else:
+                voice_client.cleanup()
+                await interaction.response.send_message('Disonnected (cleanup)')
         else:
             await interaction.response.send_message("The bot is not connected to a voice channel.",
                                                     ephemeral=True)
