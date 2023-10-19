@@ -127,10 +127,15 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         voice_client: discord.VoiceClient = interaction.guild.voice_client
         
         if voice_client.is_connected():
-            source = discord.FFmpegPCMAudio(music_url, executable="ffmpeg")
-            source.read()
-            voice_client.play(source, after=None)
-            await interaction.response.send_message(f'Playing {song}')
+            if voice_client.is_playing():
+                await interaction.response.send_message("The bot is already playing a song. Use /stop to stop playing.", ephemeral=True)
+            elif voice_client.is_paused():
+                await interaction.response.send_message("The bot is paused while playing. Use /resume or /stop.", ephemeral=True)
+            else:                                    
+                source = discord.FFmpegPCMAudio(music_url, executable="ffmpeg")
+                source.read()
+                voice_client.play(source, after=None)
+                await interaction.response.send_message(f'Playing {song}')
         else:
             await interaction.response.send_message("The bot is not connected to a voice channel.",
                                                     ephemeral=True)
