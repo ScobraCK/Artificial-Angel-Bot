@@ -10,7 +10,7 @@ import load_env
 from master_data import MasterData
 from guilddb import GuildDB
 
-class MyBot(commands.Bot):  # include masterdata in the class
+class AABot(commands.Bot):  # include masterdata in the class
     def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity):
         super().__init__(command_prefix=command_prefix, intents=intents, owner_id=owner_id, activity=activity)
         self.masterdata = MasterData()
@@ -40,6 +40,6 @@ if __name__ == "__main__":
         name='you auto click',
         type=discord.ActivityType.watching)
     
-    bot = MyBot(command_prefix='!', intents=intents, owner_id=load_env.OWNER_ID, activity=activity)
+    bot = AABot(command_prefix='!', intents=intents, owner_id=load_env.OWNER_ID, activity=activity)
     bot.masterdata.load_all()  # preload main json data before running the bot
     asyncio.run(main())
