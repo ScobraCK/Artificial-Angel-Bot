@@ -45,8 +45,8 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
     @tasks.loop(time=cur_time)
     async def my_task(self):
         ch = self.bot.get_channel(LOG_CHANNEL)
-        msg = get_cur_time() + '\n'
-        msg += update_rankings(self.bot.gdb) 
+        ret_msg = update_rankings(self.bot.gdb) 
+        msg = f'{get_cur_time()}\n{ret_msg}'
         embed = discord.Embed(description=msg)
 
         await ch.send(embed=embed)
