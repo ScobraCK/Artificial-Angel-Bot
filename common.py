@@ -110,6 +110,7 @@ char_list = {
     'nina': 28,
     'dodge': 28,
     'mertillier': 29,
+    'mert': 29,
     'hakase': 29,
     'luke': 30,
     'garmr': 31,
