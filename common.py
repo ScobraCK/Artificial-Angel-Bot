@@ -139,6 +139,7 @@ char_list = {
     'lunalynn': 46,
     'the witch of snowy illusions': 46,
     'valeriede': 47,
+    'val': 47,
     'the witch of conflagration': 47,
     'aa': 48,
     'a.a.': 48,
