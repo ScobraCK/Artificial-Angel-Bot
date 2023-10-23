@@ -120,6 +120,16 @@ def fetch_guildlist(server: int, world: int):
         return data
     else:
         return None
+    
+def fetch_guildlist_all():
+    url = f"https://api.mentemori.icu/0/guild_ranking/latest"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        data = json.loads(resp.content.decode('utf-8'))
+        return data['data']
+    else:
+        return None
+    
 
 def fetch_worlddata():
     url = f"https://api.mentemori.icu/worlds"
@@ -137,24 +147,17 @@ def fetch_group_list(server):
     return data
 
 def update_rankings(gdb: GuildDB):
-    worlds = fetch_worlddata()
-    if worlds:
+    guild_data = fetch_guildlist_all()
+    if guild_data:
         try:
-            for world_data in worlds:
-                server = int(str(world_data['world_id'])[0])
-                world = int(str(world_data['world_id'])[1:])
-
-                if world_data['ranking'] == False:
-                    continue
-
-                data = fetch_guildlist(server, world)
-                if not data:
-                    continue
-                
-                guilds = data['data']['rankings']['bp']
+            for data in guild_data:
+                world_id = str(data['world_id'])
+                server = int(world_id[0])
+                world = int(world_id[1:])
+                guilds = data['rankings']['bp']
                 gdb.insert_guilds(guilds, server, world)
             return "Updated rankings"
         except Exception as e:
             return e
     else:
-        return "API fail"
+        return 'API fail'
