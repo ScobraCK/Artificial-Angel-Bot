@@ -206,7 +206,7 @@ def speed_text(speedtuple: Tuple[int, int], buff: int=0) -> Tuple[str, List]:
     '''
     output speed text for single character from speed tuple
     ''' 
-    text = f"{common.id_list[speedtuple[0]]} {speedtuple[1]*(1+buff/100):.0f}\n"
+    text = f"{common.id_list[speedtuple[0]]} {int(speedtuple[1]*(1+buff/100))}\n"
 
     return text
 
