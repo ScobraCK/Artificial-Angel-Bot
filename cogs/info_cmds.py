@@ -184,7 +184,7 @@ class Info(commands.Cog, name='Info Commands'):
             if world['server'] != current_server:
                 current_server = world['server']             
                 text.write(f'\n**{current_server.upper()}: **')
-            id = int(str(world['world_id'])[-2:])
+            id = int(str(world['world_id'])[-3:])  # world_id
             if world['temple']:
                 text.write(f' {id}')
 
