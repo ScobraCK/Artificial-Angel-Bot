@@ -6,7 +6,6 @@ class GuildData():
     world: int
     bp: int
     name: str
-    level: int
 
     def list_bp(self):
         return [self.bp, self.world, self.name]
@@ -21,7 +20,6 @@ class GuildDB():
             id varchar(12) PRIMARY KEY,
             name text,
             bp int,
-            level int,
             world int,
             server int)
         """)
@@ -77,8 +75,8 @@ class GuildDB():
         for guild in guilds:
             guild['world'] = world
             guild['server'] = server
-            self.cur.execute("INSERT OR REPLACE INTO guilds (id, name, bp, level, world, server)"
-                             "VALUES (:id, :name, :bp, :level, :world, :server)",
+            self.cur.execute("INSERT OR REPLACE INTO guilds (id, name, bp, world, server)"
+                             "VALUES (:id, :name, :bp, :world, :server)",
                              guild)
         self.con.commit()
 

@@ -173,8 +173,8 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		Updates guild rankings
 		'''
 		ch = self.bot.get_channel(LOG_CHANNEL)
-		msg = get_cur_time() + '\n'
-		msg += update_rankings(self.bot.gdb) 
+		res = update_rankings(self.bot.gdb)
+		msg = f'{get_cur_time()}\n{res}'
 		embed = discord.Embed(description=msg)
 
 		await ch.send(embed=embed)
