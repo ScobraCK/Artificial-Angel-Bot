@@ -171,7 +171,7 @@ class Info(commands.Cog, name='Info Commands'):
             )
         else:
             group_id = group_id[0]
-            rankings = self.bot.db.get_group_ranking(server.value, group_id)
+            rankings = self.bot.db.get_group_guild_ranking(server.value, group_id)
             start, end = self.bot.db.get_group_worlds(group_id)
             embed = discord.Embed(
                     title=f'Guild Rankings({server.name} {start}-{end})',
@@ -186,7 +186,7 @@ class Info(commands.Cog, name='Info Commands'):
     async def guildrankings(self, interaction: discord.Interaction, server: Region):
         '''Guild rankings prototype'''
     
-        sorted_guildlist = self.bot.db.get_server_ranking(server.value)
+        sorted_guildlist = self.bot.db.get_server_guild_ranking(server.value)
 
         embeds = []
         for i in range(0, 200, 50):  # top 100
