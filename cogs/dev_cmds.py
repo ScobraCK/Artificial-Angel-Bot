@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from load_env import MY_GUILD, LOG_CHANNEL
 from typing import Optional, Literal
-from guilddb import update_rankings
+from rankingdb import update_guild_rankings, update_player_rankings
 from timezones import get_cur_time
 
 def convert_cog_string(cog: str):
@@ -151,7 +151,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 
 	@commands.command()
 	@commands.guild_only()
-	async def update_group(
+	async def update_groups(
 		self,
 		ctx: commands.Context):
 		'''
@@ -159,25 +159,49 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
 		try:
-			self.bot.gdb.update_group(group_iter)
+			self.bot.db.update_group(group_iter)
 			await ctx.send(f"Updated world groups")
 		except Exception as e:
 			await ctx.send(f"Failed to update: {e}")
 
 	@commands.command()
 	@commands.guild_only()
-	async def update_ranking(
+	async def update_guilds(
 		self,
 		ctx: commands.Context):
 		'''
 		Updates guild rankings
 		'''
 		ch = self.bot.get_channel(LOG_CHANNEL)
-		res = update_rankings(self.bot.gdb)
+		
+		res, status = update_guild_rankings(self.bot.db)
 		msg = f'{get_cur_time()}\n{res}'
 		embed = discord.Embed(description=msg)
+		if status:
+			await ch.send(embed=embed)
+		else:
+			embed.description = f'{msg}\n<@395172008150958101>'
+			await ch.send(embed=embed)
 
-		await ch.send(embed=embed)
+	@commands.command()
+	@commands.guild_only()
+	async def update_players(
+		self,
+		ctx: commands.Context):
+		'''
+		Updates player rankings
+		'''
+		ch = self.bot.get_channel(LOG_CHANNEL)
+		
+		res, status = update_player_rankings(self.bot.db)
+		msg = f'{get_cur_time()}\n{res}'
+		embed = discord.Embed(description=msg)
+		if status:
+			await ch.send(embed=embed)
+		else:
+			embed.description = f'{msg}\n<@395172008150958101>'
+			await ch.send(embed=embed)
+	
 
 
 async def setup(bot):

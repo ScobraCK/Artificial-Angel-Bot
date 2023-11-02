@@ -1,9 +1,10 @@
 import datetime, discord
 from discord.ext import commands, tasks
 
-from guilddb import update_rankings
+from rankingdb import update_guild_rankings, update_player_rankings
 from load_env import LOG_CHANNEL
 from timezones import get_cur_time
+from main import AABot
 
 utc = datetime.timezone.utc
 
@@ -11,45 +12,35 @@ utc = datetime.timezone.utc
 cur_time = datetime.time(hour=13, tzinfo=utc)
 
 class TimerCog(commands.Cog, name = 'Timer Cog'):
-    def __init__(self, bot):
+    def __init__(self, bot: AABot):
         self.bot = bot
         self.my_task.start()
-        self.bot.block_guilddb = False
 
     async def cog_unload(self):
         self.my_task.cancel()
 
-    # async def cog_load(self):  # temporary measure to initiate
-    #     self.bot.block_guilddb = True
-    #     time.sleep(1)  # in case there is other use, need further error checking implemented
-
-    #     db = GuildDB()
-    #     worlds = fetch_worlddata()
-    #     for world_data in worlds:
-    #         server = int(str(world_data['world_id'])[0])
-    #         world = int(str(world_data['world_id'])[1:])
-
-    #         if world_data['ranking'] == False:
-    #             continue
-
-    #         data = fetch_guildlist(server, world)
-    #         if data['status'] != 200:
-    #             continue
-    #         print(world_data['world_id'])
-    #         guilds = data['data']['rankings']['bp']
-    #         db.insert_guilds(guilds, server, world)
-
-    #     db.close()
-    #     self.bot.block_guilddb = False
-
     @tasks.loop(time=cur_time)
     async def my_task(self):
         ch = self.bot.get_channel(LOG_CHANNEL)
-        res = update_rankings(self.bot.gdb)
-        msg = f'{get_cur_time()}\n{res}'
-        embed = discord.Embed(description=msg)
 
-        await ch.send(embed=embed)
+        res1, status1 = update_guild_rankings(self.bot.db)
+        msg1 = f'{get_cur_time()}\n{res1}'
+        embed1 = discord.Embed(description=msg1)
+        if status1:
+            await ch.send(embed=embed)
+        else:
+            embed1.description = f'{msg1}\n<@395172008150958101>'
+            await ch.send(embed=embed1)
+
+        res2, status2 = update_player_rankings(self.bot.db)
+        msg2 = f'{get_cur_time()}\n{res2}'
+        embed = discord.Embed(description=msg2)
+        if status2:
+            await ch.send(embed=embed)
+        else:
+            embed.description = f'{msg2}\n<@395172008150958101>'
+            await ch.send(embed=embed)
+             
      
 async def setup(bot):
 	await bot.add_cog(TimerCog(bot))

@@ -5,12 +5,14 @@ from discord.ext import commands
 import requests, json
 from enum import Enum
 from my_view import Button_View
-from typing import List
+from typing import List, Optional
 from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
 
-from guilddb import fetch_group_list
+from rankingdb import fetch_group_list
+from main import AABot
+from quests import convert_to_stage
 
 class Region(Enum): #temp solution
     JP = 1
@@ -19,6 +21,12 @@ class Region(Enum): #temp solution
     NA = 4
     EU = 5
     GL = 6
+
+class RankingType(Enum):
+    BP = 'bp'
+    # Rank = 'rank'
+    Quest = 'quest'
+    # Tower = 'tower'
 
 temple_type = {
     1: 'Green Orb',
@@ -38,6 +46,39 @@ def guildlist_to_ascii(guild_list: List[dict], start: int=1):
         body=ranking,
         style=PresetStyle.thin_compact
     )
+    return output
+
+def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
+    ranking = []
+    if server:
+        for rank, player in enumerate(players, start):
+            playerdata = [rank] + list(player)
+            # quest
+            if quest_id := playerdata[-2]:
+                playerdata[-2] = convert_to_stage(quest_id) if quest_id else None  
+            ranking.append(playerdata)
+        
+        output = t2a(
+            header=["Rank", "World", 'BP', 'Quest', "Name"],
+            body=ranking,
+            style=PresetStyle.thin_compact
+        )
+
+    else:
+        for rank, player in enumerate(players, start):
+            playerdata = [rank] + list(player)
+            # server
+            playerdata[1] = Region(playerdata[1]).name
+            # quest
+            if quest_id := playerdata[-2]:
+                playerdata[-2] = convert_to_stage(quest_id) if quest_id else None  
+            ranking.append(playerdata)
+        
+        output = t2a(
+            header=["Rank", 'Server', "World", 'BP', 'Quest', "Name"],
+            body=ranking,
+            style=PresetStyle.thin_compact
+        )
     return output
 
 def in_range(num, start, end):
@@ -65,7 +106,7 @@ async def group_autocomplete(
 class Info(commands.Cog, name='Info Commands'):
     '''Commands that fetch ingame info'''
 
-    def __init__(self, bot):
+    def __init__(self, bot: AABot):
         self.bot = bot
     
     @app_commands.command()
@@ -119,9 +160,9 @@ class Info(commands.Cog, name='Info Commands'):
                             group: str):
         '''Guild rankings by group'''
         if group.isnumeric():
-            group_id = self.bot.gdb.get_group_id(server.value, int(group))
+            group_id = self.bot.db.get_group_id(server.value, int(group))
         else:
-            group_id = self.bot.gdb.get_group_id(server.value, int(group.split('-')[0]))
+            group_id = self.bot.db.get_group_id(server.value, int(group.split('-')[0]))
 
         if group_id is None:
             await interaction.response.send_message(
@@ -130,8 +171,8 @@ class Info(commands.Cog, name='Info Commands'):
             )
         else:
             group_id = group_id[0]
-            rankings = self.bot.gdb.get_group_ranking(server.value, group_id)
-            start, end = self.bot.gdb.get_group_worlds(group_id)
+            rankings = self.bot.db.get_group_ranking(server.value, group_id)
+            start, end = self.bot.db.get_group_worlds(group_id)
             embed = discord.Embed(
                     title=f'Guild Rankings({server.name} {start}-{end})',
                     description=f'```{guildlist_to_ascii(rankings)}```',
@@ -145,7 +186,7 @@ class Info(commands.Cog, name='Info Commands'):
     async def guildrankings(self, interaction: discord.Interaction, server: Region):
         '''Guild rankings prototype'''
     
-        sorted_guildlist = self.bot.gdb.get_server_ranking(server.value)
+        sorted_guildlist = self.bot.db.get_server_ranking(server.value)
 
         embeds = []
         for i in range(0, 200, 50):  # top 100
@@ -155,6 +196,44 @@ class Info(commands.Cog, name='Info Commands'):
             text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
             embed = discord.Embed(
                 title=f'Top Guild Rankings by BP({server.name})',
+                description=text,
+                colour=discord.Colour.orange()
+            )
+            embeds.append(embed)
+
+        user = interaction.user
+        view = Button_View(user, embeds)
+        await view.btn_update()
+
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
+
+    @app_commands.command()
+    @app_commands.describe(
+        server='The region your world is in. Leave empty for all servers',
+        category='The ranking category. Default BP')
+    async def playerrankings(self, 
+                             interaction: discord.Interaction, 
+                             server: Optional[Region],
+                             category: Optional[RankingType] = RankingType.BP):
+        '''Player rankings for server'''
+        
+        if server:
+            players = self.bot.db.get_server_player_ranking(server.value, category.value)
+            servername = server.name
+        else:
+            players = self.bot.db.get_all_player_ranking(category.value)
+            servername = 'All Servers'
+
+        embeds = []
+        for i in range(0, len(players), 50):  # top 100
+            if i+50 > len(players):
+                break
+
+            text = f'```{playerlist_to_ascii(players[i:i+50], i+1, server)}```'
+            embed = discord.Embed(
+                title=f'Top Player Rankings by {category.name}({servername})',
                 description=text,
                 colour=discord.Colour.orange()
             )
