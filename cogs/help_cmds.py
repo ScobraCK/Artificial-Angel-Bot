@@ -26,7 +26,7 @@ def get_param_text(param: app_commands.Parameter)->str:
     if (choices := param.choices):
         param_text += f"Choices: *{', '.join(map(lambda x: x.name, choices))}*\n"
         if (default := param.default) is not MISSING:
-            param_text += f"Default: {default}"
+            param_text += f"Default: {default}\n"
     return param_text
 
 
