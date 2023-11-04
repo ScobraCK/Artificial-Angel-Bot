@@ -31,7 +31,8 @@ class MememoriDB():
                          policy int,
                          description text,
                          free_join int,
-                         bp_requirement int
+                         bp_requirement int,
+                         timestamp datetime
             )
         """)
 
@@ -65,7 +66,8 @@ class MememoriDB():
                          guild_id int,
                          guild_join_time int,
                          guild_position int,
-                         prev_legend_league_class int
+                         prev_legend_league_class int,
+                         timestamp datetime
             )
         """)
         # 1 = Master, 2 = Chief, 3 = Member
@@ -91,34 +93,36 @@ class MememoriDB():
                     (group_id, server, world_list[0], world_list[-1]))
         self.con.commit()
 
-    def _insert_guild(self, server, world, guild_data):
+    def _insert_guild(self, server, world, guild_data, timestamp):
         # does not commit
         guild_data['server'] = server
         guild_data['world'] = world
+        guild_data['timestamp'] = timestamp
         self.cur.execute(
             "INSERT OR REPLACE INTO guilds"
-            "(id, server, world, name, bp, level, stock, exp, num_members, leader_id, policy, description, free_join, bp_requirement)"
-            "VALUES (:id, :server, :world, :name, :bp, :level, :stock, :exp, :num_members, :leader_id, :policy, :description, :free_join, :bp_requirement)",
+            "(id, server, world, name, bp, level, stock, exp, num_members, leader_id, policy, description, free_join, bp_requirement, timestamp)"
+            "VALUES (:id, :server, :world, :name, :bp, :level, :stock, :exp, :num_members, :leader_id, :policy, :description, :free_join, :bp_requirement, :timestamp)",
             guild_data)
 
-    def update_guilds(self, server, world, guild_info: dict):
+    def update_guilds(self, server, world, guild_info: dict, timestamp):
         for guild_data in guild_info.values():
-            self._insert_guild(server, world, guild_data)
+            self._insert_guild(server, world, guild_data, timestamp)
         self.con.commit()
 
-    def _insert_player(self, server, world, player_data):
+    def _insert_player(self, server, world, player_data, timestamp):
         # does not commit
         player_data['server'] = server
         player_data['world'] = world
+        player_data['timestamp'] = timestamp
         self.cur.execute(
             "INSERT OR REPLACE INTO players"
-            "(id, server, world, name, bp, rank, quest_id, tower_id, icon_id, guild_id, guild_join_time, guild_position, prev_legend_league_class)"
-            "VALUES (:id, :server, :world, :name, :bp, :rank, :quest_id, :tower_id, :icon_id, :guild_id, :guild_join_time, :guild_position, :prev_legend_league_class)",
+            "(id, server, world, name, bp, rank, quest_id, tower_id, icon_id, guild_id, guild_join_time, guild_position, prev_legend_league_class, timestamp)"
+            "VALUES (:id, :server, :world, :name, :bp, :rank, :quest_id, :tower_id, :icon_id, :guild_id, :guild_join_time, :guild_position, :prev_legend_league_class, :timestamp)",
             player_data)
 
-    def update_players(self, server, world, player_info: dict):
+    def update_players(self, server, world, player_info: dict, timestamp):
         for player_data in player_info.values():
-            self._insert_player(server, world, player_data)
+            self._insert_player(server, world, player_data, timestamp)
         self.con.commit()
     
     # READ
@@ -181,6 +185,7 @@ class MememoriDB():
     def close(self):
         self.con.close()
 
+# UNUSED
 def fetch_guildlist(server: int, world: int):
     world_id = f"{server}{world:03}"
     url = f"https://api.mentemori.icu/{world_id}/guild_ranking/latest"
@@ -196,7 +201,7 @@ def fetch_guilds():
     resp = requests.get(url)
     if resp.status_code == 200:
         data = json.loads(resp.content.decode('utf-8'))
-        return data['data']
+        return data['data'], data['timestamp']
     else:
         return None
     
@@ -205,7 +210,7 @@ def fetch_players():
     resp = requests.get(url)
     if resp.status_code == 200:
         data = json.loads(resp.content.decode('utf-8'))
-        return data['data']
+        return data['data'], data['timestamp']
     else:
         return None    
     
@@ -229,13 +234,13 @@ def split_world_id(world_id):
     return int(world_id[0]), int(world_id[1:])
 
 def update_guild_rankings(gdb: MememoriDB):
-    guild_data = fetch_guilds()
+    guild_data, timestamp = fetch_guilds()
     if guild_data:
         try:
             for data in guild_data:
                 server, world = split_world_id(data['world_id'])
                 guilds = data['guild_info']
-                gdb.update_guilds(server, world, guilds)
+                gdb.update_guilds(server, world, guilds, timestamp)
             return "Updated guild rankings", True
         except Exception as e:
             return e, False
@@ -243,13 +248,13 @@ def update_guild_rankings(gdb: MememoriDB):
         return 'API fail', False
 
 def update_player_rankings(gdb: MememoriDB):
-    player_data = fetch_players()
+    player_data, timestamp = fetch_players()
     if player_data:
         try:
             for data in player_data:
                 server, world = split_world_id(data['world_id'])
                 player_info = data['player_info']
-                gdb.update_players(server, world, player_info)
+                gdb.update_players(server, world, player_info, timestamp)
             return "Updated player rankings", True
         except Exception as e:
             return e, False
