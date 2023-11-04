@@ -176,12 +176,11 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		
 		res, status = update_guild_rankings(self.bot.db)
 		msg = f'{get_cur_time()}\n{res}'
-		embed = discord.Embed(description=msg)
 		if status:
-			await ch.send(embed=embed)
+			await ch.send(msg)
 		else:
-			embed.description = f'{msg}\n<@395172008150958101>'
-			await ch.send(embed=embed)
+			msg = f'{msg}\n<@395172008150958101>'
+			await ch.send(msg)
 
 	@commands.command()
 	@commands.guild_only()
@@ -195,12 +194,11 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		
 		res, status = update_player_rankings(self.bot.db)
 		msg = f'{get_cur_time()}\n{res}'
-		embed = discord.Embed(description=msg)
 		if status:
-			await ch.send(embed=embed)
+			await ch.send(msg)
 		else:
-			embed.description = f'{msg}\n<@395172008150958101>'
-			await ch.send(embed=embed)
+			msg = f'{msg}\n<@395172008150958101>'
+			await ch.send(msg)
 	
 
 

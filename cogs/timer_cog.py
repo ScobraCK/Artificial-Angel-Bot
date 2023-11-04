@@ -27,13 +27,12 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         res2, status2 = update_player_rankings(self.bot.db)
         
         msg = f'{get_cur_time()}\n{res1}\n{res2}'
-        embed = discord.Embed(description=msg)
 
         if status1 and status2:
-            await ch.send(embed=embed)
+            await ch.send(msg)
         else:
-            embed.description = f'{msg}\n<@395172008150958101>'
-            await ch.send(embed=embed)
+            msg = f'{msg}\n<@395172008150958101>'
+            await ch.send(msg)
 
              
      
