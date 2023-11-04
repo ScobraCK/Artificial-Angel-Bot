@@ -164,7 +164,7 @@ class MememoriDB():
     def get_server_player_ranking(self, server, order='bp'):
         '''order can be bp, quest'''
         res = self.cur.execute(
-            f"SELECT world, bp, quest, name FROM players WHERE server = (?) ORDER BY {order} DESC", (server, )
+            f"SELECT world, bp, quest_id, name FROM players WHERE server = (?) ORDER BY {order} DESC", (server, )
         )
         return res.fetchmany(200)        
     
@@ -174,7 +174,7 @@ class MememoriDB():
         None defaults to bp
         '''
         res = self.cur.execute(
-            f"SELECT server, world, bp, quest, name FROM players ORDER BY {order} DESC"
+            f"SELECT server, world, bp, quest_id, name FROM players ORDER BY {order} DESC"
         )
         return res.fetchmany(500)
 
