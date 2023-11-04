@@ -18,11 +18,21 @@ class MememoriDB():
         
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS guilds (
-            id varchar(12) PRIMARY KEY,
-            name text,
-            bp int,
-            world int,
-            server int)
+                         id varchar(12) PRIMARY KEY,          
+                         server int,           
+                         world int,
+                         name text,           
+                         bp int,
+                         level int,
+                         stock int,
+                         exp int,
+                         num_members int,
+                         leader_id int,
+                         policy int,
+                         description text,
+                         free_join int,
+                         bp_requirement int
+            )
         """)
 
         self.cur.execute("""
@@ -43,15 +53,23 @@ class MememoriDB():
 
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS players (
-            id int PRIMARY KEY,
-            server int,
-            world int,
-            name int,
-            bp int,
-            rank int,
-            quest int,
-            tower int)
+                         id varchar(12) PRIMARY KEY,
+                         server int,
+                         world int,
+                         name text,
+                         bp int,
+                         rank int,
+                         quest_id int,
+                         tower_id int,
+                         icon_id int,
+                         guild_id int,
+                         guild_join_time int,
+                         guild_position int,
+                         prev_legend_league_class int
+            )
         """)
+        # 1 = Master, 2 = Chief, 3 = Member
+        # 1 = Chevalier, 2 = Paladin, 3 = Grand Cross, 4 = Royal Rank, 5 = Legend Rank, 6 = World Ruler
 
     # INSERT
 
@@ -73,41 +91,34 @@ class MememoriDB():
                     (group_id, server, world_list[0], world_list[-1]))
         self.con.commit()
 
-    def insert_guilds(self, guilds: List[dict], server: int, world: int):
-        for guild in guilds:
-            guild['world'] = world
-            guild['server'] = server
-            self.cur.execute("INSERT OR REPLACE INTO guilds (id, name, bp, world, server)"
-                             "VALUES (:id, :name, :bp, :world, :server)",
-                             guild)
+    def _insert_guild(self, server, world, guild_data):
+        # does not commit
+        guild_data['server'] = server
+        guild_data['world'] = world
+        self.cur.execute(
+            "INSERT OR REPLACE INTO guilds"
+            "(id, server, world, name, bp, level, stock, exp, num_members, leader_id, policy, description, free_join, bp_requirement)"
+            "VALUES (:id, :server, :world, :name, :bp, :level, :stock, :exp, :num_members, :leader_id, :policy, :description, :free_join, :bp_requirement)",
+            guild_data)
+
+    def update_guilds(self, server, world, guild_info: dict):
+        for guild_data in guild_info.values():
+            self._insert_guild(server, world, guild_data)
         self.con.commit()
 
-    def update_players(self, server, world, rankings):
-        # update bp + name update
-        for player in rankings['bp']:
-            self.cur.execute("INSERT OR REPLACE INTO players (id, server, world, name, bp)"
-                            "VALUES (?, ?, ?, ?, ?)"
-                            "ON CONFLICT(id) DO UPDATE SET name=excluded.name, bp=excluded.bp",
-                            (player['id'], server, world, player['name'], player['bp']))
-        # update rank
-        for player in rankings['rank']:
-            self.cur.execute("INSERT OR REPLACE INTO players (id, server, world, name, rank)"
-                            "VALUES (?, ?, ?, ?, ?)"
-                            "ON CONFLICT(id) DO UPDATE SET rank=excluded.rank",
-                            (player['id'], server, world, player['name'], player['rank']))
-        # update quest
-        for player in rankings['quest']:
-            self.cur.execute("INSERT OR REPLACE INTO players (id, server, world, name, quest)"
-                            "VALUES (?, ?, ?, ?, ?)"
-                            "ON CONFLICT(id) DO UPDATE SET quest=excluded.quest",
-                            (player['id'], server, world, player['name'], player['quest_id']))
-        # update tower
-        for player in rankings['tower']:
-            self.cur.execute("INSERT OR REPLACE INTO players (id, server, world, name, tower)"
-                            "VALUES (?, ?, ?, ?, ?)"
-                            "ON CONFLICT(id) DO UPDATE SET tower=excluded.tower",
-                            (player['id'], server, world, player['name'], player['tower_id']))
-        
+    def _insert_player(self, server, world, player_data):
+        # does not commit
+        player_data['server'] = server
+        player_data['world'] = world
+        self.cur.execute(
+            "INSERT OR REPLACE INTO players"
+            "(id, server, world, name, bp, rank, quest_id, tower_id, icon_id, guild_id, guild_join_time, guild_position, prev_legend_league_class)"
+            "VALUES (:id, :server, :world, :name, :bp, :rank, :quest_id, :tower_id, :icon_id, :guild_id, :guild_join_time, :guild_position, :prev_legend_league_class)",
+            player_data)
+
+    def update_players(self, server, world, player_info: dict):
+        for player_data in player_info.values():
+            self._insert_player(server, world, player_data)
         self.con.commit()
     
     # READ
@@ -180,7 +191,7 @@ def fetch_guildlist(server: int, world: int):
     else:
         return None
     
-def fetch_guildlist_all():
+def fetch_guilds():
     url = f"https://api.mentemori.icu/0/guild_ranking/latest"
     resp = requests.get(url)
     if resp.status_code == 200:
@@ -189,7 +200,7 @@ def fetch_guildlist_all():
     else:
         return None
     
-def fetch_player_ranking_all():
+def fetch_players():
     url = f"https://api.mentemori.icu/0/player_ranking/latest"
     resp = requests.get(url)
     if resp.status_code == 200:
@@ -213,16 +224,18 @@ def fetch_group_list(server):
     db.close()
     return data
 
+def split_world_id(world_id):
+    world_id = str(world_id)
+    return int(world_id[0]), int(world_id[1:])
+
 def update_guild_rankings(gdb: MememoriDB):
-    guild_data = fetch_guildlist_all()
+    guild_data = fetch_guilds()
     if guild_data:
         try:
             for data in guild_data:
-                world_id = str(data['world_id'])
-                server = int(world_id[0])
-                world = int(world_id[1:])
-                guilds = data['rankings']['bp']
-                gdb.insert_guilds(guilds, server, world)
+                server, world = split_world_id(data['world_id'])
+                guilds = data['guild_info']
+                gdb.update_guilds(server, world, guilds)
             return "Updated guild rankings", True
         except Exception as e:
             return e, False
@@ -230,15 +243,13 @@ def update_guild_rankings(gdb: MememoriDB):
         return 'API fail', False
 
 def update_player_rankings(gdb: MememoriDB):
-    player_data = fetch_player_ranking_all()
+    player_data = fetch_players()
     if player_data:
         try:
             for data in player_data:
-                world_id = str(data['world_id'])
-                server = int(world_id[0])
-                world = int(world_id[1:])
-                rankings = data['rankings']
-                gdb.update_players(server, world, rankings)
+                server, world = split_world_id(data['world_id'])
+                player_info = data['player_info']
+                gdb.update_players(server, world, player_info)
             return "Updated player rankings", True
         except Exception as e:
             return e, False
