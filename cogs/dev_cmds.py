@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from load_env import MY_GUILD, LOG_CHANNEL
 from typing import Optional, Literal
-from rankingdb import update_guild_rankings, update_player_rankings
+from mementodb import update_guild_rankings, update_player_rankings
 from timezones import get_cur_time
 
 def convert_cog_string(cog: str):

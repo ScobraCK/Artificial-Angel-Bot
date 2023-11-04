@@ -10,7 +10,7 @@ from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
 
-from rankingdb import fetch_group_list
+from mementodb import fetch_group_list
 from main import AABot
 from quests import convert_to_stage
 

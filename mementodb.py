@@ -13,7 +13,7 @@ class GuildData():
 
 class MememoriDB():
     def __init__(self) -> None:
-        self.con = sqlite3.connect('ranking.db')
+        self.con = sqlite3.connect('memento.db')
         self.cur = self.con.cursor()
         
         self.cur.execute("""

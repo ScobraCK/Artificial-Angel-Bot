@@ -1,7 +1,7 @@
 import datetime, discord
 from discord.ext import commands, tasks
 
-from rankingdb import update_guild_rankings, update_player_rankings
+from mementodb import update_guild_rankings, update_player_rankings
 from load_env import LOG_CHANNEL
 from timezones import get_cur_time
 from main import AABot
