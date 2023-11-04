@@ -8,7 +8,7 @@ import asyncio
 
 import load_env
 from master_data import MasterData
-from rankingdb import MememoriDB
+from mementodb import MememoriDB
 
 class AABot(commands.Bot):  # include masterdata in the class
     def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity):
