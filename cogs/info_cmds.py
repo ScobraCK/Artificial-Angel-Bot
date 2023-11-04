@@ -174,7 +174,7 @@ class Info(commands.Cog, name='Info Commands'):
             rankings = self.bot.db.get_group_guild_ranking(server.value, group_id)
             start, end = self.bot.db.get_group_worlds(group_id)
             embed = discord.Embed(
-                    title=f'Guild Rankings({server.name} {start}-{end})',
+                    title=f'Guild Rankings ({server.name} {start}-{end})',
                     description=f'```{guildlist_to_ascii(rankings)}```',
                     colour=discord.Colour.orange()
                 )
@@ -195,7 +195,7 @@ class Info(commands.Cog, name='Info Commands'):
 
             text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
             embed = discord.Embed(
-                title=f'Top Guild Rankings by BP({server.name})',
+                title=f'Top Guild Rankings by BP ({server.name})',
                 description=text,
                 colour=discord.Colour.orange()
             )
@@ -233,7 +233,7 @@ class Info(commands.Cog, name='Info Commands'):
 
             text = f'```{playerlist_to_ascii(players[i:i+50], i+1, server)}```'
             embed = discord.Embed(
-                title=f'Top Player Rankings by {category.name}({servername})',
+                title=f'Top Player Rankings by {category.name} ({servername})',
                 description=text,
                 colour=discord.Colour.orange()
             )
