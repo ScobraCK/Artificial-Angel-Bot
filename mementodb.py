@@ -58,6 +58,7 @@ class MememoriDB():
                          server int,
                          world int,
                          name text,
+                         auto_bp int,
                          bp int,
                          rank int,
                          quest_id int,
@@ -116,13 +117,19 @@ class MememoriDB():
         player_data['timestamp'] = timestamp
         self.cur.execute(
             "INSERT OR REPLACE INTO players"
-            "(id, server, world, name, bp, rank, quest_id, tower_id, icon_id, guild_id, guild_join_time, guild_position, prev_legend_league_class, timestamp)"
+            "(id, server, world, name, auto_bp, rank, quest_id, tower_id, icon_id, guild_id, guild_join_time, guild_position, prev_legend_league_class, timestamp)"
             "VALUES (:id, :server, :world, :name, :bp, :rank, :quest_id, :tower_id, :icon_id, :guild_id, :guild_join_time, :guild_position, :prev_legend_league_class, :timestamp)",
             player_data)
 
-    def update_players(self, server, world, player_info: dict, timestamp):
+    def update_players(self, server, world, player_info: dict, bp_ranking, timestamp):
         for player_data in player_info.values():
             self._insert_player(server, world, player_data, timestamp)
+        for bp in bp_ranking:
+            self.cur.execute(
+                "INSERT OR REPLACE INTO players (id, name, bp)"
+                "VALUES (:id, :name, :bp)"
+                "ON CONFLICT(id) DO UPDATE SET bp=excluded.bp",
+                bp)
         self.con.commit()
     
     # READ
@@ -254,7 +261,8 @@ def update_player_rankings(gdb: MememoriDB):
             for data in player_data:
                 server, world = split_world_id(data['world_id'])
                 player_info = data['player_info']
-                gdb.update_players(server, world, player_info, timestamp)
+                bp_ranking = data['rankings']['bp']
+                gdb.update_players(server, world, player_info, bp_ranking, timestamp)
             return "Updated player rankings", True
         except Exception as e:
             return e, False
