@@ -72,6 +72,7 @@ id_list = {
     70: 'Sabrina(Summer)',
     71: 'Moddey(Summer)',
     72: 'Cordie(Yukata)',
+    73: 'Amour(Xmas)',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -205,6 +206,12 @@ char_list = {
     'scordie': 72,
     'ycordie': 72,
     'cordie2': 72,
+    'holy nights gift': 73,
+    'ccamour': 73,
+    'xmas amour': 73,
+    'santa amour': 73,
+    'amour2': 73,
+    'christmas amour': 73,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -273,6 +280,7 @@ char_list = {
     '墓守の夏休み':71,
     '水着モーザ': 71,
     '夏の残響コルディ': 72,
+    '聖夜アモール': 73,
 }
 
 ############
