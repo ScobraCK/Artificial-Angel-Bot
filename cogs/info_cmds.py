@@ -25,7 +25,7 @@ class Region(Enum): #temp solution
 class RankingType(Enum):
     BP = 'bp'
     # Rank = 'rank'
-    Quest = 'quest'
+    Quest = 'quest_id'
     # Tower = 'tower'
 
 temple_type = {
