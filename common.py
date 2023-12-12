@@ -73,6 +73,7 @@ id_list = {
     71: 'Moddey(Summer)',
     72: 'Cordie(Yukata)',
     73: 'Amour(Xmas)',
+    74: 'Tropon(Xmas)',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -212,6 +213,16 @@ char_list = {
     'santa amour': 73,
     'amour2': 73,
     'christmas amour': 73,
+    'xamour': 73,
+    'holy nights prayer': 74,
+    'cctropon': 74,
+    'xmas tropon': 74,
+    'reindeer tropon': 74,
+    'tropon2': 74,
+    'christmas tropon': 74,
+    'xtropon': 74,    
+    'lolipon': 74, 
+    'stare': 74,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
