@@ -147,6 +147,7 @@ char_list = {
     'alfred': 45,
     'the witch of longinus': 45,
     'qlipha1': 45,
+    'pope': 45,
     'lunalynn': 46,
     'the witch of snowy illusions': 46,
     'qlipha9': 46,
