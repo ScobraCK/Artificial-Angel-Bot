@@ -67,6 +67,7 @@ id_list = {
     60: 'Fia',
     61: 'Illya(SR)',
     62: 'Priscilla',
+    66: 'Iris(SR)',
     67: 'Richesse',
     68: 'Fenny',
     70: 'Sabrina(Summer)',
