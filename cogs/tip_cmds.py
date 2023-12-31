@@ -195,42 +195,46 @@ class Tips(commands.Cog, name='Other Commands'):
             await interaction.response.send_message(
                 f"startlevel should be lower than baselevel. Got `{startlevel}` and `{endlevel}`.",
                 ephemeral=True
-            )
-
-        elif endbase > 500:
-            await interaction.response.send_message(
-                "level should be between 240 and 500.",
-                ephemeral=True
-            )        
+            )       
 
         else:
-            link_data_MB = self.bot.masterdata.get_MB_iter("LevelLinkMB")
-            link_iter = iter(link_data_MB)
-            level_data = dropwhile(lambda x: level_predicate(x, startbase, startsub), link_iter)
-            total_gold = 0
-            total_gorb = 0
-            total_rorb = 0
-            for level in level_data:
-                if level['PartyLevel'] == endbase and level['PartySubLevel'] == endsub:
-                    break
-                costs = level['RequiredLevelUpItems']
-                total_gold += costs[0]["ItemCount"]  # gold
-                total_gorb += costs[1]["ItemCount"]  # green orbs
-                if len(costs) == 3:
-                    total_rorb += costs[2]["ItemCount"]  # red orbs               
+            link_data_MB = self.bot.masterdata.get_MB_iter("LevelLinkMB")                
+            link_data_list = list(link_data_MB)
             
-            embed = discord.Embed(
-                title='Level Link Costs',
-                description=(
-                    f"**__{startbase}.{startsub} -> {endbase}.{endsub}__**\n"
-                    f"Gold: {total_gold:,d}\n"
-                    f"Green Orbs: {total_gorb:,d}\n"
-                    f"Red Orbs: {total_rorb:,d}\n"
-                ),
-                color=discord.Color.dark_gold()
-            )
+            max_level = link_data_list[-1]['PartyLevel']
+            if endbase == max_level + 1:
+                endsub = 0
+            if startlevel > max_level or endbase > max_level+1:
+                await interaction.response.send_message(
+                    f"Max level is {max_level}.9",
+                    ephemeral=True
+                )
+            else:
+                level_data = dropwhile(lambda x: level_predicate(x, startbase, startsub), link_data_list)
+                total_gold = 0
+                total_gorb = 0
+                total_rorb = 0
+                for level in level_data:
+                    if level['PartyLevel'] == endbase and level['PartySubLevel'] == endsub:  # end
+                        break
+                    costs = level['RequiredLevelUpItems']
+                    total_gold += costs[0]["ItemCount"]  # gold
+                    total_gorb += costs[1]["ItemCount"]  # green orbs
+                    if len(costs) == 3:
+                        total_rorb += costs[2]["ItemCount"]  # red orbs      
+                
+                embed = discord.Embed(
+                    title='Level Link Costs',
+                    description=(
+                        f"**__{startbase}.{startsub} -> {endbase}.{endsub}__**\n"
+                        f"Gold: {total_gold:,d}\n"
+                        f"Green Orbs: {total_gorb:,d}\n"
+                        f"Red Orbs: {total_rorb:,d}\n"
+                    ),
+                    color=discord.Color.dark_gold()
+                )
 
-            await interaction.response.send_message(embed=embed)
+                await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
