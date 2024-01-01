@@ -113,7 +113,7 @@ def detailed_enemy_embed(master: MasterData, enemy: dict)->discord.Embed:
 
 def quest_embed(master: MasterData, quest_data, bp)->discord.Embed:
     embed = discord.Embed(
-        title=f"Stage {quests.convert_to_stage(quest_data['Id'])}",
+        title=f"Stage {quests.convert_to_stage(quest_data['Id'])} (ID: {quest_data['Id']})",
         description=(f"**BP:** {bp:,}\n"
                      f"**Daily red orb gain:** {quest_data['PotentialJewelPerDay']}"),
         color=discord.Colour.red()
