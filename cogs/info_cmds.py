@@ -48,6 +48,33 @@ def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     )
     return output
 
+def towerlist_to_ascii(players: List[dict], start: int=1, server=None):
+    ranking = []
+    if server:
+        for rank, player in enumerate(players, start):
+            playerdata = [rank] + list(player)
+            ranking.append(playerdata)
+        
+        output = t2a(
+            header=["Rank", "World", 'Floor', "Name"],
+            body=ranking,
+            style=PresetStyle.thin_compact
+        )
+
+    else:
+        for rank, player in enumerate(players, start):
+            playerdata = [rank] + list(player)
+            # server
+            playerdata[1] = Region(playerdata[1]).name
+            ranking.append(playerdata)
+        
+        output = t2a(
+            header=["Rank", 'Server', "World", 'Floor', "Name"],
+            body=ranking,
+            style=PresetStyle.thin_compact
+        )
+    return output
+
 def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
     ranking = []
     if server:
@@ -234,6 +261,42 @@ class Info(commands.Cog, name='Info Commands'):
             text = f'```{playerlist_to_ascii(players[i:i+50], i+1, server)}```'
             embed = discord.Embed(
                 title=f'Top Player Rankings by {category.name} ({servername})',
+                description=text,
+                colour=discord.Colour.orange()
+            )
+            embeds.append(embed)
+
+        user = interaction.user
+        view = Button_View(user, embeds)
+        await view.btn_update()
+
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
+        
+    @app_commands.command()
+    @app_commands.describe(
+        server='The region your world is in. Leave empty for all servers')
+    async def towerrankings(self, 
+                             interaction: discord.Interaction, 
+                             server: Optional[Region]):
+        '''Tower rankings (infinity only for now)'''
+        
+        if server:
+            players = self.bot.db.get_server_tower_ranking(server.value)
+            servername = server.name
+        else:
+            players = self.bot.db.get_all_tower_ranking(count=500)
+            servername = 'All Servers'
+            
+        embeds = []
+        for i in range(0, len(players), 50):
+            if i+50 > len(players):
+                break
+
+            text = f'```{towerlist_to_ascii(players[i:i+50], i+1, server)}```'
+            embed = discord.Embed(
+                title=f'Top Tower Rankings ({servername})',
                 description=text,
                 colour=discord.Colour.orange()
             )

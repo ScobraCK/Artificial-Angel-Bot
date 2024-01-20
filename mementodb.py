@@ -1,6 +1,12 @@
 import sqlite3, requests, json
-from typing import List
+from enum import Enum
 from dataclasses import dataclass
+
+class Towers(Enum):
+    Blue = 'tower_blue'
+    Red = 'tower_red'
+    Green = 'tower_green'
+    Yellow = 'tower_yellow'
 
 @dataclass
 class GuildData():
@@ -73,6 +79,15 @@ class MememoriDB():
         """)
         # 1 = Master, 2 = Chief, 3 = Member
         # 1 = Chevalier, 2 = Paladin, 3 = Grand Cross, 4 = Royal Rank, 5 = Legend Rank, 6 = World Ruler
+        
+        for tower_type in Towers:
+            self.cur.execute(f"""
+                             CREATE TABLE IF NOT EXISTS {tower_type.value} (
+                                 id varchar(12) PRIMARY KEY,
+                                 tower_id int,
+                                 timestamp datetime
+                             )
+                             """)
 
     # INSERT
 
@@ -121,7 +136,9 @@ class MememoriDB():
             "VALUES (:id, :server, :world, :name, :bp, :rank, :quest_id, :tower_id, :icon_id, :guild_id, :guild_join_time, :guild_position, :prev_legend_league_class, :timestamp)",
             player_data)
 
-    def update_players(self, server, world, player_info: dict, bp_ranking, timestamp):
+    def update_players(self, server, world, data: dict, timestamp):
+        player_info = data['player_info']
+        bp_ranking = data['rankings']['bp']
         for player_data in player_info.values():
             self._insert_player(server, world, player_data, timestamp)
         for bp in bp_ranking:
@@ -130,6 +147,14 @@ class MememoriDB():
                 "VALUES (:id, :name, :bp)"
                 "ON CONFLICT(id) DO UPDATE SET bp=excluded.bp",
                 bp)
+            
+        for tower_type in Towers:
+            tower_type = tower_type.value
+            for ele_tower in data['rankings'][tower_type]:
+                self.cur.execute(
+                    f"INSERT OR REPLACE INTO {tower_type} (id, tower_id, timestamp)"
+                    "VALUES (?, ?, ?)",
+                    (ele_tower['id'], ele_tower['tower_id'], timestamp))
         self.con.commit()
     
     # READ
@@ -173,7 +198,7 @@ class MememoriDB():
         return res.fetchmany(50)
     
     def get_server_player_ranking(self, server, order='bp'):
-        '''order can be bp, quest'''
+        '''order can be bp, quest_id'''
         res = self.cur.execute(
             f"SELECT world, bp, quest_id, name FROM players WHERE server = (?) ORDER BY {order} DESC", (server, )
         )
@@ -181,13 +206,52 @@ class MememoriDB():
     
     def get_all_player_ranking(self, order='bp'):
         '''
-        order can be bp, quest
+        order can be bp, quest_id
         None defaults to bp
         '''
         res = self.cur.execute(
             f"SELECT server, world, bp, quest_id, name FROM players ORDER BY {order} DESC"
         )
         return res.fetchmany(500)
+    
+    def get_server_tower_ranking(self, server, tower_type: Towers=None, count=200):
+        '''
+        tower_type: Tower of Infinity is None
+        '''
+        if tower_type:
+            tower_type = tower_type.value
+            res = self.cur.execute(
+                f"SELECT players.world, {tower_type}.tower_id, players.name "
+                f"FROM {tower_type} "
+                f"JOIN players ON {tower_type}.id = players.id "
+                f"WHERE players.server = {server} "
+                f"ORDER BY {tower_type}.tower_id DESC"
+            )
+        else:
+            res = self.cur.execute(
+                f"SELECT world, tower_id, name FROM players WHERE server = {server} ORDER BY tower_id DESC"
+            )
+            
+        return res.fetchmany(200)
+    
+    def get_all_tower_ranking(self, tower_type: Towers=None, count=200):
+        '''
+        tower_type: Tower of Infinity is None
+        '''
+        if tower_type:
+            tower_type = tower_type.value
+            res = self.cur.execute(
+                f"SELECT players.server, players.world, {tower_type}.tower_id, players.name "
+                f"FROM {tower_type} "
+                f"JOIN players ON {tower_type}.id = players.id "
+                f"ORDER BY {tower_type}.tower_id DESC"
+            )
+        else:
+            res = self.cur.execute(
+                "SELECT server, world, tower_id, name FROM players ORDER BY tower_id DESC"
+            )
+            
+        return res.fetchmany(count)
 
     def close(self):
         self.con.close()
@@ -260,9 +324,7 @@ def update_player_rankings(gdb: MememoriDB):
         try:
             for data in player_data:
                 server, world = split_world_id(data['world_id'])
-                player_info = data['player_info']
-                bp_ranking = data['rankings']['bp']
-                gdb.update_players(server, world, player_info, bp_ranking, timestamp)
+                gdb.update_players(server, world, data, timestamp)
             return "Updated player rankings", True
         except Exception as e:
             return e, False
