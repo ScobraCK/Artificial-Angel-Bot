@@ -160,11 +160,13 @@ class Info(commands.Cog, name='Info Commands'):
             )
         else:
             quest_ids = data['data']['quest_ids']
-
-            text = f'Lv. {int(str(quest_ids[0])[1:4])}\n\n'
-            for quest in quest_ids:
-                quest_id_str = str(quest)
-                text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
+            if len(str(quest_ids[0])) != 6:
+                text = f"Events are not supported yet. Sorry."
+            else:
+                text = f'Lv. {int(str(quest_ids[0])[1:4])}\n\n'
+                for quest in quest_ids:
+                    quest_id_str = str(quest)
+                    text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
 
             time = str(data["timestamp"])
             text += f'\nLast update: <t:{time}:R>'
