@@ -338,12 +338,6 @@ class Info(commands.Cog, name='Info Commands'):
             description=text.getvalue()
         )
 
-        embed.set_footer(text=(
-            'Due to current code, the world may be listed here but not shown as an option. ' 
-            'Ignore the option choice and input the world in this case. '
-            'Regard the worlds listed here as most up-to-date.'
-        ))
-
         await interaction.response.send_message(embed=embed)
 
 
