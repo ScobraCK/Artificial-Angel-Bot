@@ -192,6 +192,7 @@ char_list = {
     'illya sr': 61,
     'qlipha0':61,
     'priscilla': 62,
+    'pris': 62,
     'paladea': 63,
     'witch of justice': 63,
     'hat': 64,
