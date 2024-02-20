@@ -319,7 +319,7 @@ class Info(commands.Cog, name='Info Commands'):
         url = f"https://api.mentemori.icu/worlds"
         resp = requests.get(url)
         data = json.loads(resp.text)
-        worlds = data['data']
+        worlds = sorted(data['data'], key=lambda x: x['world_id'])
 
         text = StringIO()
         
