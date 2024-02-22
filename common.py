@@ -80,6 +80,7 @@ id_list = {
     74: 'Tropon(Xmas)',
     76: 'Yuni',
     84: 'Liselotte',
+    85: 'Matilda',
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -244,6 +245,8 @@ char_list = {
     'yuni': 76,
     'liz':84,
     'liselotte': 84,
+    'matilda': 85,
+    'banana': 85,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -320,6 +323,7 @@ char_list = {
     '聖夜トロポン': 74,
     'ユニ': 76,
     'リズ': 84,
+    'マチルダ': 85,
 }
 
 ############
