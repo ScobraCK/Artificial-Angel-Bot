@@ -27,7 +27,7 @@ class Item():
         else:
             raise TypeError
 
-def get_item_name(master: MasterData, item: dict|str, lang: Optional[Language]='enUS')->str:
+def get_item_name(master: MasterData, item, lang: Optional[Language]='enUS')->str:
     '''
     gets item name from it's json data
     '''
