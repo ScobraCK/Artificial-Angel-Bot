@@ -499,6 +499,8 @@ class Search(commands.Cog, name='Search Commands'):
                 return
             character = find_id_from_name(tokens[0])
             equip_strings = tokens[1:]
+        else:
+            equip_strings = string.split()
         
         if type:
             slot = type.value.SlotType
