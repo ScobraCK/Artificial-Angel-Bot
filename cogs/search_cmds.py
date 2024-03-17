@@ -223,8 +223,8 @@ def equipment_help_embed():
         name="String Parameters",
         value=(
             "Provides details for equipment rarity, level, and upgrade level.\n"
-            "**Rarity**: D, C, B, A, S, SP(S+), R, SR, SSR, UR, LR. Lowercase is allowed.\n"
-            "**Level**: integer for the gear level. If the level doesn't exist will return error.\n"
+            "**Rarity**: D, C, B, A, S, SP(S+), R, SR, SSR, UR, LR. Lowercase is allowed.\n\n"
+            "**Level**: integer for the gear level. If the level doesn't exist will return error.\n\n"
             "**Upgrade Level**: Upgrade Level of gear. Integer after '+' prefix (Ex: +120). Will default to 0 if not provided. Additionally it is possible to omit the equipment level and write only the upgrade level. This will assume the upgrade level is the same as the equipment level.\n\n"
             "```Examples: \n"
             "ssr240+120 -> Rarity: SSR Level: 240 Upgrade Level:120\n"
@@ -237,8 +237,8 @@ def equipment_help_embed():
         name="Additional Parameters",
         value=(
             "Additional Information that may be required to find equipment.\n"
-            "Type: The type of equipment. If the character is specified this field is unneeded.\n"
-            "Character: Character name or id. Character is only used to find UW."
+            "**Type**: The type of equipment. If the character is specified this field is unneeded.\n\n"
+            "**Character**: Character name or id. Character is only used to find UW."
             "This field can be combined into input string by writing `[character] [string_parameter]` instead of a normal string paramater. Additionaly having a charcter field will overwrite any Type field parameters." 
         )
     )
