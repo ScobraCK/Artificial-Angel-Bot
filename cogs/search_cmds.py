@@ -5,12 +5,16 @@ from discord.ext import commands
 from collections import Counter
 
 import common
-import quests, items
+import quests
 from master_data import MasterData
 from helper import human_format as hf
-from emoji import emoji_list, soul_emoji
+from emoji import emoji_list, soul_emoji, rarity_emoji
 from my_view import My_View
-from items import get_item_name
+from items import get_item_name, get_reward_list
+from equipment import get_equipment_from_str, Equipment
+from cogs.char_cmds import IdTransformer
+from character import find_id_from_name
+from main import AABot
 
 # soul bonus
 def get_bonus_url(soul_list):
@@ -122,8 +126,8 @@ def quest_embed(master: MasterData, quest_data, bp)->discord.Embed:
     return embed
 
 def tower_embed(master: MasterData, quest_data: dict, tower_type: str, bp: int)->discord.Embed:
-    fixed_rewards = items.get_reward_list(master, quest_data['BattleRewardsConfirmed'])
-    first_time_rewards = items.get_reward_list(master, quest_data['BattleRewardsFirst'])
+    fixed_rewards = get_reward_list(master, quest_data['BattleRewardsConfirmed'])
+    first_time_rewards = get_reward_list(master, quest_data['BattleRewardsFirst'])
 
     text = ''
     if fixed_rewards:
@@ -203,11 +207,90 @@ class Enemy_View(My_View):
         await self.update_button(button)
         await interaction.response.edit_message(embed=self.embeds[4], view=self)
 
+
+#########################
+# Equipment
+#########################
+
+def equipment_help_embed():
+    embed = discord.Embed(
+        title=f"Equipment Command Help",
+        description="If you find an error with the command please message @habenyan in discord (preferably ping in MementoMori Unofficial Discord). Since this command is WIP there may be unexpected outcomes.",
+        color=discord.Colour.green()
+    )
+    
+    embed.add_field(
+        name="String Parameters",
+        value=(
+            "Provides details for equipment rarity, level, and upgrade level.\n"
+            "**Rarity**: D, C, B, A, S, SP(S+), R, SR, SSR, UR, LR. Lowercase is allowed.\n"
+            "**Level**: integer for the gear level. If the level doesn't exist will return error.\n"
+            "**Upgrade Level**: Upgrade Level of gear. Integer after '+' prefix (Ex: +120). Will default to 0 if not provided. Additionally it is possible to omit the equipment level and write only the upgrade level. This will assume the upgrade level is the same as the equipment level.\n\n"
+            "```Examples: \n"
+            "ssr240+120 -> Rarity: SSR Level: 240 Upgrade Level:120\n"
+            "UR300 -> Rarity: UR Level: 300 Upgrade Level:0\n"
+            "LR+240 -> Rarity: LR Level: 240 Upgrade Level:240```"
+            )
+    )
+    
+    embed.add_field(
+        name="Additional Parameters",
+        value=(
+            "Additional Information that may be required to find equipment.\n"
+            "Type: The type of equipment. If the character is specified this field is unneeded.\n"
+            "Character: Character name or id. Character is only used to find UW."
+            "This field can be combined into input string by writing `[character] [string_parameter]` instead of a normal string paramater. Additionaly having a charcter field will overwrite any Type field parameters." 
+        )
+    )
+
+    return embed
+
+def equipment_embed(equipment: Equipment):
+    embed = discord.Embed(
+        title=f"{rarity_emoji.get(equipment.rarity, rarity_emoji.get('N'))} {equipment.rarity} {equipment.name}",
+        description=f"Type: {equipment.equip_type}\nLevel: {equipment.level}",
+        color=discord.Colour.blurple()
+    )
+    
+    max_value = int(equipment.bonus_parameters * 0.6)
+    sub_value = equipment.bonus_parameters - max_value
+
+    stats_value = (
+        f"```{equipment.stat_type}: {equipment.stat} (Base: {equipment.basestat})\n"
+        f"Bonus Parameters: {equipment.bonus_parameters}\n"
+        f"Max: {max_value}\n"
+        f"Sub: {sub_value}```"
+    )
+    embed.add_field(
+        name="Stats",
+        value=stats_value,
+        inline=False  # Display as a separate block
+    )
+
+
+    if equipment.set_name:
+        set_effect = "\n".join([f"{set_piece[0]}: {set_piece[1]} {set_piece[2]}" for set_piece in equipment.set_effect])
+        embed.add_field(
+            name=equipment.set_name,
+            value=f"```{set_effect}```",
+            inline=False 
+        )
+        
+    if equipment.is_uw:    
+        uw_bonus_effect = "\n".join([f"{bonus[0]}: {bonus[1]}" for bonus in equipment.uw_bonus])
+        embed.add_field(
+            name="Unique Passive Effect",
+            value=f"```{uw_bonus_effect}```",
+            inline=False
+        )
+    
+    return embed
+
 class Search(commands.Cog, name='Search Commands'):
     '''Commands related to searching'''
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: AABot = bot
 
     @app_commands.command()
     @app_commands.describe(
@@ -333,6 +416,50 @@ class Search(commands.Cog, name='Search Commands'):
         item = self.bot.masterdata.find_item(id, type)
         name = get_item_name(self.bot.masterdata, item, language)
         await interaction.response.send_message(name)
+        
+    @app_commands.command()
+    @app_commands.describe(
+        string="Search string.",
+        type="Equipment Type. Can also specify in string.",
+        character="For UW search. Can also specify in string and ignore type.",
+        language="Text language. Defaults to English."
+    )    
+    async def equipment(
+        self, interaction: discord.Interaction, 
+        string: str,
+        type: Optional[common.EquipSlot]=None,
+        character: Optional[app_commands.Transform[int, IdTransformer]]=None,
+        language: Optional[common.Language]=common.Language.EnUs
+    ):
+        if not type and not character:  # char + string input
+            tokens = string.split()
+            character = find_id_from_name(tokens[0])
+            string = tokens[1]
+        
+        if type:
+            slot = type.value.SlotType
+            job = type.value.EquippedJobFlags
+        elif character:
+            slot = 1  # weapon
+            job = None
+        else:  # undefined 
+            await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
+            return
+        
+        equipment: Equipment = get_equipment_from_str(
+            slot, string, self.bot.masterdata, language, char_id=character, job=job)
+            
+        if not equipment:
+            await interaction.response.send_message(
+                embed=discord.Embed(
+                    title="Equipment was not found correctly",
+                    description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Ping @habenyan in Unofficial MementoMori Discord if you think something went wrong."
+                )
+            )
+            return
+        
+        await interaction.response.send_message(embed=equipment_embed(equipment))
+        
 
 
 

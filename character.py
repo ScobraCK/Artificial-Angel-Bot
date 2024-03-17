@@ -1,6 +1,6 @@
 from master_data import MasterData
 import common
-import equipment
+from equipment import get_uw_name
 from fuzzywuzzy import process, fuzz
 from typing import Iterable, Literal, Optional
 import re
@@ -21,7 +21,7 @@ def get_character_info(
     char['Class'] = common.job_map[char_data['JobFlags']]
     char['Base Speed'] = char_data['InitialBattleParameter']['Speed']
     char['Normal Attack'] = common.normal_skills[char_data["NormalSkillId"]]
-    char['UW'] = equipment.get_uw_name(id, master, lang=lang)
+    char['UW'] = get_uw_name(id, master, lang=lang)
 
     char['Active Skills'] = char_data["ActiveSkillIds"]
     char["Passive Skills"] = char_data["PassiveSkillIds"]
@@ -88,6 +88,7 @@ def speed_iter(masterdata: MasterData) -> Iterable:
 
 
 # character parameters
+
 
 
 # testing

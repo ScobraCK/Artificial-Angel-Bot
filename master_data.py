@@ -70,6 +70,10 @@ class MasterData():
         Not meant to be used with large files
         '''
         return iter(self.__load_MB(dataMB))
+    
+    def get_MB_data(self, dataMB: str):
+        '''cause not having this was inconvenient'''
+        return self.__load_MB(dataMB)
 
     def __load_MB(self, dataMB: str):
         """
@@ -146,18 +150,21 @@ class MasterData():
         returns None if char does not have uw
         '''
         profile = self.search_id(char_id, 'CharacterProfileMB')
-        if (composite_id := profile['EquipmentCompositeId']):
+        if profile is None:
+            return None  # temp solution for undefined data
+        if (composite_id := profile.get('EquipmentCompositeId')):
             equipment = filter(
                 lambda x: x['CompositeId'] == composite_id,
                 self.__load_MB('EquipmentMB'))
             return equipment
         else:
-            return None
+            return None  # for no UW
 
     def search_uw_description(self, char_id):
         '''
         gets the UW descrription from a char id
         '''
+
         equipment = self.search_uw(char_id)
         if equipment:
             equipment = next(equipment)
@@ -240,4 +247,61 @@ class MasterData():
             if char_id is None or (char_id in arcana['RequiredCharacterIds']):
                 yield self.__find_arcana_group(arcana['Id'])
 
+    def search_equipment(self, char_id=None, **filter_args) ->Iterable:
+        '''
+        char_id may be passed for simpler UW search
         
+        Filter Args
+        
+        Category: int [1-3]
+            1: D-S+ rank gear (Non set-gear)
+            2: non UW set-gear
+            3: UW
+            
+        CompositeID: int
+            Gotten from CharacterProfileMB
+        
+        EquipmentLv: int
+            Equipment Level
+            
+        EquippedJobFlags: int [1, 2, 4, 7]
+            1: Warrior
+            2: Sniper
+            3: Sorcerer
+            7: All
+            
+        QualityLv: int [0-4]
+            0-1: Non set-gear
+            1-4: set-gear
+            Note: quality is fixed for set-gear depending on rarity
+        
+        RarityFlags: int [1-512]
+            1: D
+            2: C
+            4: B
+            8: A
+            16: S
+            32: R
+            64: SR
+            128: SSR
+            256: UR
+            512: LR
+            
+        SlotType
+            1: Weapon
+            2: Sub
+            3: Gauntlet
+            4: Helmet
+            5: Armor
+            6: Shoes
+        '''
+        
+        def filter_func(item):
+            return all(item.get(key) == value for key, value in filter_args.items())
+        if char_id:
+            equipment= self.search_uw(char_id)  # limits to UW
+        else:
+            equipment = self.__load_MB('EquipmentMB')
+        
+        return filter(filter_func, equipment)
+    

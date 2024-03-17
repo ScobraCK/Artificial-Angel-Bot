@@ -31,3 +31,6 @@ def human_format(num: int)->str:
         magnitude += 1
         num /= 1000.0
     return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T'][magnitude])
+
+def reverse_dict_search(dictionary, search_value):
+    return [key for key, value in dictionary.items() if value == search_value][0]

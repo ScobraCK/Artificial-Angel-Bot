@@ -1,6 +1,6 @@
 # from typing import List, TypedDict
 from enum import Enum
-
+from collections import namedtuple
 ############
 # Character id
 ############
@@ -364,7 +364,10 @@ char_rarity = {
     8192: 'LR+4',
     16384: 'LR+5',
     32768: 'LR+6',
-    65536: 'LR+7'
+    65536: 'LR+7',
+    131072: 'LR+8',
+    262144: 'LR+9',
+    524288: 'LR+10'
 }
 
 equip_rarity = {
@@ -517,3 +520,16 @@ class Tower(Enum):
     Crimson = 3
     Emerald = 4
     Amber = 5
+    
+# Equip SlotTupe
+EquipType = namedtuple('EquipType', ['SlotType', 'EquippedJobFlags'])
+
+class EquipSlot(Enum):
+    Sword = EquipType(1, 1)
+    Pistol = EquipType(1, 2)
+    Tome = EquipType(1, 4)
+    Sub = EquipType(2, 7)
+    Gauntlet= EquipType(3, 7)
+    Helmet = EquipType(4, 7)
+    Armor = EquipType(5, 7)
+    Shoes = EquipType(6, 7)
