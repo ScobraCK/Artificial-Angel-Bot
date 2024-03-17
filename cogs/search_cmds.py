@@ -3,6 +3,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from collections import Counter
+from io import StringIO
 
 import common
 import quests
@@ -10,8 +11,8 @@ from master_data import MasterData
 from helper import human_format as hf
 from emoji import emoji_list, soul_emoji, rarity_emoji
 from my_view import My_View
-from items import get_item_name, get_reward_list
-from equipment import get_equipment_from_str, Equipment
+from items import get_item_name, get_item_list, Item
+from equipment import get_equipment_from_str, Equipment, get_upgrade_costs
 from cogs.char_cmds import IdTransformer
 from character import find_id_from_name
 from main import AABot
@@ -126,8 +127,8 @@ def quest_embed(master: MasterData, quest_data, bp)->discord.Embed:
     return embed
 
 def tower_embed(master: MasterData, quest_data: dict, tower_type: str, bp: int)->discord.Embed:
-    fixed_rewards = get_reward_list(master, quest_data['BattleRewardsConfirmed'])
-    first_time_rewards = get_reward_list(master, quest_data['BattleRewardsFirst'])
+    fixed_rewards = get_item_list(master, quest_data['BattleRewardsConfirmed'])
+    first_time_rewards = get_item_list(master, quest_data['BattleRewardsFirst'])
 
     text = ''
     if fixed_rewards:
@@ -242,6 +243,19 @@ def equipment_help_embed():
             "This field can be combined into input string by writing `[character] [string_parameter]` instead of a normal string paramater. Additionaly having a charcter field will overwrite any Type field parameters." 
         )
     )
+    
+    embed.add_field(
+        name="Equipment Upgrade Cost",
+        value=(
+            "Equipment upgrade costs will be also calculated\n"
+            "By default it will show the cost of making the specified equipment."
+            "However adding a 2nd equipment string will allow you to compare and upgrade from the first equipment. The first equipment must be lower level than the 2nd.\n\n"
+            
+            "```Examples: \n"
+            "aa ssr180+120 -> will show costs up to ssr240+120\n"
+            "aa ssr180+180 LR240+240 -> will show costs from ssr180+180 to LR240+240```"
+        )
+    )
 
     return embed
 
@@ -256,10 +270,10 @@ def equipment_embed(equipment: Equipment):
     sub_value = equipment.bonus_parameters - max_value
 
     stats_value = (
-        f"```{equipment.stat_type}: {equipment.stat} (Base: {equipment.basestat})\n"
-        f"Bonus Parameters: {equipment.bonus_parameters}\n"
-        f"Max: {max_value}\n"
-        f"Sub: {sub_value}```"
+        f"```{equipment.stat_type}: {equipment.stat:,} (Base: {equipment.basestat:,})\n"
+        f"Bonus Parameters: {equipment.bonus_parameters:,}\n"
+        f"Max: {max_value:,}\n"
+        f"Sub: {sub_value:,}```"
     )
     embed.add_field(
         name="Stats",
@@ -285,6 +299,52 @@ def equipment_embed(equipment: Equipment):
         )
     
     return embed
+
+def upgrade_embed(costs: dict[str, Item]):
+    description = StringIO()
+    description.write('```')
+    for item in costs.values():
+        description.write(f"{item}\n")
+    description.write('```')
+
+    embed = discord.Embed(
+        title=f"Upgrade Costs",
+        description=description.getvalue(),
+        color=discord.Colour.blurple()
+    )
+    
+    return embed
+
+class Equipment_View(My_View):
+    def __init__(self, user: discord.User, embeds:List[discord.Embed], upgrade_embed: discord.Embed):
+        super().__init__(user)
+        self.embeds = embeds
+        self.upgrade_embed = upgrade_embed
+
+    async def update_button(self, button: discord.ui.Button):
+        for btn in self.children:
+            if btn is button:
+                btn.disabled=True
+            else:
+                if not (len(self.embeds) == 1 and btn is self.equip_btn2):
+                    btn.disabled=False
+
+    @discord.ui.button(label="Equipment 1", disabled=True)
+    async def equip_btn1(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.update_button(button)
+        await interaction.response.edit_message(embed=self.embeds[0], view=self)
+        
+    @discord.ui.button(label="Equipment 2")
+    async def equip_btn2(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if len(self.embeds) == 2:
+            await self.update_button(button)
+            await interaction.response.edit_message(embed=self.embeds[1], view=self)
+
+    @discord.ui.button(label="Upgrade Costs")
+    async def upgrade_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.update_button(button)
+        await interaction.response.edit_message(embed=self.upgrade_embed, view=self)
+
 
 class Search(commands.Cog, name='Search Commands'):
     '''Commands related to searching'''
@@ -434,11 +494,11 @@ class Search(commands.Cog, name='Search Commands'):
         if not type and not character:  # char + string input
             tokens = string.split()
             
-            if len(tokens) < 2:
+            if len(tokens) == 1:
                 await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
                 return
             character = find_id_from_name(tokens[0])
-            string = tokens[1]
+            equip_strings = tokens[1:]
         
         if type:
             slot = type.value.SlotType
@@ -450,21 +510,47 @@ class Search(commands.Cog, name='Search Commands'):
             await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
             return
         
-        equipment: Equipment = get_equipment_from_str(
-            slot, string, self.bot.masterdata, language, char_id=character, job=job)
+        equipments = []
+        embeds = []
+        for i, equip_str in enumerate(equip_strings, 1):
+            if i == 3:
+                await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
+                return
+            equipment: Equipment = get_equipment_from_str(slot, equip_str, self.bot.masterdata, language, char_id=character, job=job)
             
-        if not equipment:
+            if not equipment:
+                await interaction.response.send_message(
+                    embed=discord.Embed(
+                        title=f"Equipment {i} was not found correctly",
+                        description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Ping @habenyan in Unofficial MementoMori Discord if you think something went wrong."
+                    )
+                )
+                return
+            
+            equipments.append(equipment)
+            embeds.append(equipment_embed(equipment))
+        
+        if len(equipments) == 1:
+            upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0])
+        else:
+            upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0], equipments[1])
+        
+        if not upgrade_costs:
             await interaction.response.send_message(
                 embed=discord.Embed(
-                    title="Equipment was not found correctly",
+                    title=f"Upgrade Costs was not calculated correctly",
                     description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Ping @habenyan in Unofficial MementoMori Discord if you think something went wrong."
                 )
             )
             return
-        
-        await interaction.response.send_message(embed=equipment_embed(equipment))
-        
-
+            
+        user = interaction.user
+        view = Equipment_View(user, embeds, upgrade_embed(upgrade_costs))
+        if len(embeds) == 1:
+            view.equip_btn2.disabled=True
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
 
 
 async def setup(bot):

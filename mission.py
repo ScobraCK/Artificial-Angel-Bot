@@ -11,7 +11,7 @@ class Mission():
     Parameters:
         name, open, reward_list
     '''
-    def __init__(self, name:str, open: int, reward_list: List[items.Reward]) -> None:
+    def __init__(self, name:str, open: int, reward_list: List[items.Item]) -> None:
         self.name = name
         self.open = open # opening period
         self.reward_list = reward_list
@@ -40,7 +40,7 @@ def get_Missions(
             open = mission["OpeningPeriod"]
             reward_list = []
             for item in mission["RewardList"]:  # "RewardList":[{"Item":{}, "RarityFlags":0}]
-                reward_list.append(items.get_reward(master, item['Item'], lang))
+                reward_list.append(items.get_item(master, item['Item'], lang))
             yield Mission(name, open, reward_list)
     except StopIteration:
         pass

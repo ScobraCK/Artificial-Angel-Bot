@@ -193,7 +193,10 @@ class MasterData():
 
         **_ is to catch extra data if using **keyword arguments
         '''
-        if ItemType == 14:
+        
+        if ItemType == 5:
+            return "Fragment"
+        elif ItemType == 14:
             item = self.search_id(ItemId, 'SphereMB')
         elif ItemType == 17:
             item = self.search_id(ItemId, 'TreasureChestMB')

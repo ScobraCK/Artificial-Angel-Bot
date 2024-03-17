@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import re
 from helper import reverse_dict_search
 from itertools import chain
+from items import Item, get_item_list
 ### for UW skill descriptions ###
 
 def get_uw_name(
@@ -83,6 +84,8 @@ class Equipment:
     is_uw: bool
     upgrade_type: int # 1: weapon 2: other
     upgrade_level: int
+    evolution_id: int
+    composite_id: int
     # set only
     set_name: Optional[int]=None
     set_effect: Optional[list]=None
@@ -250,6 +253,8 @@ def get_equipment(
         bonus_parameters=equipment_data['AdditionalParameterTotal'],
         upgrade_type=equipment_data['EquipmentReinforcementMaterialId'],
         upgrade_level=upgrade,
+        evolution_id=equipment_data['EquipmentEvolutionId'],
+        composite_id=equipment_data['CompositeId'],
         is_uw=bool(char_id),
         char_id=char_id
     )
@@ -261,22 +266,132 @@ def get_equipment(
         equipment.uw_bonus = get_uw_bonus(equipment_data['ExclusiveEffectId'], masterdata, lang)
     
     return equipment
+
+
+def get_enhance_cost(start, end, id, masterdata: MasterData, lang: Optional[common.Language]='enUS', composite_id=None):
+    total_items = {}
+    enhance_data = masterdata.search_id(id, 'EquipmentEvolutionMB')
     
+    if composite_id:  # createion material
+        composite_data = masterdata.search_id(composite_id, 'EquipmentCompositeMB')
+        shard_count = composite_data['RequiredFragmentCount']
+        composite_item_list = get_item_list(masterdata, composite_data['RequiredItemList'], lang)
+        composite_item_list.append(Item('Fragment', shard_count, composite_id, 5))
+        for item in composite_item_list:
+            if total_items.get(item.name):
+                total_items[item.name] += item
+            else:
+                total_items[item.name] = item
+
+    for enhance_info in enhance_data['EquipmentEvolutionInfoList']:
+        before = enhance_info['BeforeEquipmentLv']
+        after = enhance_info['AfterEquipmentLv']
+        
+        if after > end:
+            break
+        if start <= before:
+            item_list = get_item_list(masterdata, enhance_info['RequiredItemList'],lang)
+            for item in item_list:
+                if total_items.get(item.name):
+                    total_items[item.name] += item
+                else:
+                    total_items[item.name] = item
+                    
+    return total_items
+
+def get_reinforcement_cost(start, end, id, masterdata: MasterData, lang: Optional[common.Language]='enUS'):
+    total_items = {}
+    reinforcement_data = masterdata.search_id(id, 'EquipmentReinforcementMaterialMB')
+    
+    for reinforcement_info in reinforcement_data['ReinforcementMap']:
+        lv = reinforcement_info['Lv']
+        if lv == end:
+            break
+        if start <= lv:
+            item_list = get_item_list(masterdata, reinforcement_info['RequiredItemList'],lang)
+            for item in item_list:
+                if total_items.get(item.name):
+                    total_items[item.name] += item
+                else:
+                    total_items[item.name] = item
+    return total_items
+    
+def get_upgrade_costs(
+    masterdata: MasterData, equip1: Equipment, equip2: Equipment=None, lang: Optional[common.Language]='enUS'):
+    if equip2:
+        if (equip1.upgrade_type != equip2.upgrade_type or equip1.equip_type != equip2.equip_type or equip1.is_uw != equip2.is_uw):
+            return None
+        
+        level1 = equip1.level
+        upgrade1 = equip1.upgrade_level
+        rarity1 = equip1.rarity
+        level2 = equip2.level
+        upgrade2 = equip2.upgrade_level
+        rarity2 = equip2.rarity
+        comp = None
+    else:
+        level1 = 180
+        upgrade1 = 0
+        rarity1 = 'SSR'  # only UW is affected
+        level2 = equip1.level
+        upgrade2 = equip1.upgrade_level
+        rarity2 = equip1.rarity
+        comp = equip1.composite_id
+            
+    if level1 > level2:
+        return None
+    if upgrade1 > upgrade2:
+        return None
+    if reverse_dict_search(common.equip_rarity, rarity1) > reverse_dict_search(common.equip_rarity, rarity2):
+        return None
+
+    
+    if equip1.is_uw:
+        if rarity1 == 'SSR' and rarity2 == 'UR':
+            dew = 15
+        elif rarity1 == 'SSR' and rarity2 == 'LR':
+            dew = 65
+        elif rarity1 == 'UR' and rarity2 == 'LR':
+            dew = 50
+        else:
+            dew = 0
+               
+    total_cost = get_enhance_cost(level1, level2, equip1.evolution_id, masterdata, lang, composite_id=comp)
+    reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, equip1.upgrade_type, masterdata, lang)
+    
+    if reinforcement_cost:
+        for item in reinforcement_cost.values():
+            if total_cost.get(item.name):
+                total_cost[item.name] += item
+            else:
+                total_cost[item.name] = item
+    
+    # dew data
+    if dew:
+        dews = get_item_list(masterdata, [{"ItemCount": dew,"ItemId": 1,"ItemType": 24}], lang)[0]
+        total_cost[dews.name] = dews
+    
+    return total_cost
 
 if __name__ == "__main__":
     md = MasterData()
     from pprint import pprint
-    # res = md.search_equipment(**{'EquipmentLv': 1, 'RarityFlags': 8, 'SlotType': 5})
-    # 
-    # # pprint(res)
+    # # res = md.search_equipment(**{'EquipmentLv': 1, 'RarityFlags': 8, 'SlotType': 5})
+    # # 
+    # # # pprint(res)
     
     from common import EquipSlot
     equip_type = EquipSlot.Sword
-    string = 'test lr+370'.split(maxsplit=1)
-    char = 56
+    string = 'lr+370'
+    char = 63
     
-    pprint(get_equipment_from_str(1, string[1], md, char_id=char, job=equip_type.value.EquippedJobFlags))
-    # pprint(common.EquipSlot((4, 7)).name)
+    # pprint(get_equipment_from_str(1, string[1], md, char_id=char, job=equip_type.value.EquippedJobFlags))
+    # # pprint(common.EquipSlot((4, 7)).name)
+    equip = get_equipment_from_str(1, string, md, char_id=char, job=equip_type.value.EquippedJobFlags)
+    items = get_upgrade_costs(md, equip)
+                              
+    for item in items.values():
+        print(item)
 
 '''
 equipment search (500+)
