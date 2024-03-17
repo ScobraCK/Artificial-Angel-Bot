@@ -433,6 +433,10 @@ class Search(commands.Cog, name='Search Commands'):
     ):
         if not type and not character:  # char + string input
             tokens = string.split()
+            
+            if len(tokens) < 2:
+                await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
+                return
             character = find_id_from_name(tokens[0])
             string = tokens[1]
         
