@@ -345,16 +345,14 @@ def get_upgrade_costs(
     if reverse_dict_search(common.equip_rarity, rarity1) > reverse_dict_search(common.equip_rarity, rarity2):
         return None
 
-    
+    dew = 0
     if equip1.is_uw:
         if rarity1 == 'SSR' and rarity2 == 'UR':
             dew = 15
-        elif rarity1 == 'SSR' and rarity2 == 'LR':
+        if rarity1 == 'SSR' and rarity2 == 'LR':
             dew = 65
-        elif rarity1 == 'UR' and rarity2 == 'LR':
+        if rarity1 == 'UR' and rarity2 == 'LR':
             dew = 50
-        else:
-            dew = 0
                
     total_cost = get_enhance_cost(level1, level2, equip1.evolution_id, masterdata, lang, composite_id=comp)
     reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, equip1.upgrade_type, masterdata, lang)
@@ -367,7 +365,7 @@ def get_upgrade_costs(
                 total_cost[item.name] = item
     
     # dew data
-    if dew:
+    if dew != 0:
         dews = get_item_list(masterdata, [{"ItemCount": dew,"ItemId": 1,"ItemType": 24}], lang)[0]
         total_cost[dews.name] = dews
     
