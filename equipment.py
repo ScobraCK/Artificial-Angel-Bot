@@ -301,19 +301,20 @@ def get_enhance_cost(start, end, id, masterdata: MasterData, lang: Optional[comm
 
 def get_reinforcement_cost(start, end, id, masterdata: MasterData, lang: Optional[common.Language]='enUS'):
     total_items = {}
-    reinforcement_data = masterdata.search_id(id, 'EquipmentReinforcementMaterialMB')
     
-    for reinforcement_info in reinforcement_data['ReinforcementMap']:
-        lv = reinforcement_info['Lv']
-        if lv == end:
-            break
-        if start <= lv:
-            item_list = get_item_list(masterdata, reinforcement_info['RequiredItemList'],lang)
-            for item in item_list:
-                if total_items.get(item.name):
-                    total_items[item.name] += item
-                else:
-                    total_items[item.name] = item
+    if end > 0:  # no 0 in data
+        reinforcement_data = masterdata.search_id(id, 'EquipmentReinforcementMaterialMB')
+        for reinforcement_info in reinforcement_data['ReinforcementMap']:
+            lv = reinforcement_info['Lv']
+            if lv == end:
+                break
+            if start <= lv:
+                item_list = get_item_list(masterdata, reinforcement_info['RequiredItemList'],lang)
+                for item in item_list:
+                    if total_items.get(item.name):
+                        total_items[item.name] += item
+                    else:
+                        total_items[item.name] = item
     return total_items
     
 def get_upgrade_costs(
@@ -332,7 +333,7 @@ def get_upgrade_costs(
     else:
         level1 = 180
         upgrade1 = 0
-        rarity1 = 'SSR'  # only UW is affected
+        rarity1 = 'SSR' if equip1.is_uw else 'UR'  # UW or Micheal gear
         level2 = equip1.level
         upgrade2 = equip1.upgrade_level
         rarity2 = equip1.rarity
@@ -346,7 +347,7 @@ def get_upgrade_costs(
         return None
 
     dew = 0
-    if equip1.is_uw:
+    if equip1.is_uw or rarity2 == 'LR':
         if rarity1 == 'SSR' and rarity2 == 'UR':
             dew = 15
         if rarity1 == 'SSR' and rarity2 == 'LR':
