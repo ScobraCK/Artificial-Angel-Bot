@@ -305,6 +305,8 @@ class Info(commands.Cog, name='Info Commands'):
                 description=text,
                 colour=discord.Colour.orange()
             )
+            if towertype:
+                embed.set_footer(text="Note that ranking data for elemental towers is collected from only the top 20 of each world.")
             embeds.append(embed)
 
         user = interaction.user
