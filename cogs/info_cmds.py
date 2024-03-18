@@ -13,6 +13,7 @@ from io import StringIO
 from mementodb import fetch_group_list
 from main import AABot
 from quests import convert_to_stage
+from common import Tower
 
 class Region(Enum): #temp solution
     JP = 1
@@ -278,17 +279,19 @@ class Info(commands.Cog, name='Info Commands'):
         
     @app_commands.command()
     @app_commands.describe(
-        server='The region your world is in. Leave empty for all servers')
+        server='The region your world is in. Leave empty for all servers',
+        towertype="The tower type. Defaults to the Tower of Infinity")
     async def towerrankings(self, 
                              interaction: discord.Interaction, 
-                             server: Optional[Region]):
-        '''Tower rankings (infinity only for now)'''
+                             server: Optional[Region],
+                             towertype: Optional[Tower]=Tower.Infinity):
+        '''Tower rankings'''
         
         if server:
-            players = self.bot.db.get_server_tower_ranking(server.value)
+            players = self.bot.db.get_server_tower_ranking(server.value, towertype)
             servername = server.name
         else:
-            players = self.bot.db.get_all_tower_ranking(count=500)
+            players = self.bot.db.get_all_tower_ranking(towertype, count=500)
             servername = 'All Servers'
             
         embeds = []
@@ -298,7 +301,7 @@ class Info(commands.Cog, name='Info Commands'):
 
             text = f'```{towerlist_to_ascii(players[i:i+50], i+1, server)}```'
             embed = discord.Embed(
-                title=f'Top Tower Rankings ({servername})',
+                title=f'Top {towertype.name} Tower Rankings ({servername})',
                 description=text,
                 colour=discord.Colour.orange()
             )

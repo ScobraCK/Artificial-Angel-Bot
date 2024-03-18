@@ -1,12 +1,7 @@
 import sqlite3, requests, json
 from enum import Enum
 from dataclasses import dataclass
-
-class Towers(Enum):
-    Blue = 'tower_blue'
-    Red = 'tower_red'
-    Green = 'tower_green'
-    Yellow = 'tower_yellow'
+from common import Tower, tower_map
 
 @dataclass
 class GuildData():
@@ -80,9 +75,9 @@ class MememoriDB():
         # 1 = Master, 2 = Chief, 3 = Member
         # 1 = Chevalier, 2 = Paladin, 3 = Grand Cross, 4 = Royal Rank, 5 = Legend Rank, 6 = World Ruler
         
-        for tower_type in Towers:
+        for tower_type in tower_map.values():
             self.cur.execute(f"""
-                             CREATE TABLE IF NOT EXISTS {tower_type.value} (
+                             CREATE TABLE IF NOT EXISTS {tower_type} (
                                  id varchar(12) PRIMARY KEY,
                                  tower_id int,
                                  timestamp datetime
@@ -148,8 +143,7 @@ class MememoriDB():
                 "ON CONFLICT(id) DO UPDATE SET bp=excluded.bp",
                 bp)
             
-        for tower_type in Towers:
-            tower_type = tower_type.value
+        for tower_type in tower_map.values():
             for ele_tower in data['rankings'][tower_type]:
                 self.cur.execute(
                     f"INSERT OR REPLACE INTO {tower_type} (id, tower_id, timestamp)"
@@ -214,18 +208,18 @@ class MememoriDB():
         )
         return res.fetchmany(500)
     
-    def get_server_tower_ranking(self, server, tower_type: Towers=None, count=200):
+    def get_server_tower_ranking(self, server, tower_type: Tower=None, count=200):
         '''
         tower_type: Tower of Infinity is None
         '''
         if tower_type:
-            tower_type = tower_type.value
+            tower = tower_map.get(tower_type.value) 
             res = self.cur.execute(
-                f"SELECT players.world, {tower_type}.tower_id, players.name "
-                f"FROM {tower_type} "
-                f"JOIN players ON {tower_type}.id = players.id "
+                f"SELECT players.world, {tower}.tower_id, players.name "
+                f"FROM {tower} "
+                f"JOIN players ON {tower}.id = players.id "
                 f"WHERE players.server = {server} "
-                f"ORDER BY {tower_type}.tower_id DESC"
+                f"ORDER BY {tower}.tower_id DESC"
             )
         else:
             res = self.cur.execute(
@@ -234,17 +228,17 @@ class MememoriDB():
             
         return res.fetchmany(200)
     
-    def get_all_tower_ranking(self, tower_type: Towers=None, count=200):
+    def get_all_tower_ranking(self, tower_type: Tower=None, count=200):
         '''
         tower_type: Tower of Infinity is None
         '''
         if tower_type:
-            tower_type = tower_type.value
+            tower = tower_map.get(tower_type.value) 
             res = self.cur.execute(
-                f"SELECT players.server, players.world, {tower_type}.tower_id, players.name "
-                f"FROM {tower_type} "
-                f"JOIN players ON {tower_type}.id = players.id "
-                f"ORDER BY {tower_type}.tower_id DESC"
+                f"SELECT players.server, players.world, {tower}.tower_id, players.name "
+                f"FROM {tower} "
+                f"JOIN players ON {tower}.id = players.id "
+                f"ORDER BY {tower}.tower_id DESC"
             )
         else:
             res = self.cur.execute(

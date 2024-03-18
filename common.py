@@ -472,6 +472,15 @@ event_type = {
         'description': 'For a limited time, all Souls in the Tower of Infinity will be unlocked!'}
 }
 
+# for tower mapping in DB
+tower_map = {
+    2: 'tower_blue',
+    3: 'tower_red',
+    4: 'tower_green',
+    5: 'tower_yellow'
+}
+
+
 ############
 # Others
 ############
@@ -519,7 +528,7 @@ class Tower(Enum):
     Azure = 2
     Crimson = 3
     Emerald = 4
-    Amber = 5
+    Amber = 5 
     
 # Equip SlotTupe
 EquipType = namedtuple('EquipType', ['SlotType', 'EquippedJobFlags'])
