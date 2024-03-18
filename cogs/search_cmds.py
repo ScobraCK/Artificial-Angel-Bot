@@ -297,20 +297,41 @@ def equipment_embed(equipment: Equipment):
             value=f"```{uw_bonus_effect}```",
             inline=False
         )
+        
+    # thumbnail
+    image_link = common.raw_asset_link_header + f'Equipment/EQP_{equipment.icon:06}.png'
+    embed.set_thumbnail(url=image_link)
     
     return embed
 
-def upgrade_embed(costs: dict[str, Item]):
-    description = StringIO()
-    description.write('```')
-    for item in costs.values():
-        description.write(f"{item}\n")
-    description.write('```')
-
+def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment):
     embed = discord.Embed(
-        title=f"Upgrade Costs",
-        description=description.getvalue(),
+        title=(
+            f"{equip1.rarity} Lv. {equip1.level}+{equip1.upgrade_level} → "
+            f"{equip2.rarity} Lv. {equip2.level}+{equip2.upgrade_level}"
+            ),
+        description=f'Type: {equip1.equip_type}',
         color=discord.Colour.blurple()
+    )
+    
+    embed.add_field(
+        name='Stats',
+        value=(
+            f"```{equip1.stat_type}: {equip1.stat:,} -> {equip2.stat:,}\n"
+            f"Bonus Parameters: {equip1.bonus_parameters:,} -> {equip2.bonus_parameters:,}```"
+        )
+    )
+    
+    upgrade_costs = StringIO()
+    upgrade_costs.write('```')
+    for item in costs.values():
+        upgrade_costs.write(f"{item}\n")
+    upgrade_costs.write('```')
+    
+    embed.add_field(
+        name="Upgrade Costs",
+        value=upgrade_costs.getvalue(),
+        inline=False
     )
     
     return embed
@@ -547,7 +568,7 @@ class Search(commands.Cog, name='Search Commands'):
             return
             
         user = interaction.user
-        view = Equipment_View(user, embeds, upgrade_embed(upgrade_costs))
+        view = Equipment_View(user, embeds, upgrade_embed(upgrade_costs, equipments[0], equipments[1]))
         if len(embeds) == 1:
             view.equip_btn2.disabled=True
         await interaction.response.send_message(embed=embeds[0], view=view)
