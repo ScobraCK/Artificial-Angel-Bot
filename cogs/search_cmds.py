@@ -216,7 +216,7 @@ class Enemy_View(My_View):
 def equipment_help_embed():
     embed = discord.Embed(
         title=f"Equipment Command Help",
-        description="If you find an error with the command please message @habenyan in discord (preferably ping in MementoMori Unofficial Discord). Since this command is WIP there may be unexpected outcomes.",
+        description="If you find an error with the command please report it on https://discord.gg/DyATxE7saX.",
         color=discord.Colour.green()
     )
     
@@ -545,7 +545,7 @@ class Search(commands.Cog, name='Search Commands'):
                 await interaction.response.send_message(
                     embed=discord.Embed(
                         title=f"Equipment {i} was not found correctly",
-                        description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Ping @habenyan in Unofficial MementoMori Discord if you think something went wrong."
+                        description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Feel free to report it on the support server. https://discord.gg/DyATxE7saX"
                     )
                 )
                 return
@@ -562,7 +562,7 @@ class Search(commands.Cog, name='Search Commands'):
             await interaction.response.send_message(
                 embed=discord.Embed(
                     title=f"Upgrade Costs was not calculated correctly",
-                    description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Ping @habenyan in Unofficial MementoMori Discord if you think something went wrong."
+                    description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Feel free to report it on the support server. https://discord.gg/DyATxE7saX"
                 )
             )
             return
