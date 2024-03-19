@@ -212,7 +212,7 @@ class MememoriDB():
         '''
         tower_type: Tower of Infinity is None
         '''
-        if tower_type:
+        if tower_type in tower_map.keys():
             tower = tower_map.get(tower_type.value) 
             res = self.cur.execute(
                 f"SELECT players.world, {tower}.tower_id, players.name "
@@ -232,7 +232,7 @@ class MememoriDB():
         '''
         tower_type: Tower of Infinity is None
         '''
-        if tower_type:
+        if tower_type in tower_map.keys():
             tower = tower_map.get(tower_type.value) 
             res = self.cur.execute(
                 f"SELECT players.server, players.world, {tower}.tower_id, players.name "
