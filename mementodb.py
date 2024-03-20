@@ -208,11 +208,15 @@ class MememoriDB():
         )
         return res.fetchmany(500)
     
-    def get_server_tower_ranking(self, server, tower_type: Tower=None, count=200):
+    def get_server_tower_ranking(self, server, tower_type: Tower=Tower.Infinity, count=200):
         '''
         tower_type: Tower of Infinity is None
         '''
-        if tower_type in tower_map.keys():
+        if tower_type == Tower.Infinity:
+            res = self.cur.execute(
+                f"SELECT world, tower_id, name FROM players WHERE server = {server} ORDER BY tower_id DESC"
+            )
+        else:
             tower = tower_map.get(tower_type.value) 
             res = self.cur.execute(
                 f"SELECT players.world, {tower}.tower_id, players.name "
@@ -221,28 +225,24 @@ class MememoriDB():
                 f"WHERE players.server = {server} "
                 f"ORDER BY {tower}.tower_id DESC"
             )
-        else:
-            res = self.cur.execute(
-                f"SELECT world, tower_id, name FROM players WHERE server = {server} ORDER BY tower_id DESC"
-            )
             
         return res.fetchmany(200)
     
-    def get_all_tower_ranking(self, tower_type: Tower=None, count=200):
+    def get_all_tower_ranking(self, tower_type: Tower=Tower.Infinity, count=200):
         '''
         tower_type: Tower of Infinity is None
         '''
-        if tower_type in tower_map.keys():
+        if tower_type == Tower.Infinity:
+            res = self.cur.execute(
+                "SELECT server, world, tower_id, name FROM players ORDER BY tower_id DESC"
+            )
+        else:
             tower = tower_map.get(tower_type.value) 
             res = self.cur.execute(
                 f"SELECT players.server, players.world, {tower}.tower_id, players.name "
                 f"FROM {tower} "
                 f"JOIN players ON {tower}.id = players.id "
                 f"ORDER BY {tower}.tower_id DESC"
-            )
-        else:
-            res = self.cur.execute(
-                "SELECT server, world, tower_id, name FROM players ORDER BY tower_id DESC"
             )
             
         return res.fetchmany(count)
