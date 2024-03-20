@@ -304,23 +304,27 @@ def equipment_embed(equipment: Equipment):
     
     return embed
 
-def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment):
-    embed = discord.Embed(
-        title=(
+def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment=None):
+    
+    title_text = (
             f"{equip1.rarity} Lv. {equip1.level}+{equip1.upgrade_level} → "
             f"{equip2.rarity} Lv. {equip2.level}+{equip2.upgrade_level}"
-            ),
+            ) if equip2 else f"{equip1.rarity} Lv. {equip1.level}+{equip1.upgrade_level}"
+    
+    embed = discord.Embed(
+        title= title_text,
         description=f'Type: {equip1.equip_type}',
         color=discord.Colour.blurple()
     )
     
-    embed.add_field(
-        name='Stats',
-        value=(
-            f"```{equip1.stat_type}: {equip1.stat:,} -> {equip2.stat:,}\n"
-            f"Bonus Parameters: {equip1.bonus_parameters:,} -> {equip2.bonus_parameters:,}```"
+    if equip2:
+        embed.add_field(
+            name='Stats',
+            value=(
+                f"```{equip1.stat_type}: {equip1.stat:,} -> {equip2.stat:,}\n"
+                f"Bonus Parameters: {equip1.bonus_parameters:,} -> {equip2.bonus_parameters:,}```"
+            )
         )
-    )
     
     upgrade_costs = StringIO()
     upgrade_costs.write('```')
@@ -555,8 +559,10 @@ class Search(commands.Cog, name='Search Commands'):
         
         if len(equipments) == 1:
             upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0])
+            upgrade_ebd = upgrade_embed(upgrade_costs, equipments[0])
         else:
             upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0], equipments[1])
+            upgrade_ebd = upgrade_embed(upgrade_costs, equipments[0], equipments[1])
         
         if not upgrade_costs:
             await interaction.response.send_message(
@@ -568,7 +574,7 @@ class Search(commands.Cog, name='Search Commands'):
             return
             
         user = interaction.user
-        view = Equipment_View(user, embeds, upgrade_embed(upgrade_costs, equipments[0], equipments[1]))
+        view = Equipment_View(user, embeds, upgrade_ebd)
         if len(embeds) == 1:
             view.equip_btn2.disabled=True
         await interaction.response.send_message(embed=embeds[0], view=view)
