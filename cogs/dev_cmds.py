@@ -8,6 +8,8 @@ from typing import Optional, Literal
 from mementodb import update_guild_rankings, update_player_rankings
 from timezones import get_cur_time
 
+from main import AABot
+
 def convert_cog_string(cog: str):
 	if not cog.startswith('cogs.'):
 		cog = 'cogs.' + cog
@@ -16,8 +18,8 @@ def convert_cog_string(cog: str):
 class DevCommands(commands.Cog, name='Dev Commands'):
 	'''These are the developer commands'''
 
-	def __init__(self, bot):
-		self.bot: commands.Bot = bot
+	def __init__(self, bot: AABot):
+		self.bot = bot
 
 	async def cog_check(self, ctx):  
 		'''
@@ -157,12 +159,13 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		Updates world groups
 		'''
+		ch = self.bot.get_channel(LOG_CHANNEL)
 		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
 		try:
 			self.bot.db.update_group(group_iter)
-			await ctx.send(f"Updated world groups")
+			await ch.send(f"{get_cur_time()}\nUpdated world groups")
 		except Exception as e:
-			await ctx.send(f"Failed to update: {e}")
+			await ch.send(f"{get_cur_time()}\nFailed to update groups: {e}")
 
 	@commands.command()
 	@commands.guild_only()
