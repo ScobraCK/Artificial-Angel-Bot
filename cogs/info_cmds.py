@@ -13,7 +13,8 @@ from io import StringIO
 from mementodb import fetch_group_list
 from main import AABot
 from quests import convert_to_stage
-from common import Tower
+from common import Tower, Language
+from character import get_full_name
 
 class Region(Enum): #temp solution
     JP = 1
@@ -36,6 +37,15 @@ temple_type = {
     4: 'Red Orbs',
     5: 'Rune Tickets'
 }
+
+# move out of cog later
+class IoCServer(Enum):
+    JP = ['jp1', 'jp2', 'jp3', 'jp4', 'jp5']
+    KR = ['kr1', 'kr2']
+    AP = ['ap1', 'ap2']
+    NA = ['us1']
+    EU = ['eu1']
+    GL = ['gl1', 'gl2']
 
 def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     ranking = []
@@ -130,6 +140,22 @@ async def group_autocomplete(
         app_commands.Choice(name=f'{choice[1]}-{choice[2]}', value=f'{choice[1]}-{choice[2]}')
         for choice in group_list if in_range(current, choice[1], choice[2])
     ]
+
+# IoC
+def ioc_embed(data, server, md, lang):
+    description = StringIO()
+    for player in data:
+        description.write(
+            f"**Player:** {player['Name']}\n"
+            f"**Character:** {get_full_name(player['UserItem']['ItemId'], md, lang)}\n\n"
+        )
+    
+    embed = discord.Embed(
+        title=f'Server {server}',
+        description=description.getvalue()
+    )
+    
+    return embed
 
 class Info(commands.Cog, name='Info Commands'):
     '''Commands that fetch ingame info'''
@@ -344,6 +370,36 @@ class Info(commands.Cog, name='Info Commands'):
         )
 
         await interaction.response.send_message(embed=embed)
+        
+    @app_commands.command()
+    @app_commands.describe(
+        server='Server to check IoC',
+        language='Text language. Defaults to English.'
+    )
+    async def ioclog(
+        self, 
+        interaction: discord.Interaction, 
+        server: IoCServer,
+        language: Optional[Language]=Language.EnUs):
+        '''Shows IoC logs'''
+
+        await interaction.response.defer()
+        embeds = []
+        for server_id in server.value:
+            url = f'https://api.mentemori.icu/{server_id}/destiny_log/latest'
+            resp = requests.get(url)
+            data = json.loads(resp.text)
+            if data['status'] != 200:
+                await interaction.response.send_message('Something went wrong', ephemeral=True)
+            embeds.append(ioc_embed(data['data'], server_id.upper(), self.bot.masterdata, language))
+ 
+        user = interaction.user
+        view = Button_View(user, embeds)
+        await view.btn_update()
+        
+        await interaction.followup.send(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
 
 
 async def setup(bot):
