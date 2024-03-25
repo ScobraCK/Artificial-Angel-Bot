@@ -39,6 +39,10 @@ temple_type = {
 }
 
 # move out of cog later
+class GachaLog(Enum):
+    IoC = 'destiny_log'
+    IoSG = 'stars_guidance_log'
+
 class IoCServer(Enum):
     JP = ['jp1', 'jp2', 'jp3', 'jp4', 'jp5']
     KR = ['kr1', 'kr2']
@@ -142,7 +146,7 @@ async def group_autocomplete(
     ]
 
 # IoC
-def ioc_embed(data, server, md, lang):
+def ioc_embed(data, title, md, lang):
     description = StringIO()
     for player in data:
         description.write(
@@ -151,7 +155,7 @@ def ioc_embed(data, server, md, lang):
         )
     
     embed = discord.Embed(
-        title=f'Server {server}',
+        title=title,
         description=description.getvalue()
     )
     
@@ -373,25 +377,28 @@ class Info(commands.Cog, name='Info Commands'):
         
     @app_commands.command()
     @app_commands.describe(
+        gacha='Invocation of Chance (IoC) / Invocation of Stars Guidance (IoSG)',
         server='Server to check IoC',
         language='Text language. Defaults to English.'
     )
-    async def ioclog(
+    async def gachalogs(
         self, 
         interaction: discord.Interaction, 
+        gacha: GachaLog,
         server: IoCServer,
         language: Optional[Language]=Language.EnUs):
-        '''Shows IoC logs'''
+        '''Shows IoC or IoSG logs'''
 
         await interaction.response.defer()
         embeds = []
         for server_id in server.value:
-            url = f'https://api.mentemori.icu/{server_id}/destiny_log/latest'
+            url = f'https://api.mentemori.icu/{server_id}/{gacha.value}/latest'
             resp = requests.get(url)
             data = json.loads(resp.text)
             if data['status'] != 200:
                 await interaction.response.send_message('Something went wrong', ephemeral=True)
-            embeds.append(ioc_embed(data['data'], server_id.upper(), self.bot.masterdata, language))
+            title = f'{gacha.name} - {server_id.upper()}'
+            embeds.append(ioc_embed(data['data'], title, self.bot.masterdata, language))
  
         user = interaction.user
         view = Button_View(user, embeds)
