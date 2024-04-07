@@ -11,6 +11,7 @@ env:
   ROLE_ARN: arn:aws:iam::471112724169:role/aabot_deploy
 
 permissions:
+  id-token: write
   contents: read
 
 jobs:
