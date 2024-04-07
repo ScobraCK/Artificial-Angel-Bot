@@ -28,11 +28,13 @@ jobs:
       with:
         role-to-assume: ${{ env.ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
-
+        
     - name: Login to Amazon ECR
-      id: login-ecr
+      id: login-ecr-public
       uses: aws-actions/amazon-ecr-login@v2
-
+      with:
+        registry-type: public  
+       
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
@@ -40,7 +42,6 @@ jobs:
         ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         IMAGE_TAG: ${{ github.sha }}
       run: | 
-        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
         docker build -t $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG ./aabot
         docker push $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG
 
