@@ -1,8 +1,7 @@
 import datetime, discord
 from discord.ext import commands, tasks
 
-from mementodb import update_guild_rankings, update_player_rankings
-from load_env import LOG_CHANNEL
+from mementodb import async_update_guild_rankings, async_update_player_rankings, update_guild_rankings, update_player_rankings
 from timezones import get_cur_time
 from main import AABot
 
@@ -21,17 +20,21 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
 
     @tasks.loop(time=cur_time)
     async def my_task(self):
-        ch = self.bot.get_channel(LOG_CHANNEL)
+        ch = self.bot.get_channel(self.bot.log_channel)
 
+    
         res1, status1 = update_guild_rankings(self.bot.db)
         res2, status2 = update_player_rankings(self.bot.db)
+        
+        # res1, status1 = await async_update_guild_rankings(self.bot.db)
+        # res2, status2 = await async_update_player_rankings(self.bot.db)
         
         msg = f'**Auto Update**\n{get_cur_time()}\n{res1}\n{res2}'
 
         if status1 and status2:
             await ch.send(msg)
         else:
-            msg = f'{msg}\n<@395172008150958101>'
+            msg = f'{msg}\n<@{self.bot.owner_id}>'
             await ch.send(msg)
 
              

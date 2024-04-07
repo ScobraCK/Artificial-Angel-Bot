@@ -2,6 +2,8 @@ import sqlite3, requests, json
 from enum import Enum
 from dataclasses import dataclass
 from common import Tower, tower_map
+from logging import Logger, ERROR
+import aiohttp, asyncio
 
 @dataclass
 class GuildData():
@@ -14,7 +16,7 @@ class GuildData():
 
 class MememoriDB():
     def __init__(self) -> None:
-        self.con = sqlite3.connect('memento.db')
+        self.con = sqlite3.connect('/usr/src/app/data/memento.db')
         self.cur = self.con.cursor()
         
         self.cur.execute("""
@@ -265,19 +267,27 @@ def fetch_guilds():
     url = f"https://api.mentemori.icu/0/guild_ranking/latest"
     resp = requests.get(url)
     if resp.status_code == 200:
-        data = json.loads(resp.content.decode('utf-8'))
-        return data['data'], data['timestamp']
+        try:
+            data = json.loads(resp.content.decode('utf-8'))
+            return data['data'], data['timestamp']
+        except Exception as e:
+            Logger.log(level=ERROR, msg=e)
+            return None, None
     else:
-        return None
+        return None, None
     
 def fetch_players():
     url = f"https://api.mentemori.icu/0/player_ranking/latest"
     resp = requests.get(url)
     if resp.status_code == 200:
-        data = json.loads(resp.content.decode('utf-8'))
-        return data['data'], data['timestamp']
+        try:
+            data = json.loads(resp.content.decode('utf-8'))
+            return data['data'], data['timestamp']
+        except Exception as e:
+            Logger.log(level=ERROR, msg=e)
+            return None, None
     else:
-        return None    
+        return None, None
     
 def fetch_worlddata():
     url = f"https://api.mentemori.icu/worlds"
@@ -324,3 +334,56 @@ def update_player_rankings(gdb: MememoriDB):
             return e, False
     else:
         return 'API fail', False
+
+async def async_fetch_guild(world_id):
+    async with aiohttp.ClientSession() as session:
+        url = f"https://api.mentemori.icu/{world_id}/guild_ranking/latest"
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data
+            else:
+                return None
+            
+            
+async def async_update_guild_rankings(gdb: MememoriDB):
+    world_data = fetch_worlddata()
+    try:
+        tasks = [async_fetch_guild(world['world_id']) for world in world_data if world['ranking']]
+        guild_data = await asyncio.gather(*tasks)
+        for resp in guild_data:
+            if resp is not None:
+                data = resp['data']
+                timestamp = resp['timestamp']
+                server, world = split_world_id(data['world_id'])
+                guilds = data['guild_info']
+                gdb.update_guilds(server, world, guilds, timestamp)
+        return "Updated guild rankings", True
+
+    except Exception as e:
+        return e, False
+
+async def async_fetch_player(world_id):
+    url = f"https://api.mentemori.icu/{world_id}/player_ranking/latest"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data
+            else:
+                return None
+            
+async def async_update_player_rankings(gdb: MememoriDB):
+    world_data = fetch_worlddata()
+    try:
+        tasks = [async_fetch_player(world['world_id']) for world in world_data if world['ranking']]
+        player_data = await asyncio.gather(*tasks)
+        for resp in player_data:
+            if resp is not None:
+                data = resp['data']
+                timestamp = resp['timestamp']
+                server, world = split_world_id(data['world_id'])
+                gdb.update_players(server, world, data, timestamp)
+        return "Updated player rankings", True
+    except Exception as e:
+        return e, False

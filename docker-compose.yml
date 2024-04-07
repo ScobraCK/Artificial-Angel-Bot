@@ -1,0 +1,13 @@
+version: '3'
+services:
+  aabot:
+    image: ${IMAGE_NAME}
+    env_file:
+      - .env
+    volumes:
+      - type: volume
+        source: mementodb
+        target: /usr/src/app/data
+volumes:
+  mementodb:
+    name: mementodb

@@ -9,6 +9,7 @@ from typing import List, Optional
 from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
+import aiohttp
 
 from mementodb import fetch_group_list
 from main import AABot
@@ -59,7 +60,8 @@ def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     output = t2a(
         header=["Rank", "BP", "World", "Name",],
         body=ranking,
-        style=PresetStyle.thin_compact
+        style=PresetStyle.thin_compact,
+        alignments=Alignment.LEFT
     )
     return output
 
@@ -73,7 +75,8 @@ def towerlist_to_ascii(players: List[dict], start: int=1, server=None):
         output = t2a(
             header=["Rank", "World", 'Floor', "Name"],
             body=ranking,
-            style=PresetStyle.thin_compact
+            style=PresetStyle.thin_compact,
+            alignments=Alignment.LEFT
         )
 
     else:
@@ -86,7 +89,8 @@ def towerlist_to_ascii(players: List[dict], start: int=1, server=None):
         output = t2a(
             header=["Rank", 'Server', "World", 'Floor', "Name"],
             body=ranking,
-            style=PresetStyle.thin_compact
+            style=PresetStyle.thin_compact,
+            alignments=Alignment.LEFT
         )
     return output
 
@@ -103,7 +107,8 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
         output = t2a(
             header=["Rank", "World", 'BP', 'Quest', "Name"],
             body=ranking,
-            style=PresetStyle.thin_compact
+            style=PresetStyle.thin_compact,
+            alignments=Alignment.LEFT
         )
 
     else:
@@ -119,7 +124,8 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
         output = t2a(
             header=["Rank", 'Server', "World", 'BP', 'Quest', "Name"],
             body=ranking,
-            style=PresetStyle.thin_compact
+            style=PresetStyle.thin_compact,
+            alignments=Alignment.LEFT
         )
     return output
 
@@ -392,13 +398,14 @@ class Info(commands.Cog, name='Info Commands'):
         await interaction.response.defer()
         embeds = []
         for server_id in server.value:
-            url = f'https://api.mentemori.icu/{server_id}/{gacha.value}/latest'
-            resp = requests.get(url)
-            data = json.loads(resp.text)
-            if data['status'] != 200:
-                await interaction.response.send_message('Something went wrong', ephemeral=True)
-            title = f'{gacha.name} - {server_id.upper()}'
-            embeds.append(ioc_embed(data['data'], title, self.bot.masterdata, language))
+            async with aiohttp.ClientSession() as session:
+                url = f'https://api.mentemori.icu/{server_id}/{gacha.value}/latest'
+                async with session.get(url) as resp:
+                    data = await resp.json()
+                    if data['status'] != 200:
+                        await interaction.response.send_message('Something went wrong', ephemeral=True)
+                    title = f'{gacha.name} - {server_id.upper()}'
+                    embeds.append(ioc_embed(data['data'], title, self.bot.masterdata, language))
  
         user = interaction.user
         view = Button_View(user, embeds)

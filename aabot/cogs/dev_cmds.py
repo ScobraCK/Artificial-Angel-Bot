@@ -3,9 +3,8 @@
 
 import discord
 from discord.ext import commands
-from load_env import MY_GUILD, LOG_CHANNEL
 from typing import Optional, Literal
-from mementodb import update_guild_rankings, update_player_rankings
+from mementodb import async_update_guild_rankings, async_update_player_rankings, update_guild_rankings, update_player_rankings
 from timezones import get_cur_time
 
 from main import AABot
@@ -159,7 +158,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		Updates world groups
 		'''
-		ch = self.bot.get_channel(LOG_CHANNEL)
+		ch = self.bot.get_channel(self.bot.log_channel)
 		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
 		try:
 			self.bot.db.update_group(group_iter)
@@ -175,14 +174,15 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		Updates guild rankings
 		'''
-		ch = self.bot.get_channel(LOG_CHANNEL)
+		ch = self.bot.get_channel(self.bot.log_channel)
 		
 		res, status = update_guild_rankings(self.bot.db)
+		# res, status = await async_update_guild_rankings(self.bot.db)
 		msg = f'{get_cur_time()}\n{res}'
 		if status:
 			await ch.send(msg)
 		else:
-			msg = f'{msg}\n<@395172008150958101>'
+			msg = f'{msg}\n<@{self.bot.owner_id}>'
 			await ch.send(msg)
 
 	@commands.command()
@@ -193,17 +193,16 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		Updates player rankings
 		'''
-		ch = self.bot.get_channel(LOG_CHANNEL)
-		
+		ch = self.bot.get_channel(self.bot.log_channel)
+  
 		res, status = update_player_rankings(self.bot.db)
+		# res, status = await async_update_player_rankings(self.bot.db)
 		msg = f'{get_cur_time()}\n{res}'
 		if status:
 			await ch.send(msg)
 		else:
-			msg = f'{msg}\n<@395172008150958101>'
+			msg = f'{msg}\n<@{self.bot.owner_id}>'
 			await ch.send(msg)
-	
 
-
-async def setup(bot):
-	await bot.add_cog(DevCommands(bot), guild=MY_GUILD)
+async def setup(bot: AABot):
+	await bot.add_cog(DevCommands(bot))
