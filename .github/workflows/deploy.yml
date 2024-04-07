@@ -3,6 +3,8 @@ name: Deploy to server
 on:
   push:
     branches: [ "main" ]
+    paths:
+    - aabot/**
 
 env:
   AWS_REGION: us-east-1
@@ -13,8 +15,9 @@ env:
 permissions:
   id-token: write
   contents: read
-
+  
 jobs:
+  # using ECR as a test and may not be nessecary for this project
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -45,10 +48,21 @@ jobs:
         docker build -t $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG ./aabot
         docker push $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG
 
-  # deploy:
-  #   name: Deploy
-  #   runs-on: ubuntu-latest
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Execute SSH Commands
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd ./Artificial-Angel-Bot
+          git pull  # probably unneeded due to using ECR
+          docker-compose pull  && docker-compose up -d
