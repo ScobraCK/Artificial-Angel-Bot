@@ -36,13 +36,12 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
-        ECR_REGISTRY: ${{ env.ECR_URL }}
+        ECR_URL: ${{ env.ECR_URL }}
         ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         IMAGE_TAG: ${{ github.sha }}
       run: | 
         aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-        docker build -t $ECR_REPOSITORY ./aabot
-        docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker build -t $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG ./aabot
+        docker push $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG
 
 # test to build and upload image
