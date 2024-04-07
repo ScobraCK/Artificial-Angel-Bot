@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: aabot
+  ECR_REPOSITORY: n7f5u6j0/aabot
   ECR_URL: public.ecr.aws/n7f5u6j0/aabot:latest
   ROLE_ARN: arn:aws:iam::471112724169:role/aabot_deploy
 
