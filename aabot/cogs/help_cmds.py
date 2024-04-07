@@ -74,7 +74,7 @@ class Help(commands.Cog, name='Help Commands'):
             embed = discord.Embed(
                 title= "Mertillier's guide to A.A.",
                 description="For detailed help for a command, use **/help command**\n"\
-                    + "If you find any problems with the bot, join the support server https://discord.gg/DyATxE7saX"
+                    + "If you find any problems with the bot, join the support server: https://discord.gg/DyATxE7saX"
                 )
             for cog in self.bot.cogs:
                 if cog == 'Dev Commands':
