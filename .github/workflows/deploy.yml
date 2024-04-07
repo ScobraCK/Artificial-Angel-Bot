@@ -15,8 +15,8 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Deploy
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -34,15 +34,21 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
       with:
         registry-type: public  
-       
+      
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
         ECR_URL: ${{ env.ECR_URL }}
         ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: latest  # may change later
       run: | 
         docker build -t $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG ./aabot
         docker push $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG
 
-# test to build and upload image
+  # deploy:
+  #   name: Deploy
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v4
