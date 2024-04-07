@@ -69,7 +69,7 @@ class Help(commands.Cog, name='Help Commands'):
         command='The command you want more info about'
     )
     async def help(self, interaction: discord.Interaction, command: Optional[str]=None):
-        '''See the list of commands and how to use them.'''
+        '''See the list of commands and how to use them'''
         if command is None:
             embed = discord.Embed(
                 title= "Mertillier's guide to A.A.",
