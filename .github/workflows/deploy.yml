@@ -8,7 +8,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: aabot
   ECR_URL: public.ecr.aws/n7f5u6j0
-  ROLE_ARN: arn:aws:iam::471112724169:role/aabot_deploy
+  ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ID }}:role/aabot_deploy
 
 permissions:
   id-token: write
