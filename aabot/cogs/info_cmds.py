@@ -55,7 +55,9 @@ class IoCServer(Enum):
 def guildlist_to_ascii(guild_list: List[dict], start: int=1):
     ranking = []
     for rank, guild in enumerate(guild_list, start):
-        ranking.append([rank] + list(guild))
+        guild_data = [rank] + list(guild)
+        guild_data[1] = f'{guild_data[1]:,}'  # BP
+        ranking.append(guild_data)
 
     output = t2a(
         header=["Rank", "BP", "World", "Name",],
@@ -99,6 +101,7 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
     if server:
         for rank, player in enumerate(players, start):
             playerdata = [rank] + list(player)
+            playerdata[2] = f'{playerdata[2]:,}'  # BP
             # quest
             if quest_id := playerdata[-2]:
                 playerdata[-2] = convert_to_stage(quest_id) if quest_id else None  
@@ -114,6 +117,7 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
     else:
         for rank, player in enumerate(players, start):
             playerdata = [rank] + list(player)
+            playerdata[3] = f'{playerdata[3]:,}'  # BP
             # server
             playerdata[1] = Region(playerdata[1]).name
             # quest
@@ -206,7 +210,7 @@ class Info(commands.Cog, name='Info Commands'):
                     text += f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n'
 
             time = str(data["timestamp"])
-            text += f'\nLast update: <t:{time}:R>'
+            text += f'\nLast Update: <t:{time}:R>'
             embed.description = text
 
             embed.set_footer(text='Prototype command')
@@ -239,9 +243,10 @@ class Info(commands.Cog, name='Info Commands'):
             group_id = group_id[0]
             rankings = self.bot.db.get_group_guild_ranking(server.value, group_id)
             start, end = self.bot.db.get_group_worlds(group_id)
+            last_update = self.bot.db.get_last_update_guild()
             embed = discord.Embed(
                     title=f'Guild Rankings ({server.name} {start}-{end})',
-                    description=f'```{guildlist_to_ascii(rankings)}```',
+                    description=f'```{guildlist_to_ascii(rankings)}```\nLast Updated: <t:{last_update}>',
                     colour=discord.Colour.orange()
                 )
             
@@ -253,13 +258,14 @@ class Info(commands.Cog, name='Info Commands'):
         '''Guild rankings prototype'''
     
         sorted_guildlist = self.bot.db.get_server_guild_ranking(server.value)
-
+        last_update = self.bot.db.get_last_update_guild()
+        
         embeds = []
         for i in range(0, 200, 50):  # top 100
             if server == Region.EU and i > 100:
                 break
 
-            text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```'
+            text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```\nLast Updated: <t:{last_update}>'
             embed = discord.Embed(
                 title=f'Top Guild Rankings by BP ({server.name})',
                 description=text,
@@ -291,13 +297,14 @@ class Info(commands.Cog, name='Info Commands'):
         else:
             players = self.bot.db.get_all_player_ranking(category.value)
             servername = 'All Servers'
-
+        last_update = self.bot.db.get_last_update_player()
+        
         embeds = []
         for i in range(0, len(players), 50):  # top 100
             if i+50 > len(players):
                 break
 
-            text = f'```{playerlist_to_ascii(players[i:i+50], i+1, server)}```'
+            text = f'```{playerlist_to_ascii(players[i:i+50], i+1, server)}```\nLast Updated: <t:{last_update}>'
             embed = discord.Embed(
                 title=f'Top Player Rankings by {category.name} ({servername})',
                 description=text,
@@ -329,20 +336,23 @@ class Info(commands.Cog, name='Info Commands'):
         else:
             players = self.bot.db.get_all_tower_ranking(towertype, count=500)
             servername = 'All Servers'
+        
+        last_update = self.bot.db.get_last_update_player()
             
         embeds = []
         for i in range(0, len(players), 50):
             if i+50 > len(players):
                 break
 
-            text = f'```{towerlist_to_ascii(players[i:i+50], i+1, server)}```'
+            text = f'```{towerlist_to_ascii(players[i:i+50], i+1, server)}```\nLast Updated: <t:{last_update}>'
             embed = discord.Embed(
                 title=f'Top {towertype.name} Tower Rankings ({servername})',
                 description=text,
                 colour=discord.Colour.orange()
             )
+            
             if towertype != Tower.Infinity:
-                embed.set_footer(text="Note that ranking data for elemental towers is collected from only the top 20 of each world.")
+                embed.set_footer(text=f"Last Updated: <t:{last_update}>\nNote that ranking data for elemental towers is collected from only the top 20 of each world.")
             embeds.append(embed)
 
         user = interaction.user

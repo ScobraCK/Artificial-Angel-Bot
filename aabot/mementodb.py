@@ -248,6 +248,16 @@ class MememoriDB():
             )
             
         return res.fetchmany(count)
+    
+    def get_last_update_guild(self):
+        '''Get most recent timestamp from guild'''
+        res = self.cur.execute('SELECT timestamp FROM guilds ORDER BY timestamp DESC LIMIT 1')
+        return res.fetchone()[0]
+    
+    def get_last_update_player(self):
+        '''Get most recent timestamp from player'''
+        res = self.cur.execute('SELECT timestamp FROM players ORDER BY timestamp DESC LIMIT 1')
+        return res.fetchone()[0]    
 
     def close(self):
         self.con.close()
@@ -334,6 +344,9 @@ def update_player_rankings(gdb: MememoriDB):
             return e, False
     else:
         return 'API fail', False
+
+
+###### unused ######
 
 async def async_fetch_guild(world_id):
     async with aiohttp.ClientSession() as session:
