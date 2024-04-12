@@ -140,8 +140,7 @@ class MusicCog(commands.Cog, name = 'Music Cog'):
         else:
             await interaction.response.send_message("The bot is not connected to a voice channel.",
                                                     ephemeral=True)
-            
-        
+                    
 async def setup(bot):
 	await bot.add_cog(MusicCog(bot))
         
