@@ -46,6 +46,12 @@ class MasterData():
         self.__load_MB('MissionMB')
         self.__load_MB('BossBattleEnemyMB')
         self.__load_MB('TowerBattleEnemyMB')
+        self.__load_MB('TowerBattleQuestMB')
+        self.__load_MB('EquipmentEvolutionMB')
+        self.__load_MB('EquipmentCompositeMB')
+        self.__load_MB('EquipmentReinforcementMaterialMB')
+        self.__load_MB('EquipmentReinforcementParameterMB')
+        self.__load_MB('EquipmentExclusiveEffectMB')
 
     def reload_all(self):
         self.textdata = self.open_MB('TextResourceMB')
