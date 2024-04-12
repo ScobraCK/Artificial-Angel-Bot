@@ -262,7 +262,7 @@ def equipment_help_embed():
 def equipment_embed(equipment: Equipment):
     embed = discord.Embed(
         title=f"{rarity_emoji.get(equipment.rarity, rarity_emoji.get('N'))} {equipment.rarity} {equipment.name}",
-        description=f"Type: {equipment.equip_type}\nLevel: {equipment.level}",
+        description=f"Type: {equipment.equip_type}\nLevel: {equipment.level}\nUpgrade: {equipment.upgrade_level}",
         color=discord.Colour.blurple()
     )
     
@@ -326,17 +326,18 @@ def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment=N
             )
         )
     
-    upgrade_costs = StringIO()
-    upgrade_costs.write('```')
-    for item in costs.values():
-        upgrade_costs.write(f"{item}\n")
-    upgrade_costs.write('```')
-    
-    embed.add_field(
-        name="Upgrade Costs",
-        value=upgrade_costs.getvalue(),
-        inline=False
-    )
+    if costs:
+        upgrade_costs = StringIO()
+        upgrade_costs.write('```')
+        for item in costs.values():
+            upgrade_costs.write(f"{item}\n")
+        upgrade_costs.write('```')
+        
+        embed.add_field(
+            name="Compare",
+            value=upgrade_costs.getvalue(),
+            inline=False
+        )
     
     return embed
 
@@ -537,7 +538,7 @@ class Search(commands.Cog, name='Search Commands'):
             await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
             return
         
-        equipments = []
+        equipments: List[Equipment] = []
         embeds = []
         for i, equip_str in enumerate(equip_strings, 1):
             if i == 3:
@@ -563,15 +564,6 @@ class Search(commands.Cog, name='Search Commands'):
         else:
             upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0], equipments[1])
             upgrade_ebd = upgrade_embed(upgrade_costs, equipments[0], equipments[1])
-        
-        if not upgrade_costs:
-            await interaction.response.send_message(
-                embed=discord.Embed(
-                    title=f"Upgrade Costs was not calculated correctly",
-                    description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Feel free to report it on the support server. https://discord.gg/DyATxE7saX"
-                )
-            )
-            return
             
         user = interaction.user
         view = Equipment_View(user, embeds, upgrade_ebd)

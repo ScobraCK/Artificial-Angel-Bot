@@ -173,7 +173,19 @@ def get_equipment_from_str(
     if search_args['upgrade']:
         search_args['upgrade'] = search_args['upgrade'].removeprefix('+')
         if search_args['level'] is None:  # level is ommited
-            search_args['level'] = search_args['upgrade']  # considered upgrade is max
+            # considered upgrade is max
+            level = int(search_args['upgrade'])
+            if level < 180:
+                if search_args['rarity'] in [256, 512]:  # UR or LR
+                    level = 240
+                else:
+                    level = 180
+            elif level < 240 and (level % 20) != 0:
+                level = level + (20 - level % 20)
+            elif level % 10 != 0:
+                level = level + (10 - level % 10)
+            search_args['level'] = level
+            
     else:
         search_args['upgrade'] = 0  # case where upgrade is 0
         
@@ -224,14 +236,10 @@ def get_equipment(
         search_args['ExclusiveEffectId'] = 0
     
     equipment_iter = masterdata.search_equipment(char_id=char_id, **search_args)
-    
-    equipment_data = next(equipment_iter)
-
     try:
-        next(equipment_iter)
-        return None  # temp return to check if multiple equipment
+        equipment_data = next(equipment_iter)
     except StopIteration:
-        pass
+        return None # incorrect equipment level
     
     rarity = common.equip_rarity[rarity]
     if rarity == "S" and quality == 1:
@@ -320,7 +328,12 @@ def get_reinforcement_cost(start, end, id, masterdata: MasterData, lang: Optiona
 def get_upgrade_costs(
     masterdata: MasterData, equip1: Equipment, equip2: Equipment=None, lang: Optional[common.Language]='enUS'):
     if equip2:
-        if (equip1.upgrade_type != equip2.upgrade_type or equip1.equip_type != equip2.equip_type or equip1.is_uw != equip2.is_uw):
+        ## unable to calculate
+        if (
+            equip1.upgrade_type != equip2.upgrade_type 
+            or equip1.equip_type != equip2.equip_type 
+            or equip1.is_uw != equip2.is_uw
+            ):
             return None
         
         level1 = equip1.level
@@ -333,12 +346,18 @@ def get_upgrade_costs(
     else:
         level1 = 180
         upgrade1 = 0
-        rarity1 = 'SSR' if equip1.is_uw else 'UR'  # UW or Micheal gear
+        if equip1.is_uw:
+            rarity1 = 'SSR'
+        elif equip1.rarity == 'LR':
+            rarity1 = 'UR'
+        else:
+            rarity1 = equip1.rarity
         level2 = equip1.level
         upgrade2 = equip1.upgrade_level
         rarity2 = equip1.rarity
         comp = equip1.composite_id
-            
+    
+    # equip 1 > equip 2   
     if level1 > level2:
         return None
     if upgrade1 > upgrade2:
@@ -354,6 +373,8 @@ def get_upgrade_costs(
             dew = 65
         if rarity1 == 'UR' and rarity2 == 'LR':
             dew = 50
+    elif rarity1 != rarity2:  # rarity has to be same otherwise
+        return None
                
     total_cost = get_enhance_cost(level1, level2, equip1.evolution_id, masterdata, lang, composite_id=comp)
     reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, equip1.upgrade_type, masterdata, lang)
