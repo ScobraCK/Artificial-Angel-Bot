@@ -47,7 +47,6 @@ if __name__ == "__main__":
     
     discord.utils.setup_logging()
     intents=discord.Intents.default()
-    intents.message_content = True
     activity = discord.Activity(
         name='you auto click',
         type=discord.ActivityType.watching)
