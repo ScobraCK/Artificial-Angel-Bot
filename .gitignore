@@ -133,3 +133,4 @@ dmypy.json
 old/
 test*.py
 *.db
+*.bat
