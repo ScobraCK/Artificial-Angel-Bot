@@ -2,6 +2,11 @@ FROM python:3.12
 
 WORKDIR /usr/src/app
 COPY . .
+
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y --no-install-recommends ffmpeg
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 CMD python3 ./main.py
