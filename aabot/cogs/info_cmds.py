@@ -101,7 +101,7 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
     if server:
         for rank, player in enumerate(players, start):
             playerdata = [rank] + list(player)
-            playerdata[2] = f'{playerdata[2]:,}'  # BP
+            playerdata[2] = (f'{playerdata[2]:,}' if isinstance(playerdata[2], int) else playerdata[2])  # BP
             # quest
             if quest_id := playerdata[-2]:
                 playerdata[-2] = convert_to_stage(quest_id) if quest_id else None  
@@ -117,7 +117,7 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
     else:
         for rank, player in enumerate(players, start):
             playerdata = [rank] + list(player)
-            playerdata[3] = f'{playerdata[3]:,}'  # BP
+            playerdata[3] = (f'{playerdata[3]:,}' if isinstance(playerdata[3], int) else playerdata[3])   # BP
             # server
             playerdata[1] = Region(playerdata[1]).name
             # quest
