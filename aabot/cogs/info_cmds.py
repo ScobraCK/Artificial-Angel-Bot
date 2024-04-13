@@ -352,7 +352,7 @@ class Info(commands.Cog, name='Info Commands'):
             )
             
             if towertype != Tower.Infinity:
-                embed.set_footer(text=f"Last Updated: <t:{last_update}>\nNote that ranking data for elemental towers is collected from only the top 20 of each world.")
+                embed.set_footer(text=f"Note that ranking data for elemental towers is collected from only the top 20 of each world.")
             embeds.append(embed)
 
         user = interaction.user
