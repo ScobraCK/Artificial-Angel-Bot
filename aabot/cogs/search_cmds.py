@@ -334,7 +334,7 @@ def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment=N
         upgrade_costs.write('```')
         
         embed.add_field(
-            name="Compare",
+            name="Upgrade Costs",
             value=upgrade_costs.getvalue(),
             inline=False
         )
@@ -366,7 +366,7 @@ class Equipment_View(My_View):
             await self.update_button(button)
             await interaction.response.edit_message(embed=self.embeds[1], view=self)
 
-    @discord.ui.button(label="Upgrade Costs")
+    @discord.ui.button(label="Compare")
     async def upgrade_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.update_button(button)
         await interaction.response.edit_message(embed=self.upgrade_embed, view=self)
