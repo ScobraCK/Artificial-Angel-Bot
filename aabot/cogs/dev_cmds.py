@@ -27,7 +27,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		return ctx.author.id == self.bot.owner_id
 
 	@commands.command(aliases=['rl'])
-	@commands.guild_only()
 	async def reload(self, ctx, cog):
 		'''
 		Reloads a cog.
@@ -48,7 +47,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 				await ctx.send('Unknown Cog')  # If the cog isn't found/loaded.
 	
 	@commands.command(aliases=['ul'])
-	@commands.guild_only()
 	async def unload(self, ctx, cog):
 		'''
 		Unload a cog.
@@ -78,7 +76,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		await ctx.send(f"`{cog}` has successfully been unloaded.")
 	
 	@commands.command()
-	@commands.guild_only()
 	async def load(self, ctx, cog):
 		'''
 		Loads a cog.
@@ -103,7 +100,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 
 	# sync message command copied from @AbstractUmbra's gist post
 	@commands.command()
-	@commands.guild_only()
 	async def sync(
 		self,
 		ctx: commands.Context, 
@@ -140,7 +136,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
 	@commands.command()
-	@commands.guild_only()
 	async def reload_data(
 		self,
 		ctx: commands.Context):
@@ -151,7 +146,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		await ctx.send(f"Reloaded all data")
 
 	@commands.command()
-	@commands.guild_only()
 	async def update_groups(
 		self,
 		ctx: commands.Context):
@@ -167,7 +161,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 			await ch.send(f"{get_cur_time()}\nFailed to update groups: {e}")
 
 	@commands.command()
-	@commands.guild_only()
 	async def update_guilds(
 		self,
 		ctx: commands.Context):
@@ -186,7 +179,6 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 			await ch.send(msg)
 
 	@commands.command()
-	@commands.guild_only()
 	async def update_players(
 		self,
 		ctx: commands.Context):
