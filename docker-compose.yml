@@ -1,4 +1,3 @@
-version: '3'
 services:
   aabot:
     image: ${IMAGE_NAME}
