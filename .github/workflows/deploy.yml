@@ -6,47 +6,47 @@ on:
     paths:
     - aabot/**
 
-# env:
-#   AWS_REGION: us-east-1
-#   ECR_REPOSITORY: aabot
-#   ECR_URL: public.ecr.aws/n7f5u6j0
-#   ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ID }}:role/aabot_deploy
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: aabot
+  ECR_URL: public.ecr.aws/n7f5u6j0
+  ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ID }}:role/aabot_deploy
 
-# permissions:
-#   id-token: write
-#   contents: read
+permissions:
+  id-token: write
+  contents: read
   
 jobs:
   # using ECR as a test and may not be nessecary for this project
-  # build:
-  #   name: Build
-  #   runs-on: ubuntu-latest
+  build:
+    name: Build
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
-  #   - name: Configure AWS credentials
-  #     uses: aws-actions/configure-aws-credentials@v4
-  #     with:
-  #       role-to-assume: ${{ env.ROLE_ARN }}
-  #       aws-region: ${{ env.AWS_REGION }}
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
         
-  #   - name: Login to Amazon ECR
-  #     id: login-ecr-public
-  #     uses: aws-actions/amazon-ecr-login@v2
-  #     with:
-  #       registry-type: public  
+    - name: Login to Amazon ECR
+      id: login-ecr-public
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registry-type: public  
       
-  #   - name: Build, tag, and push image to Amazon ECR
-  #     id: build-image
-  #     env:
-  #       ECR_URL: ${{ env.ECR_URL }}
-  #       ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
-  #       IMAGE_TAG: latest  # may change later
-  #     run: | 
-  #       docker build -t $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG ./aabot
-  #       docker push $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_URL: ${{ env.ECR_URL }}
+        ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+        IMAGE_TAG: latest  # may change later
+      run: | 
+        docker build -t $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG ./aabot
+        docker push $ECR_URL/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy:
     name: Deploy
@@ -66,6 +66,5 @@ jobs:
         script: |
           cd ./Artificial-Angel-Bot
           git pull
-          docker build -t aabot ./aabot
-          docker compose up -d
+          docker compose pull  && docker compose up -d
           docker image prune -f
