@@ -8,6 +8,12 @@ services:
       - type: volume
         source: mementodb
         target: /usr/src/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+    
 volumes:
   mementodb:
     name: mementodb
