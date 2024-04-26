@@ -10,7 +10,7 @@ services:
     logging:
       options:
         max-file: "1"
-        max-size: "50m"
+        max-size: "10m"
     
 volumes:
   mementodb:
