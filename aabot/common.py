@@ -83,6 +83,7 @@ id_list = {
     76: 'Yuni',
     84: 'Liselotte',
     85: 'Matilda',
+    88: 'Rosalie(SR)'
 }
 MAX_CHAR_ID = len(id_list)  #TODO remove references
 
@@ -252,6 +253,15 @@ char_list = {
     'liselotte': 84,
     'matilda': 85,
     'banana': 85,
+    'rosalie2': 88,
+    'srrosalie': 88,
+    'rosaliesr': 88,
+    'radiant rosalie': 88,
+    'caritas': 88,
+    'rosalter': 88,
+    'alter rosalie': 88,
+    'apostle of caritas': 88,
+    'apostle rosalie': 88,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -331,6 +341,7 @@ char_list = {
     'ユニ': 76,
     'リズ': 84,
     'マチルダ': 85,
+    '使徒ロザリー': 88,
 }
 
 ############
