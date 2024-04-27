@@ -8,8 +8,9 @@ services:
         source: mementodb
         target: /usr/src/app/data
     logging:
+      driver: "local"
       options:
-        max-file: "1"
+        max-file: "2"
         max-size: "10m"
     
 volumes:
