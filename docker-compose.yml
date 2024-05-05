@@ -12,7 +12,7 @@ services:
       options:
         max-file: "2"
         max-size: "10m"
-    restart: on-failure
+    restart: unless-stopped
     
 volumes:
   mementodb:
