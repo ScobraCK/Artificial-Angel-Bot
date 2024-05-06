@@ -208,6 +208,7 @@ char_list = {
     'cciris': 66,
     'sriris': 66,
     'irissr': 66,
+    'tainted iris': 66,
     'richesse': 67,
     'fene': 68,
     'fenny': 68,
