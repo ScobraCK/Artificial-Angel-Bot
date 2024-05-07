@@ -1,6 +1,9 @@
 services:
   aabot:
-    image: ${IMAGE_NAME}
+    build: 
+      context: ./aabot
+      args:
+        IMAGE_NAME: aabot
     env_file:
       - .env
     volumes:
@@ -11,7 +14,7 @@ services:
       driver: "json-file"
       options:
         max-file: "2"
-        max-size: "10m"
+        max-size: "50m"
     restart: unless-stopped
     
 volumes:
