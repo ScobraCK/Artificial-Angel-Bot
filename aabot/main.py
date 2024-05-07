@@ -61,3 +61,4 @@ if __name__ == "__main__":
     bot.masterdata.load_all()  # preload main json data before running the bot
     asyncio.run(main(TOKEN))
     
+    
