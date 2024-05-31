@@ -255,7 +255,7 @@ char_list = {
     'yuni': 76,
     'asahi': 78,
     'ninja': 78,
-    'alexandra'
+    'alexandra': 82,
     'liz':84,
     'liselotte': 84,
     'matilda': 85,
