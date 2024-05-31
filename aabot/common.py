@@ -82,6 +82,7 @@ id_list = {
     75: 'Morgana',
     76: 'Yuni',
     78: 'Asahi',
+    82: 'Alexandra',
     84: 'Liselotte',
     85: 'Matilda',
     88: 'Rosalie(Apostle)'
@@ -141,6 +142,7 @@ char_list = {
     'hathor': 37,
     'olivia': 38,
     'primavera': 39,
+    'prim':  39,
     'carol': 40,
     'natasha': 41,
     'witch of mourning flowers': 41,
@@ -253,6 +255,7 @@ char_list = {
     'yuni': 76,
     'asahi': 78,
     'ninja': 78,
+    'alexandra'
     'liz':84,
     'liselotte': 84,
     'matilda': 85,
@@ -344,6 +347,7 @@ char_list = {
     'モルガナ': 75,
     'ユニ': 76,
     'アサヒ': 78,
+    'アレクサンドラ': 82,
     'リズ': 84,
     'マチルダ': 85,
     '使徒ロザリー': 88,
