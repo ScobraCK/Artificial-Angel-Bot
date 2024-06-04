@@ -70,8 +70,7 @@ def check_time(start: str, end: str, server)->bool:
     tz = timeserver2timezone.get(server)
     start_timestamp = tz.localize(convert_date(start))
     end_timestamp = tz.localize(convert_date(end))
-    # cur = datetime.now(tz=tz)
-    cur = datetime.fromtimestamp(1718081861, tz=tz)
+    cur = datetime.now(tz=tz)
     return start_timestamp <= cur <= end_timestamp
     
 
