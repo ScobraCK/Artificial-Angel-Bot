@@ -5,10 +5,10 @@ from mementodb import async_update_guild_rankings, async_update_player_rankings,
 from timezones import get_cur_time
 from main import AABot
 
-utc = datetime.timezone.utc
+# utc = datetime.timezone.utc
 
-# If no tzinfo is given then UTC is assumed.
-cur_time = datetime.time(hour=13, tzinfo=utc)
+# # If no tzinfo is given then UTC is assumed.
+# cur_time = datetime.time(hour=13, tzinfo=utc)
 
 class TimerCog(commands.Cog, name = 'Timer Cog'):
     def __init__(self, bot: AABot):
@@ -18,11 +18,9 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
     async def cog_unload(self):
         self.my_task.cancel()
 
-    @tasks.loop(time=cur_time)
+    @tasks.loop(hours=4)
     async def my_task(self):
         ch = self.bot.get_channel(self.bot.log_channel)
-
-    
         res1, status1 = update_guild_rankings(self.bot.db)
         res2, status2 = update_player_rankings(self.bot.db)
         
@@ -36,7 +34,6 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         else:
             msg = f'{msg}\n<@{self.bot.owner_id}>'
             await ch.send(msg)
-
              
      
 async def setup(bot):
