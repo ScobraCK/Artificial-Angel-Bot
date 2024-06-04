@@ -2,6 +2,15 @@ from enum import Enum
 from datetime import datetime, timezone
 import pytz
 
+timeserver2timezone = {
+    1: pytz.timezone('Etc/GMT+9'),
+    2: pytz.timezone('Etc/GMT+9'),
+    3: pytz.timezone('Etc/GMT+8'),
+    4: pytz.timezone('Etc/GMT-7'),
+    5: pytz.timezone('Etc/GMT+1'),
+    6: pytz.timezone('Etc/GMT+1'),
+}
+
 class ServerUTC(Enum):
     NA = -7
     JP_KR = 9
@@ -56,6 +65,15 @@ def unix_to_local(timestamp: datetime.timestamp, server: ServerUTC):
 def get_cur_time():
     '''Returns current time'''
     return convert_date_string(datetime.now(pytz.timezone('Asia/Seoul')))
+
+def check_time(start: str, end: str, server)->bool:
+    tz = timeserver2timezone.get(server)
+    start_timestamp = tz.localize(convert_date(start))
+    end_timestamp = tz.localize(convert_date(end))
+    # cur = datetime.now(tz=tz)
+    cur = datetime.fromtimestamp(1718081861, tz=tz)
+    return start_timestamp <= cur <= end_timestamp
+    
 
 if __name__ == "__main__":
     a = [1680821100, 1680780600, 1680781500, 1680784200, 1680776100, 1680821100, 1680781500,

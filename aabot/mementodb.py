@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from common import Tower, tower_map
 from logging import Logger, ERROR
 import aiohttp, asyncio
+from timezones import check_time
 
 @dataclass
 class GuildData():
@@ -47,13 +48,13 @@ class MememoriDB():
             server int)
         """)
 
-        self.cur.execute("""
-        CREATE TABLE IF NOT EXISTS groups (
-            group_id int PRIMARY KEY,
-            server int,
-            start int,
-            end int)
-        """)
+        # self.cur.execute("""
+        # CREATE TABLE IF NOT EXISTS groups (
+        #     group_id int PRIMARY KEY,
+        #     server int,
+        #     start int,
+        #     end int)
+        # """)
 
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS players (
@@ -87,11 +88,13 @@ class MememoriDB():
                              """)
 
     # INSERT
-
-    def update_group(self, group_data):
+    def update_groups(self, group_data):
         for group in group_data:
+            
             group_id = group['Id']
             server = group['TimeServerId']
+            if not check_time(group['StartTime'], group['EndTime'], server):
+                continue
             world_list = []
             for world_id in group['WorldIdList']:
                 world = world_id % 1000
@@ -100,10 +103,10 @@ class MememoriDB():
                 self.cur.execute(
                     "INSERT OR REPLACE INTO worlds (world_id, group_id, world, server) VALUES (?, ?, ?, ?)",
                     (world_id, group_id, world, server))
-            # add to groups
-            self.cur.execute(
-                    "INSERT OR REPLACE INTO groups (group_id, server, start, end) VALUES (?, ?, ?, ?)",
-                    (group_id, server, world_list[0], world_list[-1]))
+            # # add to groups NOW UNUSED
+            # self.cur.execute(
+            #         "INSERT OR REPLACE INTO groups (group_id, server, start, end) VALUES (?, ?, ?, ?)",
+            #         (group_id, server, world_list[0], world_list[-1]))
         self.con.commit()
 
     def _insert_guild(self, server, world, guild_data, timestamp):
@@ -154,11 +157,30 @@ class MememoriDB():
         self.con.commit()
     
     # READ
-    def get_group_list(self, server):
+    def get_group_list(self):
+        '''
+        return example
+        grouped_data = [
+            (1, 1, ['1', '2']),
+            (1, 2, ['3']),
+            (2, 1, ['4']),
+            (2, 2, ['5', '6'])
+        ]
+        '''
         res = self.cur.execute(
-            "SELECT group_id, start, end FROM groups where server = (?)", (server, )
-        )
-        return res.fetchall()
+            """SELECT server, group_id, GROUP_CONCAT(world) AS worlds
+            FROM worlds
+            GROUP BY server, group_id
+            ORDER BY server, group_id;
+            """)
+        rows =  res.fetchall()
+        grouped_data = []
+        for row in rows:
+            server, group_id, worlds_str = row
+            worlds = worlds_str.split(',')  # Convert comma-separated string to list
+            grouped_data.append((server, group_id, worlds))
+            
+        return grouped_data
     
     def get_world_list(self, group):
         res = self.cur.execute(
@@ -173,11 +195,11 @@ class MememoriDB():
         )
         return res.fetchone()
     
-    def get_group_worlds(self, group_id):
-        res = self.cur.execute(
-            "SELECT start, end from groups WHERE group_id = (?)", (group_id, )
-        )
-        return res.fetchone()
+    # def get_group_worlds(self, group_id):
+    #     res = self.cur.execute(
+    #         "SELECT start, end from groups WHERE group_id = (?)", (group_id, )
+    #     )
+    #     return res.fetchone()
     
     def get_server_guild_ranking(self, server):
         res = self.cur.execute(
@@ -308,11 +330,11 @@ def fetch_worlddata():
     else:
         return None
 
-def fetch_group_list(server):
-    db = MememoriDB()
-    data = db.get_group_list(server)
-    db.close()
-    return data
+# def fetch_group_list(server):
+#     db = MememoriDB()
+#     data = db.get_group_list(server)
+#     db.close()
+#     return data
 
 def split_world_id(world_id):
     world_id = str(world_id)

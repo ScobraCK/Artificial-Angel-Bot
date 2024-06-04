@@ -11,10 +11,9 @@ from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
 import aiohttp
 
-from mementodb import fetch_group_list
 from main import AABot
 from quests import convert_to_stage
-from common import Tower, Language
+from common import Tower, Language, id2server
 from character import get_full_name
 
 class Region(Enum): #temp solution
@@ -133,27 +132,27 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
         )
     return output
 
-def in_range(num, start, end):
-    if num == '':
-        return True
-    num = int(num)
-    if start <= num <= end:
-        return True
-    if (start//10) <= num <= (end//10):
-        return True
-    if (start//100) <= num <= (end//100):
-        return True
-    return False
+# def in_range(num, start, end):
+#     if num == '':
+#         return True
+#     num = int(num)
+#     if start <= num <= end:
+#         return True
+#     if (start//10) <= num <= (end//10):
+#         return True
+#     if (start//100) <= num <= (end//100):
+#         return True
+#     return False
 
-async def group_autocomplete(
-        interaction: discord.Interaction, 
-        current: str) -> List[app_commands.Choice[str]]:
-    group_list = fetch_group_list(interaction.namespace.server)  # [(id, start, end), ...]
+# async def group_autocomplete(
+#         interaction: discord.Interaction, 
+#         current: str) -> List[app_commands.Choice[str]]:
+#     group_list = fetch_group_list(interaction.namespace.server)  # [(id, start, end), ...]
 
-    return [
-        app_commands.Choice(name=f'{choice[1]}-{choice[2]}', value=f'{choice[1]}-{choice[2]}')
-        for choice in group_list if in_range(current, choice[1], choice[2])
-    ]
+#     return [
+#         app_commands.Choice(name=f'{choice[1]}-{choice[2]}', value=f'{choice[1]}-{choice[2]}')
+#         for choice in group_list if in_range(current, choice[1], choice[2])
+#     ]
 
 # IoC
 def ioc_embed(data, title, md, lang):
@@ -221,36 +220,53 @@ class Info(commands.Cog, name='Info Commands'):
     @app_commands.command()
     @app_commands.describe(
         server='The region your world is in',
-        group='The group your world is in'
+        world='Any world in the group you are searching for'
     )
-    @app_commands.autocomplete(group=group_autocomplete)
+    # @app_commands.autocomplete(group=group_autocomplete)
     async def grouprankings(self, 
                             interaction: discord.Interaction, 
                             server: Region,
-                            group: str):
+                            world: int):
         '''Guild rankings by group'''
-        if group.isnumeric():
-            group_id = self.bot.db.get_group_id(server.value, int(group))
-        else:
-            group_id = self.bot.db.get_group_id(server.value, int(group.split('-')[0]))
+        group_id = self.bot.db.get_group_id(server.value, world)
 
         if group_id is None:
             await interaction.response.send_message(
-                f"Group Id of `{group}` on server `{server.name}` was not found",
+                f"Group Id for `{world}` on server `{server.name}` was not found",
                 ephemeral=True
             )
         else:
             group_id = group_id[0]
             rankings = self.bot.db.get_group_guild_ranking(server.value, group_id)
-            start, end = self.bot.db.get_group_worlds(group_id)
+            # start, end = self.bot.db.get_group_worlds(group_id)
             last_update = self.bot.db.get_last_update_guild()
             embed = discord.Embed(
-                    title=f'Guild Rankings ({server.name} {start}-{end})',
+                    title=f'Guild Rankings ({server.name} Group {group_id})',
                     description=f'```{guildlist_to_ascii(rankings)}```\nLast Updated: <t:{last_update}>',
                     colour=discord.Colour.orange()
                 )
             
             await interaction.response.send_message(embed=embed)
+            
+    @app_commands.command()
+    async def groups(self, interaction: discord.Interaction):
+        """Show world groups"""
+        group_data = self.bot.db.get_group_list()
+        
+        embed = discord.Embed(title="Groups", colour=discord.Colour.blue())
+        
+        server_groups = {}
+        for server, group_id, worlds in group_data:
+            server_name = id2server.get(server)
+            if server_name not in server_groups:
+                server_groups[server_name] = []
+            server_groups[server_name].append(f"**{group_id}**: {', '.join(worlds)}")
+        
+        for server_name, groups in server_groups.items():
+            value = '\n'.join(groups)
+            embed.add_field(name=server_name, value=value)
+        
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command()
     @app_commands.describe(server='The region your world is in')
