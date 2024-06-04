@@ -155,7 +155,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		ch = self.bot.get_channel(self.bot.log_channel)
 		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
 		try:
-			self.bot.db.update_group(group_iter)
+			self.bot.db.update_groups(group_iter)
 			await ch.send(f"{get_cur_time()}\nUpdated world groups")
 		except Exception as e:
 			await ch.send(f"{get_cur_time()}\nFailed to update groups: {e}")
