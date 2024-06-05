@@ -13,14 +13,17 @@ from main import AABot
 class TimerCog(commands.Cog, name = 'Timer Cog'):
     def __init__(self, bot: AABot):
         self.bot = bot
-        self.my_task.start()
+        
+    async def cog_load(self):
+        self.update_ranking.start()
 
     async def cog_unload(self):
-        self.my_task.cancel()
+        self.update_ranking.cancel()
 
     @tasks.loop(hours=4)
-    async def my_task(self):
+    async def update_ranking(self):
         ch = self.bot.get_channel(self.bot.log_channel)
+        
         res1, status1 = update_guild_rankings(self.bot.db)
         res2, status2 = update_player_rankings(self.bot.db)
         
@@ -34,6 +37,10 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         else:
             msg = f'{msg}\n<@{self.bot.owner_id}>'
             await ch.send(msg)
+             
+    @update_ranking.before_loop
+    async def before_update(self):
+        await self.bot.wait_until_ready()         
              
      
 async def setup(bot):
