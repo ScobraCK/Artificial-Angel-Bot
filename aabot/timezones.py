@@ -71,12 +71,8 @@ def check_time(start: str, end: str, server)->bool:
     start_timestamp = tz.localize(convert_date(start))
     end_timestamp = tz.localize(convert_date(end))
     cur = datetime.now(tz=tz)
-    print(tz)
-    print(start_timestamp)
-    print(cur)
-    print(end_timestamp)
     return start_timestamp <= cur <= end_timestamp
     
 
 if __name__ == "__main__":
-    print(check_time('2024-06-10 04:00:00', '2100-01-01 00:00:00', 4))
+    print(check_time('2024-06-10 04:00:00', '2100-01-01 00:00:00', 1))
