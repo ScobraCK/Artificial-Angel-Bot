@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 import pytz
 
 timeserver2timezone = {
-    1: pytz.timezone('Etc/GMT+9'),
-    2: pytz.timezone('Etc/GMT+9'),
-    3: pytz.timezone('Etc/GMT+8'),
-    4: pytz.timezone('Etc/GMT-7'),
-    5: pytz.timezone('Etc/GMT+1'),
-    6: pytz.timezone('Etc/GMT+1'),
+    1: pytz.timezone('Etc/GMT-9'),
+    2: pytz.timezone('Etc/GMT-9'),
+    3: pytz.timezone('Etc/GMT-8'),
+    4: pytz.timezone('Etc/GMT+7'),
+    5: pytz.timezone('Etc/GMT-1'),
+    6: pytz.timezone('Etc/GMT-1'),
 }
 
 class ServerUTC(Enum):
@@ -71,12 +71,12 @@ def check_time(start: str, end: str, server)->bool:
     start_timestamp = tz.localize(convert_date(start))
     end_timestamp = tz.localize(convert_date(end))
     cur = datetime.now(tz=tz)
+    print(tz)
+    print(start_timestamp)
+    print(cur)
+    print(end_timestamp)
     return start_timestamp <= cur <= end_timestamp
     
 
 if __name__ == "__main__":
-    a = [1680821100, 1680780600, 1680781500, 1680784200, 1680776100, 1680821100, 1680781500,
-         1680785100, 1680787800]
-    
-    for k in vars(DailyEvents):
-        print(k)
+    print(check_time('2024-06-10 04:00:00', '2100-01-01 00:00:00', 4))
