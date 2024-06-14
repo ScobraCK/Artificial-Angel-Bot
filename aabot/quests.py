@@ -13,6 +13,8 @@ def convert_from_stage(quest: str)->int:
     Chapter 2: 20
     Chapter 3: 24
     Chapter 4+: 28
+    Chapter 27+: 40,
+    Chapter 35+: 60
     '''
     if quest.isnumeric():
         return int(quest)
@@ -20,8 +22,7 @@ def convert_from_stage(quest: str)->int:
         chap, stage = tuple(map(int, (re.split('[ -/]', quest, maxsplit=2))))
     except ValueError:
         return None
-    
-    if not (0 < stage <= 40):
+    if not (0 < stage):
         return None
     if chap == 1:
         return (stage if stage <= 12 else None)
@@ -30,9 +31,11 @@ def convert_from_stage(quest: str)->int:
     elif chap == 3:
         return (stage + 32 if stage <= 24 else None)
     elif chap < 27:
-        return (chap-2) * 28 + stage  # 1-3 is 28*2 stages
+        return ((chap-2) * 28 + stage if stage <= 28 else None) # 1-3 is 28*2 stages
+    elif chap < 35:
+        return (700 + (chap-27)*40 + stage if stage <= 40 else None) # 26-28 is 700
     else:
-        return 700 + (chap-27)*40 + stage  # 26-28 is 700
+        return (1020 + (chap-35)*60 + stage if stage <= 60 else None) # 25-40 is 1020
 
 def convert_to_stage(quest_id: int)->str:
     '''
@@ -43,9 +46,17 @@ def convert_to_stage(quest_id: int)->str:
     Chapter 2: 20
     Chapter 3: 24
     Chapter 4+: 28
-    Chapter 27+: 40
+    Chapter 27+: 40,
+    Chapter 35+: 60
     '''
-    if quest_id > 700:
+    
+    if quest_id > 1020:
+        chap, stage = divmod(quest_id-1020, 60)
+        if stage==0:
+            chap += -1
+            stage = 60
+        return f"{chap+35}-{stage}"
+    elif quest_id > 700:
         chap, stage = divmod(quest_id-700, 40)
         if stage==0:
             chap += -1
