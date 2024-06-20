@@ -19,7 +19,7 @@ You agree not to use the Bot to:
 - Engage in any activity that could harm or interfere with the Bot, its servers, or its users.
 
 ## 5. Privacy
-We respect your privacy. Please review our Privacy Policy. to understand how we collect, use, and share your information.
+We respect your privacy. Please review our [Privacy Policy](https://github.com/ScobraCK/Artificial-Angel-Bot/blob/main/Privacy%20Policy.md). to understand how we collect, use, and share your information.
 
 ## 6. Limitation of Liability
 To the fullest extent permitted by law, the Bot and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from:
