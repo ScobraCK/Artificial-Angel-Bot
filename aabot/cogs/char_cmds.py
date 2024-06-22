@@ -1,16 +1,37 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from functools import wraps
 from typing import Iterable, List, Optional, Tuple, Dict
 from io import StringIO
+from itertools import batched
+import html2text
 
+from main import AABot
 import common
 import character as chars
 import skill
 import equipment
 from master_data import MasterData
-from my_view import My_View, Button_View
+from pagination import MyView, ButtonView, ButtonView2, show_view
 import emoji
+
+# decorator for char id check
+def check_id():
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(_, interaction: discord.Interaction, *args, **kwargs):
+            character = kwargs.get('character', None) or args[0]
+            if not chars.check_id(character):
+                await interaction.response.send_message(
+                    f"A character id of `{character}` does not exist.",
+                    ephemeral=True
+                )
+                return
+            return await func(_, interaction, *args, **kwargs)
+        return wrapper
+    return decorator
+
 
 #########################
 # idlist
@@ -170,7 +191,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
 
     return embed
 
-class Skill_View(My_View):
+class Skill_View(MyView):
     def __init__(self, user: discord.User, embeds:List[discord.Embed]):
         super().__init__(user)
         self.embeds = embeds
@@ -222,7 +243,7 @@ def speed_listing(speed_list, count: int ,buff: int=0) -> str:
     return text.getvalue()
 
 
-class Speed_View(My_View):
+class Speed_View(MyView):
     def __init__(self, user: discord.User, embed: discord.Embed, speed_list: List):
         super().__init__(user)
         self.speed_list = speed_list
@@ -351,7 +372,7 @@ def skill_detail_embeds(skill_info: skill.Skill, master: MasterData, lang) -> Li
 
     return [embed] + detail_embeds
 
-class Skill_Detail_View(Button_View):
+class Skill_Detail_View(ButtonView):
     def __init__(self, user: discord.User, embeds: List[discord.Embed],
                  skills: Dict[str, skill.Skill], options: List[discord.SelectOption],
                  master: MasterData, lang: common.Language):
@@ -387,7 +408,7 @@ class Character(commands.Cog, name='Character Commands'):
     '''These are helpful tip commands'''
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: AABot = bot
 
     @app_commands.command()
     @app_commands.describe(
@@ -402,7 +423,7 @@ class Character(commands.Cog, name='Character Commands'):
         '''
         embeds = id_list_embed(self.bot.masterdata, language)
         user = interaction.user
-        view = Button_View(user, embeds)
+        view = ButtonView(user, embeds)
         await view.btn_update()
 
         await interaction.response.send_message(embed=embeds[0], view=view)
@@ -415,58 +436,50 @@ class Character(commands.Cog, name='Character Commands'):
     character='The name or id of the character',
     language='Text language. Defaults to English.'
     )
+    @check_id()
     async def character(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer], # is an id
         language: Optional[common.Language]=common.Language.EnUs):  
         '''Shows a character's basic info'''
-        if not chars.check_id(character):
-            await interaction.response.send_message(
-                f"A character id of `{character}` does not exist.",
-                ephemeral=True
-            )
-        else:
-            embed = char_info_embed(character, self.bot.masterdata, lang=language)
 
-            if not embed.title:  #TEMP
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
+        embed = char_info_embed(character, self.bot.masterdata, lang=language)
 
-            await interaction.response.send_message(embed=embed)
+        if not embed.title:  #TEMP
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command()
     @app_commands.describe(
         character='The name or id of the character',
         language='Text language. Defaults to English.'
     )
+    @check_id()
     async def skill(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer],
         language: Optional[common.Language]=common.Language.EnUs):
         '''Shows character skills including unique weapon upgrade effects'''
-        if not chars.check_id(character):
-            await interaction.response.send_message(
-                f"A character id of `{character}` does not exist.",
-                ephemeral=True
-            )
-        else:
-            char = chars.get_character_info(character, self.bot.masterdata, lang=language)
-            if not char:  # TEMP
-                embed = discord.Embed(description='Character data invalid.')
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-                return
-            embeds = [
-                skill_embed(char, common.Skill_Enum.Active, self.bot.masterdata, lang=language),
-                skill_embed(char, common.Skill_Enum.Passive, self.bot.masterdata, lang=language),
-                uw_skill_embed(char, self.bot.masterdata, lang=language)
-            ]
-            user = interaction.user
-            view = Skill_View(user, embeds)
-            await interaction.response.send_message(embed=embeds[0], view=view)
-            message = await interaction.original_response()
-            view.message = message
+
+        char = chars.get_character_info(character, self.bot.masterdata, lang=language)
+        if not char:  # TEMP
+            embed = discord.Embed(description='Character data invalid.')
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        embeds = [
+            skill_embed(char, common.Skill_Enum.Active, self.bot.masterdata, lang=language),
+            skill_embed(char, common.Skill_Enum.Passive, self.bot.masterdata, lang=language),
+            uw_skill_embed(char, self.bot.masterdata, lang=language)
+        ]
+        user = interaction.user
+        view = Skill_View(user, embeds)
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
 
     @app_commands.command()
     async def speed(self, interaction: discord.Interaction):
@@ -491,36 +504,90 @@ class Character(commands.Cog, name='Character Commands'):
         character='The name or id of the character',
         language='Text language. Defaults to English.'
     )
+    @check_id()
     async def skilldetails(
         self,
         interaction: discord.Interaction,
         character: app_commands.Transform[int, IdTransformer],
         language: Optional[common.Language]=common.Language.EnUs):
         '''Shows character skills and details'''
-        if not chars.check_id(character):
-            await interaction.response.send_message(
-                f"A character id of `{character}` does not exist.",
-                ephemeral=True
-            )
-        else:
 
-            skill_list = skill.skill_detail_info(character, self.bot.masterdata, language)
+        skill_list = skill.skill_detail_info(character, self.bot.masterdata, language)
 
-            skill_dict = {}
-            options = []
-            for skill_info in skill_list:
-                options.append(discord.SelectOption(label=skill_info.name))
-                skill_dict[skill_info.name] = skill_info
+        skill_dict = {}
+        options = []
+        for skill_info in skill_list:
+            options.append(discord.SelectOption(label=skill_info.name))
+            skill_dict[skill_info.name] = skill_info
 
-            embeds = skill_detail_embeds(skill_list[0], self.bot.masterdata, language)  #initial S1 embed
-            user = interaction.user
-            view = Skill_Detail_View(user, embeds, skill_dict, options, self.bot.masterdata, language)
-            await view.btn_update()
+        embeds = skill_detail_embeds(skill_list[0], self.bot.masterdata, language)  #initial S1 embed
+        user = interaction.user
+        view = Skill_Detail_View(user, embeds, skill_dict, options, self.bot.masterdata, language)
+        await view.btn_update()
 
-            await interaction.response.send_message(embed=embeds[0], view=view)
-            message = await interaction.original_response()
-            view.message = message
-
+        await interaction.response.send_message(embed=embeds[0], view=view)
+        message = await interaction.original_response()
+        view.message = message
+            
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        language='Text language. Defaults to English.'
+    )
+    @check_id()
+    async def voicelines(
+        self,
+        interaction: discord.Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: Optional[common.Language]=common.Language.EnUs):
+        '''Shows character voicelines'''
+        voicelines = chars.get_voicelines(character, self.bot.masterdata)
+        # f'{common.moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{}'
+        
+        name = chars.get_full_name(character, self.bot.masterdata, lang=language)
+        embeds = []
+        for batch in batched(voicelines.items(), 6):
+            embed = discord.Embed(title=f"{name}'s Voicelines")
+            for key, text in batch:
+                embed.add_field(name=key, value=text, inline=False)
+            embeds.append(embed)
+        
+        user = interaction.user
+        view = ButtonView2(user, {'default': embeds})
+        await show_view(interaction, view, embeds[0])
+        
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        language='Text language. Defaults to English.'
+    )
+    @check_id()
+    async def memories(
+        self,
+        interaction: discord.Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: Optional[common.Language]=common.Language.EnUs):
+        '''Shows character memories'''
+        memories = chars.get_memories(character, self.bot.masterdata)
+        # f'{common.moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{:06}'
+        
+        name = chars.get_full_name(character, self.bot.masterdata, lang=language)
+        embeds = []
+        h = html2text.HTML2Text()
+        for i, (k, text) in enumerate(memories.items(), 1):
+            embed = discord.Embed(title=f"{name}'s Memories")
+            embed.add_field(name=k, value=h.handle(text), inline=False)
+            
+            # assets
+            jp_url = f'{common.moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{character:06}/Memory/MEM_{i:06}'
+            us_url = f'{common.moonheart_assets}/AddressableConvertAssets/Voice/US/Character/CHR_{character:06}/Memory/MEM_{i:06}'
+            embed.add_field(name='Voice',value=f'[JP]({jp_url})|[US]({us_url})', inline=False)
+            embeds.append(embed)
+        
+        user = interaction.user
+        view = ButtonView2(user, {'default': embeds})
+        await show_view(interaction, view, embeds[0])
+        
 
 async def setup(bot):
 	await bot.add_cog(Character(bot))

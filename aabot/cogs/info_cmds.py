@@ -4,7 +4,7 @@ from discord.ext import commands
 
 import requests, json
 from enum import Enum
-from my_view import Button_View
+from pagination import ButtonView
 from typing import List, Optional
 from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
@@ -290,7 +290,7 @@ class Info(commands.Cog, name='Info Commands'):
             embeds.append(embed)
 
         user = interaction.user
-        view = Button_View(user, embeds)
+        view = ButtonView(user, embeds)
         await view.btn_update()
 
         await interaction.response.send_message(embed=embeds[0], view=view)
@@ -329,7 +329,7 @@ class Info(commands.Cog, name='Info Commands'):
             embeds.append(embed)
 
         user = interaction.user
-        view = Button_View(user, embeds)
+        view = ButtonView(user, embeds)
         await view.btn_update()
 
         await interaction.response.send_message(embed=embeds[0], view=view)
@@ -372,7 +372,7 @@ class Info(commands.Cog, name='Info Commands'):
             embeds.append(embed)
 
         user = interaction.user
-        view = Button_View(user, embeds)
+        view = ButtonView(user, embeds)
         await view.btn_update()
 
         await interaction.response.send_message(embed=embeds[0], view=view)
@@ -434,7 +434,7 @@ class Info(commands.Cog, name='Info Commands'):
                     embeds.append(ioc_embed(data['data'], title, self.bot.masterdata, language))
  
         user = interaction.user
-        view = Button_View(user, embeds)
+        view = ButtonView(user, embeds)
         await view.btn_update()
         
         await interaction.followup.send(embed=embeds[0], view=view)

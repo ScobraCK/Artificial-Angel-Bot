@@ -87,13 +87,49 @@ def speed_iter(masterdata: MasterData) -> Iterable:
     return iter(sorted_char)
 
 
-# character parameters
+# voiceline
+def get_voicelines(id: int, md: MasterData, lang: Optional[common.Language]='enUS') -> dict:
+    '''
+    Get char voicelines
+    Returns:
+        Dict[button_name, subtitle]
+            etc {'Home1': <voiceline>}
+    '''
+    voiceline_data = md.search_voiceline(id)
+    voicelines = {}
+    for voice_data in voiceline_data:
+        button = md.search_string_key(voice_data['UnlockedVoiceButtonTextKey'])
+        subtitle = md.search_string_key(voice_data['SubtitleKey'])
+        if subtitle:
+            voicelines[button] = subtitle
+    
+    return voicelines
 
-
+# memories
+def get_memories(id: int, md: MasterData, lang: Optional[common.Language]='enUS') -> dict:
+    '''
+    Get char memories
+    Returns:
+        Dict[
+            episode: text(html)
+        ]
+    '''
+    memory_data = md.search_memories(id)
+    memories = {}
+    for memory in memory_data:
+        episode = md.search_string_key(memory['TitleKey'])
+        text = md.search_string_key(memory['TextKey'])
+        if text:
+            memories[episode] = text
+    
+    return memories
 
 # testing
 if __name__ == "__main__":
+    import html2text
+    h=  html2text.HTML2Text()
     master = MasterData()
-    id = 'summer sabrina'
-    print(id, get_name(find_id_from_name(id), master), find_id_from_name(id))
-    
+    id = 78
+    for  k, v in get_memories(id, master).items():
+        print(f'{k}: {h.handle(v)}')
+        break

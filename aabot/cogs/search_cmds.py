@@ -10,7 +10,7 @@ import quests
 from master_data import MasterData
 from helper import human_format as hf
 from emoji import emoji_list, soul_emoji, rarity_emoji
-from my_view import My_View
+from pagination import MyView
 from items import get_item_name, get_item_list, Item
 from equipment import get_equipment_from_str, Equipment, get_upgrade_costs
 from cogs.char_cmds import IdTransformer
@@ -164,7 +164,7 @@ def add_resonance(embed:discord.Embed, def_list: List):
             max_ind, name=max_field.name+resonance+' (High)', 
             value=max_field.value, inline=max_field.inline)
 
-class Enemy_View(My_View):
+class Enemy_View(MyView):
     def __init__(self, user: discord.User, main_embed: discord.Embed, embeds:List[discord.Embed]):
         super().__init__(user)
         self.main_embed = main_embed
@@ -341,7 +341,7 @@ def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment=N
     
     return embed
 
-class Equipment_View(My_View):
+class Equipment_View(MyView):
     def __init__(self, user: discord.User, embeds:List[discord.Embed], upgrade_embed: discord.Embed):
         super().__init__(user)
         self.embeds = embeds

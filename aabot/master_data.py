@@ -52,6 +52,8 @@ class MasterData():
         self.__load_MB('EquipmentReinforcementMaterialMB')
         self.__load_MB('EquipmentReinforcementParameterMB')
         self.__load_MB('EquipmentExclusiveEffectMB')
+        self.__load_MB('CharacterDetailVoiceMB')
+        self.__load_MB('CharacterStoryMB')
 
     def reload_all(self):
         self.textdata = self.open_MB('TextResourceMB')
@@ -314,3 +316,10 @@ class MasterData():
         
         return filter(filter_func, equipment)
     
+    def search_voiceline(self, char_id):
+        voicelines = self.__load_MB('CharacterDetailVoiceMB')
+        return list(filter(lambda x: x['CharacterId'] == char_id, voicelines))
+    
+    def search_memories(self, char_id):
+        memories = self.__load_MB('CharacterStoryMB')
+        return list(filter(lambda x: x['CharacterId'] == char_id, memories))

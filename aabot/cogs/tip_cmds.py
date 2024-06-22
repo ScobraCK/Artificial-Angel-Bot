@@ -6,7 +6,7 @@ import common
 import timezones
 from typing import Optional, Tuple
 from io import StringIO
-from my_view import My_View
+from pagination import MyView
 from itertools import dropwhile
 
 def get_dailyinfo(server: timezones.ServerUTC):
@@ -60,7 +60,7 @@ def level_predicate(leveldata, base, sub):
 
 #######################################
 
-class DailyView(My_View):
+class DailyView(MyView):
     def __init__(self, user: discord.User):
         super().__init__(user)
 

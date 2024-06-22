@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from typing import List, Optional, Iterator, Dict, Tuple
 
-from my_view import My_View
+from pagination import MyView
 import events as evt
 import mission as msn
 import common
@@ -116,7 +116,7 @@ def event_detail_embed(mm_event: evt.MM_Event, master: MasterData, lang):
     return embed, field_values
 
 
-class Event_View(My_View):
+class Event_View(MyView):
     def __init__(
         self, user: discord.User, main_embed:discord.Embed, 
         options:List[discord.SelectOption], event_embeds: Dict[str, Tuple[discord.Embed, List[str]]]):
