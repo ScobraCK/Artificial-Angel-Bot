@@ -547,7 +547,7 @@ class Character(commands.Cog, name='Character Commands'):
         name = chars.get_full_name(character, self.bot.masterdata, lang=language)
         embeds = []
         for batch in batched(voicelines.items(), 6):
-            embed = discord.Embed(title=f"{name}'s Voicelines")
+            embed = discord.Embed(title=f"{name}'s Voicelines", color=discord.Color.gold())
             for key, text in batch:
                 embed.add_field(name=key, value=text, inline=False)
             embeds.append(embed)
@@ -575,7 +575,7 @@ class Character(commands.Cog, name='Character Commands'):
         embeds = []
         h = html2text.HTML2Text()
         for i, (k, text) in enumerate(memories.items(), 1):
-            embed = discord.Embed(title=f"{name}'s Memories")
+            embed = discord.Embed(title=f"{name}'s Memories", color=discord.Color.dark_gold())
             embed.add_field(name=k, value=h.handle(text), inline=False)
             
             # assets
