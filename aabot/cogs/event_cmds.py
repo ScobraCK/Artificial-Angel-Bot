@@ -2,18 +2,18 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from typing import List, Optional, Iterator, Dict, Tuple
+from itertools import batched
 
 from pagination import MyView
 import events as evt
 import mission as msn
 import common
-from helper import batched
+
 from master_data import MasterData
 
 def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
     texts = []
-    batch_it = batched(missions, 7)  # batch into 7 missions
-    for i, batch in enumerate(batch_it):
+    for i, batch in enumerate(batched(missions, 7)):
         texts.append('')  # new field
         for mission in batch:
             texts[i] += f"{mission}\n\n"

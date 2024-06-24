@@ -15,16 +15,6 @@ def convert_timestamp_jst(date: str)->int:
     '''returns unix timestamp from jst time string'''
     return int(convert_date(date).replace(tzinfo=timezone.utc).timestamp()) - 32400 # -9 hours
 
-def batched(iterable, n):
-    "Batch data into lists of length n. The last batch may be shorter."
-    # batched('ABCDEFG', 3) --> ABC DEF G
-    it = iter(iterable)
-    while True:
-        batch = list(islice(it, n))
-        if not batch:
-            return
-        yield batch
-
 def human_format(num: int)->str:
     magnitude = 0
     while abs(num) >= 1000:

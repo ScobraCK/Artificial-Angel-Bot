@@ -46,16 +46,4 @@ def get_Missions(
         pass
 
 if __name__ == '__main__':
-    ml = [723, 724, 725, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735]
-    master = MasterData()
-    missions = get_Missions(ml, master)
-    from pprint import pprint
-    from helper import batched
-    batch = batched(missions, 7)
-    text = []
-    for i, b in enumerate(batch):
-        text.append('')
-        for mission in b:
-            text[i] += f"{mission}\n\n"
-
-    print(text[0])
+    pass
