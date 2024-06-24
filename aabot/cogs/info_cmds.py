@@ -4,25 +4,16 @@ from discord.ext import commands
 
 import requests, json
 from enum import Enum
-from pagination import ButtonView
 from typing import List, Optional
-from dacite import from_dict
 from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from io import StringIO
 import aiohttp
 
 from main import AABot
 from quests import convert_to_stage
-from common import Tower, Language, id2server
+from common import Tower, Language, Server
 from character import get_full_name
-
-class Region(Enum): #temp solution
-    JP = 1
-    KR = 2
-    AP = 3
-    NA = 4
-    EU = 5
-    GL = 6
+from pagination import ButtonView, show_view
 
 class RankingType(Enum):
     BP = 'bp'
@@ -84,7 +75,7 @@ def towerlist_to_ascii(players: List[dict], start: int=1, server=None):
         for rank, player in enumerate(players, start):
             playerdata = [rank] + list(player)
             # server
-            playerdata[1] = Region(playerdata[1]).name
+            playerdata[1] = Server(playerdata[1]).name
             ranking.append(playerdata)
         
         output = t2a(
@@ -118,7 +109,7 @@ def playerlist_to_ascii(players: List[dict], start: int=1, server=None):
             playerdata = [rank] + list(player)
             playerdata[3] = (f'{playerdata[3]:,}' if isinstance(playerdata[3], int) else playerdata[3])   # BP
             # server
-            playerdata[1] = Region(playerdata[1]).name
+            playerdata[1] = Server(playerdata[1]).name
             # quest
             if quest_id := playerdata[-2]:
                 playerdata[-2] = convert_to_stage(quest_id) if quest_id else None  
@@ -181,7 +172,7 @@ class Info(commands.Cog, name='Info Commands'):
         server='The region your world is in',
     )
     async def temple(self, interaction: discord.Interaction,
-                     server: Region,
+                     server: Server,
                      world: int):
         '''View Temple prototype'''
         
@@ -225,7 +216,7 @@ class Info(commands.Cog, name='Info Commands'):
     # @app_commands.autocomplete(group=group_autocomplete)
     async def grouprankings(self, 
                             interaction: discord.Interaction, 
-                            server: Region,
+                            server: Server,
                             world: int):
         '''Guild rankings by group'''
         group_id = self.bot.db.get_group_id(server.value, world)
@@ -256,8 +247,8 @@ class Info(commands.Cog, name='Info Commands'):
         embed = discord.Embed(title="Groups", colour=discord.Colour.blue())
         
         server_groups = {}
-        for server, group_id, worlds in group_data:
-            server_name = id2server.get(server)
+        for server_id, group_id, worlds in group_data:
+            server_name = Server(server_id).name
             if server_name not in server_groups:
                 server_groups[server_name] = []
             server_groups[server_name].append(f"**{group_id}**: {', '.join(worlds)}")
@@ -270,7 +261,7 @@ class Info(commands.Cog, name='Info Commands'):
 
     @app_commands.command()
     @app_commands.describe(server='The region your world is in')
-    async def guildrankings(self, interaction: discord.Interaction, server: Region):
+    async def guildrankings(self, interaction: discord.Interaction, server: Server):
         '''Guild rankings prototype'''
     
         sorted_guildlist = self.bot.db.get_server_guild_ranking(server.value)
@@ -278,7 +269,7 @@ class Info(commands.Cog, name='Info Commands'):
         
         embeds = []
         for i in range(0, 200, 50):  # top 100
-            if server == Region.EU and i > 100:
+            if server == Server.Europe and i > 100:
                 break
 
             text = f'```{guildlist_to_ascii(sorted_guildlist[i:i+50], i+1)}```\nLast Updated: <t:{last_update}>'
@@ -290,12 +281,8 @@ class Info(commands.Cog, name='Info Commands'):
             embeds.append(embed)
 
         user = interaction.user
-        view = ButtonView(user, embeds)
-        await view.btn_update()
-
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = ButtonView(user, {'default': embeds})
+        await show_view(interaction, view)
 
     @app_commands.command()
     @app_commands.describe(
@@ -303,7 +290,7 @@ class Info(commands.Cog, name='Info Commands'):
         category='The ranking category. Default BP')
     async def playerrankings(self, 
                              interaction: discord.Interaction, 
-                             server: Optional[Region],
+                             server: Optional[Server],
                              category: Optional[RankingType] = RankingType.BP):
         '''Player rankings for server'''
         
@@ -329,12 +316,8 @@ class Info(commands.Cog, name='Info Commands'):
             embeds.append(embed)
 
         user = interaction.user
-        view = ButtonView(user, embeds)
-        await view.btn_update()
-
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = ButtonView(user, {'default': embeds})
+        await show_view(interaction, view)
         
     @app_commands.command()
     @app_commands.describe(
@@ -342,7 +325,7 @@ class Info(commands.Cog, name='Info Commands'):
         towertype="The tower type. Defaults to the Tower of Infinity")
     async def towerrankings(self, 
                              interaction: discord.Interaction, 
-                             server: Optional[Region],
+                             server: Optional[Server],
                              towertype: Optional[Tower]=Tower.Infinity):
         '''Tower rankings'''
         
@@ -372,12 +355,8 @@ class Info(commands.Cog, name='Info Commands'):
             embeds.append(embed)
 
         user = interaction.user
-        view = ButtonView(user, embeds)
-        await view.btn_update()
-
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = ButtonView(user, {'default': embeds})
+        await show_view(interaction, view)
 
     @app_commands.command()
     async def checktemple(self, interaction: discord.Interaction):
@@ -434,12 +413,8 @@ class Info(commands.Cog, name='Info Commands'):
                     embeds.append(ioc_embed(data['data'], title, self.bot.masterdata, language))
  
         user = interaction.user
-        view = ButtonView(user, embeds)
-        await view.btn_update()
-        
-        await interaction.followup.send(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = ButtonView(user, {'default': embeds})
+        await show_view(interaction, view)
 
 
 async def setup(bot):

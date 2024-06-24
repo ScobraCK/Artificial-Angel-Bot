@@ -2,10 +2,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from functools import wraps
-from typing import Iterable, List, Optional, Tuple, Dict
+from typing import List, Optional
 from io import StringIO
 from itertools import batched
 import html2text
+import re
 
 from main import AABot
 import common
@@ -13,7 +14,7 @@ import character as chars
 import skill
 import equipment
 from master_data import MasterData
-from pagination import MyView, ButtonView, ButtonView2, show_view
+from pagination import ButtonView, DropdownView, MixedView, show_view
 import emoji
 
 # decorator for char id check
@@ -32,30 +33,16 @@ def check_id():
         return wrapper
     return decorator
 
-
-#########################
-# idlist
-#########################
-def id_list_embed(master: MasterData, lang: Optional[common.Language]):
-    text = ''
-    id_list = common.id_list
+# transformer for id
+class IdTransformer(app_commands.Transformer):
+    async def transform(self, interaction: discord.Interaction, value: str) -> int:
+        try:
+            id = int(value)
+        except ValueError:
+            id = chars.find_id_from_name(value)
+        return id
     
-    text = StringIO()
-    max = len(id_list)
-    embeds = []
-    for i, k in enumerate(id_list.keys(), 1):
-        text.write(f"{k}: {chars.get_full_name(k, master, lang)}\n")  # not the most efficient way to get ALL names
-        if i % 20 == 0 or i == max:
-            embed = discord.Embed(
-                title='Character Id',
-                color=discord.Color.green(),
-                description=text.getvalue()
-            )
-            embeds.append(embed)
-            text = StringIO()
-
-    return embeds
-
+    
 #########################
 # character
 #########################
@@ -159,7 +146,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lan
     '''
     embed = discord.Embed(
         title=f"{char['Name']}'s Skills",
-        description=f"__**{masterdata.search_string_key(type.value)}**__")
+        description=f"__**{masterdata.search_string_key(type.value)}**__",)
 
     for skill_description in skill.skill_info(char, type, master=masterdata, lang=lang):
         skill_level_embeds(skill_description, type, embed)
@@ -190,99 +177,6 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
     embed.set_thumbnail(url=image_link)
 
     return embed
-
-class Skill_View(MyView):
-    def __init__(self, user: discord.User, embeds:List[discord.Embed]):
-        super().__init__(user)
-        self.embeds = embeds
-
-    async def update_button(self, button: discord.ui.Button):
-        for btn in self.children:
-            if btn is button:
-                btn.disabled=True
-            else:
-                btn.disabled=False
-
-    @discord.ui.button(label="Active", disabled=True)
-    async def active_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[0], view=self)
-        
-    @discord.ui.button(label="Passive")
-    async def passive_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[1], view=self)
-
-    @discord.ui.button(label="Unique Weapon")
-    async def uw_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[2], view=self)
-
-#########################
-# speed
-#########################
-
-#TODO rework to named tuple
-def speed_text(speedtuple: Tuple[int, int], buff: int=0) -> Tuple[str, List]:
-    '''
-    output speed text for single character from speed tuple
-    ''' 
-    text = f"{common.id_list[speedtuple[0]]} {int(speedtuple[1]*(1+buff/100))}\n"
-
-    return text
-
-def speed_listing(speed_list, count: int ,buff: int=0) -> str:
-    '''
-    output speed text for multiple characters
-    '''
-    text = StringIO()
-    for i, speed in enumerate(speed_list, 1):
-        text.write(f"**{i}.** {speed_text(speed, buff)}")
-        if i == count:
-            break
-    return text.getvalue()
-
-
-class Speed_View(MyView):
-    def __init__(self, user: discord.User, embed: discord.Embed, speed_list: List):
-        super().__init__(user)
-        self.speed_list = speed_list
-        self.embed = embed
-        self.showall = False
-        self.count = 20 # current view state (not button state)
-        self.buff = 0
-
-    @discord.ui.button(label="Default")
-    async def default_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.buff = 0
-        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
-        await interaction.response.edit_message(embed=self.embed, view=self)
-       
-    @discord.ui.button(label="10%")
-    async def btn10(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.buff = 10
-        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
-    @discord.ui.button(label="15%")
-    async def btn15(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.buff = 15
-        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
-    @discord.ui.button(label="Show All", row=2)
-    async def show_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.showall:
-            self.showall = False
-            button.label = "Show All"
-            self.count = 20
-        else:
-            self.showall = True
-            button.label = "Show Less"
-            self.count = 0  # 0 count shows all
-        
-        self.embed.description = speed_listing(self.speed_list, self.count, self.buff)
-        await interaction.response.edit_message(embed=self.embed, view=self)
 
 #########################
 # skill detail (skill revamp)
@@ -372,36 +266,6 @@ def skill_detail_embeds(skill_info: skill.Skill, master: MasterData, lang) -> Li
 
     return [embed] + detail_embeds
 
-class Skill_Detail_View(ButtonView):
-    def __init__(self, user: discord.User, embeds: List[discord.Embed],
-                 skills: Dict[str, skill.Skill], options: List[discord.SelectOption],
-                 master: MasterData, lang: common.Language):
-        super().__init__(user, embeds)
-        self.skills = skills
-        self.skill_menu.options = options
-        self.master = master
-        self.lang = lang
-
-    @discord.ui.select()
-    async def skill_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
-        value = select.values[0]
-        self.embeds = skill_detail_embeds(self.skills.get(value), self.master, self.lang)
-        self.max_page = len(self.embeds)
-        self.current_page = 1
-        self.embed = self.embeds[0]
-
-        await self.btn_update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
-
-# transformer for id
-class IdTransformer(app_commands.Transformer):
-    async def transform(self, interaction: discord.Interaction, value: str) -> int:
-        try:
-            id = int(value)
-        except ValueError:
-            id = chars.find_id_from_name(value)
-        return id
 
 # character cog
 class Character(commands.Cog, name='Character Commands'):
@@ -421,15 +285,21 @@ class Character(commands.Cog, name='Character Commands'):
         '''
         Shows character ids
         '''
-        embeds = id_list_embed(self.bot.masterdata, language)
-        user = interaction.user
-        view = ButtonView(user, embeds)
-        await view.btn_update()
-
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
-
+        embeds = []
+        for batch in batched(common.id_list.keys(), 20):
+            text = StringIO()
+            for id in batch:
+                text.write(f"{id}: {chars.get_full_name(id, self.bot.masterdata, language)}\n")
+            embed = discord.Embed(
+                title='Character Id',
+                color=discord.Color.green(),
+                description=text.getvalue()
+                )
+            embeds.append(embed)
+        
+        user=interaction.user
+        view = ButtonView(user, {'default': [embeds]})
+        show_view(interaction, view)
     
     @app_commands.command()
     @app_commands.describe(
@@ -470,33 +340,67 @@ class Character(commands.Cog, name='Character Commands'):
             embed = discord.Embed(description='Character data invalid.')
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
-        embeds = [
-            skill_embed(char, common.Skill_Enum.Active, self.bot.masterdata, lang=language),
-            skill_embed(char, common.Skill_Enum.Passive, self.bot.masterdata, lang=language),
-            uw_skill_embed(char, self.bot.masterdata, lang=language)
-        ]
+        
+        embed_dict = {
+            'Active': [skill_embed(char, common.Skill_Enum.Active, self.bot.masterdata, lang=language)],
+            'Passive': [skill_embed(char, common.Skill_Enum.Passive, self.bot.masterdata, lang=language)],
+            'Unique Weapon': [uw_skill_embed(char, self.bot.masterdata, lang=language)]
+        }
+            
         user = interaction.user
-        view = Skill_View(user, embeds)
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = DropdownView(user, embed_dict, key='Active')
+        await show_view(interaction, view)
 
     @app_commands.command()
-    async def speed(self, interaction: discord.Interaction):
+    @app_commands.describe(
+        add='Additional speed from speed runes',
+        buffs='List of speed buff percentages',
+    )
+    async def speed(self, interaction: discord.Interaction, add: Optional[int]=0, buffs: Optional[str]=None):
         '''List character speeds in decreasing order'''
-        speed_list = list(chars.speed_iter(self.bot.masterdata))
-
-        embed = discord.Embed(
-            title='Character Speeds',
-            description=speed_listing(speed_list, 20),
-            color=discord.Colour.orange())
+        speed_dict = chars.speed_sorted(self.bot.masterdata)
+        embed_dict = {}
         
-        user = interaction.user
-        view = Speed_View(user, embed, speed_list)
+        if buffs is None:
+            buff_list = [0]
+        else:
+            try:
+                buff_list = [0] + [int(buff) for buff in re.split(r'[,\s]+', buffs) if buff]
+            except ValueError:
+                await interaction.response.send_message(
+                    "Invalid input for buffs. Please enter a list of integers separated by commas or spaces. Example /speed `-15 15 30`", 
+                    ephemeral=True
+                    )
+                return
+            
+        for buff in buff_list:
+            i = 1
+            embeds = []
+            for batch in batched(speed_dict.items(), 20):
+                text = StringIO()
+                for id, speed in batch:
+                    text.write(f"**{i}.** {common.id_list[id]} {int((speed+add)*(1+buff/100))}\n")
+                    i += 1
+                embed = discord.Embed(
+                    title='Character Speeds',
+                    description=text.getvalue(),
+                    color=discord.Colour.orange())
+                if add != 0 or buff != 0:
+                    embed.add_field(
+                        name='Bonus Parameters',
+                        value=f'Rune Bonus: {add}\nBuffs: {buff}%',
+                        inline=False
+                    )
+                embeds.append(embed)
+            if buff == 0:
+                embed_dict['Base Speed'] = embeds
+            else:
+                embed_dict[f'{buff}% Speed'] = embeds
+                
 
-        await interaction.response.send_message(embed=embed, view=view)
-        message = await interaction.original_response()
-        view.message = message
+        user = interaction.user
+        view = MixedView(user, embed_dict, 'Base Speed')
+        await show_view(interaction, view)
 
     
     @app_commands.command()
@@ -514,20 +418,16 @@ class Character(commands.Cog, name='Character Commands'):
 
         skill_list = skill.skill_detail_info(character, self.bot.masterdata, language)
 
-        skill_dict = {}
-        options = []
+        embed_dict = {}
+        default_key = None
         for skill_info in skill_list:
-            options.append(discord.SelectOption(label=skill_info.name))
-            skill_dict[skill_info.name] = skill_info
-
-        embeds = skill_detail_embeds(skill_list[0], self.bot.masterdata, language)  #initial S1 embed
+            if default_key == None:
+                default_key = skill_info.name
+            embed_dict[skill_info.name] = skill_detail_embeds(skill_info, self.bot.masterdata, language)  
+            
         user = interaction.user
-        view = Skill_Detail_View(user, embeds, skill_dict, options, self.bot.masterdata, language)
-        await view.btn_update()
-
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = MixedView(user, embed_dict, default_key)
+        await show_view(interaction, view)
             
     @app_commands.command()
     @app_commands.describe(
@@ -553,8 +453,8 @@ class Character(commands.Cog, name='Character Commands'):
             embeds.append(embed)
         
         user = interaction.user
-        view = ButtonView2(user, {'default': embeds})
-        await show_view(interaction, view, embeds[0])
+        view = ButtonView(user, {'default': embeds})
+        await show_view(interaction, view)
         
     @app_commands.command()
     @app_commands.describe(
@@ -585,8 +485,8 @@ class Character(commands.Cog, name='Character Commands'):
             embeds.append(embed)
         
         user = interaction.user
-        view = ButtonView2(user, {'default': embeds})
-        await show_view(interaction, view, embeds[0])
+        view = ButtonView(user, {'default': embeds})
+        await show_view(interaction, view)
         
 
 async def setup(bot):

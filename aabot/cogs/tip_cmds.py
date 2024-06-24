@@ -3,16 +3,16 @@ from discord import app_commands
 from discord.ext import commands
 
 import common
-import timezones
+from timezones import DailyEvents, time_to_local
 from typing import Optional, Tuple
 from io import StringIO
-from pagination import MyView
+from pagination import DropdownView, show_view
 from itertools import dropwhile
 
-def get_dailyinfo(server: timezones.ServerUTC):
+def get_dailyinfo(server: common.Server):
     text = StringIO()
-    info = timezones.DailyEvents()
-    local = timezones.unix_to_local
+    info = DailyEvents()
+    local = time_to_local
     text.write(f'<t:{local(info.reset, server)}:t> Daily Server Reset\n')
     text.write(f'<t:{local(info.shop1, server)}:t> Free Shop Reset A\n')
     text.write(f'<t:{local(info.shop2, server)}:t> Free Shop Reset B\n')
@@ -28,8 +28,8 @@ def get_dailyinfo(server: timezones.ServerUTC):
 
     return text.getvalue()
 
-def daily_embed(server: timezones.ServerUTC):
-    server_name = server.name.replace('_', '/')
+def daily_embed(server: common.Server):
+    server_name = server.name
 
     embed=discord.Embed(
         title = f'Daily Information [{server_name}]',
@@ -57,39 +57,6 @@ def level_predicate(leveldata, base, sub):
     if leveldata['PartySubLevel'] < sub:
         return True
     return False
-
-#######################################
-
-class DailyView(MyView):
-    def __init__(self, user: discord.User):
-        super().__init__(user)
-
-    async def update_button(self, button: discord.ui.Button):
-        for btn in self.children:
-            if btn is button:
-                btn.disabled=True
-            else:
-                btn.disabled=False
-
-    @discord.ui.button(label="NA")
-    async def na_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=daily_embed(timezones.ServerUTC.NA), view=self)
-        
-    @discord.ui.button(label="EU/GL")
-    async def eu_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=daily_embed(timezones.ServerUTC.EU_GL), view=self)
-
-    @discord.ui.button(label="JP/KR")
-    async def jp_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=daily_embed(timezones.ServerUTC.JP_KR), view=self)
-
-    @discord.ui.button(label="ASIA")
-    async def asia_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=daily_embed(timezones.ServerUTC.ASIA), view=self)
 
 
 class Tips(commands.Cog, name='Other Commands'):
@@ -141,28 +108,17 @@ class Tips(commands.Cog, name='Other Commands'):
 
     @app_commands.command()
     async def dailyinfo(self, interaction: discord.Interaction, 
-                        server: Optional[timezones.ServerUTC] = timezones.ServerUTC.NA):
+                        server: Optional[common.Server] = common.Server.America):
         '''List of notable daily events shown in local time'''
         
-        embed = daily_embed(server)
+        embed_dict = {}
+        for s in common.Server:
+            embed_dict[s.name] = [daily_embed(s)]
 
         user = interaction.user
-        view = DailyView(user)
+        view = DropdownView(user, embed_dict, server.name)
+        await show_view(interaction, view)
 
-        if server == timezones.ServerUTC.NA:
-            first_btn = view.na_btn
-        elif server == timezones.ServerUTC.JP_KR:
-            first_btn = view.jp_btn
-        elif server == timezones.ServerUTC.EU_GL:
-            first_btn = view.eu_btn
-        else:
-            first_btn = view.asia_btn
-
-        await view.update_button(first_btn)
-        await interaction.response.send_message(embed=embed, view=view)
-
-        message = await interaction.original_response()
-        view.message = message
 
     @app_commands.command()
     @app_commands.describe(

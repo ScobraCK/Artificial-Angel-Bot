@@ -1,9 +1,11 @@
+from fuzzywuzzy import process, fuzz
+from typing import Iterable, Literal, Optional
+from collections import namedtuple
+import re
+
 from master_data import MasterData
 import common
 from equipment import get_uw_name
-from fuzzywuzzy import process, fuzz
-from typing import Iterable, Literal, Optional
-import re
 
 def get_character_info(
     id: int, master: MasterData, lang: Optional[common.Language]='enUS') -> dict:
@@ -72,10 +74,10 @@ def get_full_name(id: int, master: MasterData, lang: Optional[common.Language]='
 
     return name
 
-def speed_iter(masterdata: MasterData) -> Iterable:
+def speed_sorted(masterdata: MasterData) -> dict:
     '''
-    returns an iterable with character speeds in decreasing order
-    Element is a tuple of (id, speed)
+    Returns a dictionary with character speeds in decreasing order.
+    Key is the character id and value is the speed.
     '''
 
     char_speed = {x['Id']: x['InitialBattleParameter']['Speed'] for x in masterdata.get_chardata()}
@@ -84,8 +86,11 @@ def speed_iter(masterdata: MasterData) -> Iterable:
         key=lambda x: x[1],
         reverse=True
     )
-    return iter(sorted_char)
 
+    # Create a dictionary from the sorted list of tuples (insertion order is maintained)
+    sorted_dict = dict(sorted_char)
+    
+    return sorted_dict
 
 # voiceline
 def get_voicelines(id: int, md: MasterData, lang: Optional[common.Language]='enUS') -> dict:

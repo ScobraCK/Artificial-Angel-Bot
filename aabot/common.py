@@ -513,15 +513,6 @@ tower_map = {
     5: 'tower_yellow'
 }
 
-id2server = {
-    1: 'Japan',
-    2: 'Korea',
-    3: 'Asia',
-    4: 'America',
-    5: 'Europe',
-    6: 'Global'
-}
-
 ############
 # Others
 ############

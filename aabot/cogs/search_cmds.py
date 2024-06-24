@@ -10,7 +10,7 @@ import quests
 from master_data import MasterData
 from helper import human_format as hf
 from emoji import emoji_list, soul_emoji, rarity_emoji
-from pagination import MyView
+from pagination import MixedView, show_view
 from items import get_item_name, get_item_list, Item
 from equipment import get_equipment_from_str, Equipment, get_upgrade_costs
 from cogs.char_cmds import IdTransformer
@@ -164,50 +164,6 @@ def add_resonance(embed:discord.Embed, def_list: List):
             max_ind, name=max_field.name+resonance+' (High)', 
             value=max_field.value, inline=max_field.inline)
 
-class Enemy_View(MyView):
-    def __init__(self, user: discord.User, main_embed: discord.Embed, embeds:List[discord.Embed]):
-        super().__init__(user)
-        self.main_embed = main_embed
-        self.embeds = embeds
-        self.length = len(embeds)
-
-    async def update_button(self, button: discord.ui.Button):
-        for i, btn in enumerate(self.children):
-            if btn is button or i > self.length:
-                btn.disabled=True
-            else:
-                btn.disabled=False
-
-    @discord.ui.button(label="Main", disabled=True, row=1)
-    async def main_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.main_embed, view=self)
-
-    @discord.ui.button(label="1")
-    async def btn1(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[0], view=self)
-        
-    @discord.ui.button(label="2")
-    async def btn2(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[1], view=self)
-
-    @discord.ui.button(label="3")
-    async def btn3(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[2], view=self)
-    
-    @discord.ui.button(label="4")
-    async def btn4(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[3], view=self)
-
-    @discord.ui.button(label="5")
-    async def btn5(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[4], view=self)
-
 
 #########################
 # Equipment
@@ -341,37 +297,6 @@ def upgrade_embed(costs: dict[str, Item], equip1: Equipment, equip2: Equipment=N
     
     return embed
 
-class Equipment_View(MyView):
-    def __init__(self, user: discord.User, embeds:List[discord.Embed], upgrade_embed: discord.Embed):
-        super().__init__(user)
-        self.embeds = embeds
-        self.upgrade_embed = upgrade_embed
-
-    async def update_button(self, button: discord.ui.Button):
-        for btn in self.children:
-            if btn is button:
-                btn.disabled=True
-            else:
-                if not (len(self.embeds) == 1 and btn is self.equip_btn2):
-                    btn.disabled=False
-
-    @discord.ui.button(label="Equipment 1", disabled=True)
-    async def equip_btn1(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.embeds[0], view=self)
-        
-    @discord.ui.button(label="Equipment 2")
-    async def equip_btn2(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if len(self.embeds) == 2:
-            await self.update_button(button)
-            await interaction.response.edit_message(embed=self.embeds[1], view=self)
-
-    @discord.ui.button(label="Compare")
-    async def upgrade_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.update_button(button)
-        await interaction.response.edit_message(embed=self.upgrade_embed, view=self)
-
-
 class Search(commands.Cog, name='Search Commands'):
     '''Commands related to searching'''
 
@@ -390,6 +315,7 @@ class Search(commands.Cog, name='Search Commands'):
         '''
         quest_id = quests.convert_from_stage(stage)
         quest_data = quests.get_quest(self.bot.masterdata, quest_id)
+        embed_dict = {}
 
         if not quest_data:  # invalid stage
             embed = discord.Embed(
@@ -405,6 +331,7 @@ class Search(commands.Cog, name='Search Commands'):
         bp = 0 
         for enemy in quest_enemy_list:
             bp += enemy['BattlePower']
+        
             
         embed = quest_embed(self.bot.masterdata, quest_data, bp)
 
@@ -421,14 +348,13 @@ class Search(commands.Cog, name='Search Commands'):
         add_resonance(embed, def_list)  #add resonance indication
 
         embed.set_thumbnail(url=get_bonus_url(soul_list))
+        
+        embed_dict['Quest Data'] = [embed]
+        embed_dict['Enemy Data'] = detail_embeds
 
         user = interaction.user
-        view = Enemy_View(user, embed, detail_embeds)
-        await view.update_button(view.main_btn)
-
-        await interaction.response.send_message(embed=embed, view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = MixedView(user, embed_dict, 'Quest Data')
+        await show_view(interaction, view)
 
     @app_commands.command()
     @app_commands.describe(
@@ -445,6 +371,7 @@ class Search(commands.Cog, name='Search Commands'):
         Shows an overview as the main page and can select to see in detail
         '''
         quest_data = quests.get_tower_floor(self.bot.masterdata, floor, towertype)
+        embed_dict = {}
 
         if not quest_data:  # invalid stage
             embed = discord.Embed(
@@ -475,14 +402,13 @@ class Search(commands.Cog, name='Search Commands'):
         add_resonance(embed, def_list)  #add resonance indication
 
         embed.set_thumbnail(url=get_bonus_url(soul_list))
+        
+        embed_dict['Quest Data'] = [embed]
+        embed_dict['Enemy Data'] = detail_embeds 
 
         user = interaction.user
-        view = Enemy_View(user, embed, detail_embeds)
-        await view.update_button(view.main_btn)
-
-        await interaction.response.send_message(embed=embed, view=view)
-        message = await interaction.original_response()
-        view.message = message
+        view = MixedView(user, embed_dict, 'Quest Data')
+        await show_view(interaction, view)
 
     @app_commands.command()
     @app_commands.describe(
@@ -539,7 +465,8 @@ class Search(commands.Cog, name='Search Commands'):
             return
         
         equipments: List[Equipment] = []
-        embeds = []
+        embed_dict = {}
+        equipment_embeds = []
         for i, equip_str in enumerate(equip_strings, 1):
             if i == 3:
                 await interaction.response.send_message(embed=equipment_help_embed(), ephemeral=True)
@@ -550,13 +477,13 @@ class Search(commands.Cog, name='Search Commands'):
                 await interaction.response.send_message(
                     embed=discord.Embed(
                         title=f"Equipment {i} was not found correctly",
-                        description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. This is a message for debugging since the command is WIP. Feel free to report it on the support server. https://discord.gg/DyATxE7saX"
+                        description=f"Search parameters: string: `{string}`, Character: {character}, Type: {type}. If you feel that this is a bug feel free to report in on the [support server](https://discord.gg/DyATxE7saX)"
                     )
                 )
                 return
             
             equipments.append(equipment)
-            embeds.append(equipment_embed(equipment))
+            equipment_embeds.append(equipment_embed(equipment))
         
         if len(equipments) == 1:
             upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0])
@@ -564,15 +491,13 @@ class Search(commands.Cog, name='Search Commands'):
         else:
             upgrade_costs = get_upgrade_costs(self.bot.masterdata, equipments[0], equipments[1])
             upgrade_ebd = upgrade_embed(upgrade_costs, equipments[0], equipments[1])
+        
+        embed_dict['Equipment Details'] = equipment_embeds
+        embed_dict['Upgrade Costs'] = [upgrade_ebd]
             
         user = interaction.user
-        view = Equipment_View(user, embeds, upgrade_ebd)
-        if len(embeds) == 1:
-            view.equip_btn2.disabled=True
-        await interaction.response.send_message(embed=embeds[0], view=view)
-        message = await interaction.original_response()
-        view.message = message
-
+        view = MixedView(user, embed_dict, 'Equipment Details')
+        await show_view(interaction, view)
 
 async def setup(bot):
 	await bot.add_cog(Search(bot))
