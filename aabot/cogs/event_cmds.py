@@ -7,7 +7,7 @@ from itertools import batched
 from pagination import MyView
 import events as evt
 import mission as msn
-import common
+from common import Language, Server
 
 from master_data import MasterData
 
@@ -213,8 +213,8 @@ class Event_Commands(commands.Cog, name='Event Commands'):
     )
     async def events(
         self, interaction: discord.Interaction,
-        language: Optional[common.Language]=common.Language.EnUs,
-        server: Optional[common.Server]=common.Server.NA):
+        language: Optional[Language]=Language.EnUs,
+        server: Optional[Server]=Server.America):
         '''Shows ongoing and future event info'''
         event_list = evt.get_all_events(self.bot.masterdata, language.value, server)
 

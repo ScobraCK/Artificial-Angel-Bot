@@ -17,7 +17,7 @@ from emoji import emoji_list
 from character import get_name
 from items import get_item_name
 from common import Server, Language
-import helper
+from timezones import convert_from_local, convert_from_jst, get_cur_timestamp_UTC
 
 class MM_Event():
     '''
@@ -53,7 +53,7 @@ class MM_Event():
         0: Ongoing Event
         1: Future Event
         '''
-        now = datetime.utcnow().timestamp()
+        now = get_cur_timestamp_UTC()
         if self.end < now:
             return -1
         elif now < self.start:
@@ -118,7 +118,7 @@ class BountyQuest(MM_Event):
         self.type_indication = emoji_list.get('black dia')
 
 def has_ended(end: int):
-    now = datetime.utcnow().timestamp()
+    now = get_cur_timestamp_UTC()
     return end < now
 
 def get_timestamp(
@@ -129,20 +129,19 @@ def get_timestamp(
     gets timestamp for time_str('StartTime', 'EndTime', 'ForceStartTime')
     '''
     time = data.get(time_str)
-    utc_diff = server.value
     if time:
-        timestamp = helper.convert_timestamp_local(time, utc_diff)
+        timestamp = convert_from_local(time, server)
     else:  # add fixJST
         time_str += 'FixJST'
         time = data.get(time_str)
-        timestamp = helper.convert_timestamp_jst(time)
+        timestamp = convert_from_jst(time)
 
     return timestamp
 
 def get_NewCharacter(
     master: MasterData, 
     lang: Optional[Language]='enUS', 
-    server:Server=Server.NA,
+    server:Server=Server.America,
     past: bool=False)->List[NewCharacter]:
     '''
     Returns a list of NewCharacterMission events
@@ -166,7 +165,7 @@ def get_NewCharacter(
 def get_LimitedMission(
     master: MasterData, 
     lang: Optional[Language]='enUS', 
-    server:Server=Server.NA, 
+    server:Server=Server.America, 
     past:bool=False)->List[LimitedMission]:
     '''
     Returns a list of LimitedMission events
@@ -186,7 +185,7 @@ def get_LimitedMission(
 def get_BountyQuest(
     master: MasterData, 
     lang: Optional[Language]='enUS', 
-    server:Server=Server.NA, 
+    server:Server=Server.America, 
     get_past:bool=False)->List[BountyQuest]:
     event_list = []
     data_it = master.get_MB_iter('BountyQuestEventMB')
@@ -213,7 +212,7 @@ def get_BountyQuest(
 def get_all_events(
     master: MasterData, 
     lang: Optional[Language]='enUS', 
-    server:Server=Server.NA, 
+    server:Server=Server.America, 
     past:bool=False)->List[MM_Event]:
     '''
     Returns a list of all events
@@ -226,6 +225,6 @@ def get_all_events(
 
 if __name__ == "__main__":
     from pprint import pprint
-    events = get_all_events(MasterData(), server=Server.NA)
+    events = get_all_events(MasterData(), server=Server.America)
     for e in events:
         pprint(e.__dict__)

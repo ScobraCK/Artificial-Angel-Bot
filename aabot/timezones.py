@@ -1,14 +1,15 @@
 from enum import Enum
 from datetime import datetime, timezone
-import pytz
+from zoneinfo import ZoneInfo
+from common import Server
 
 timeserver2timezone = {
-    1: pytz.timezone('Etc/GMT-9'),
-    2: pytz.timezone('Etc/GMT-9'),
-    3: pytz.timezone('Etc/GMT-8'),
-    4: pytz.timezone('Etc/GMT+7'),
-    5: pytz.timezone('Etc/GMT-1'),
-    6: pytz.timezone('Etc/GMT-1'),
+    1: ZoneInfo('Etc/GMT-9'),
+    2: ZoneInfo('Etc/GMT-9'),
+    3: ZoneInfo('Etc/GMT-8'),
+    4: ZoneInfo('Etc/GMT+7'),
+    5: ZoneInfo('Etc/GMT-1'),
+    6: ZoneInfo('Etc/GMT-1'),
 }
 
 class ServerUTC(Enum):
@@ -46,33 +47,46 @@ def convert_date_string(date: datetime):
 def convert_date(date: str)->datetime:
     return datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
 
-def convert_from_local(date: str, utc_diff: int)->int:
-    '''returns unix timestamp from server time string'''
-    return int(convert_date(date).replace(tzinfo=timezone.utc).timestamp()) - utc_diff*3600
+def convert_from_local(date_str: str, server: Server) -> int:
+    '''Returns unix timestamp from server time string'''
+    local_date = convert_date(date_str)
+    tz = timeserver2timezone[server.value]
+    local_date = local_date.replace(tzinfo=tz)
+    return int(local_date.timestamp())
 
-def convert_from_jst(date: str)->int:
-    '''returns unix timestamp from jst time string'''
-    return int(convert_date(date).replace(tzinfo=timezone.utc).timestamp()) - 32400 # -9 hours
+def convert_from_jst(date_str: str) -> int:
+    '''Returns unix timestamp from JST time string'''
+    jst_date = convert_date(date_str)
+    jst_date = jst_date.replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+    return int(jst_date.timestamp())
 
-def local_to_unix(timestamp: datetime.timestamp, server: ServerUTC):
-    '''converts local timestamps to unix'''
-    return timestamp + server.value*3600
+def local_to_unix(timestamp: int, server: Server) -> int:
+    '''Converts local timestamps to unix'''
+    tz = timeserver2timezone[server.value]
+    local_date = datetime.fromtimestamp(timestamp, tz)
+    return int(local_date.timestamp())
 
-def unix_to_local(timestamp: datetime.timestamp, server: ServerUTC):
-    '''converts unix timestamp to local time'''
-    return timestamp - server.value*3600
+def unix_to_local(timestamp: int, server: Server) -> str:
+    '''Converts unix timestamp to local time'''
+    tz = timeserver2timezone[server.value]
+    local_date = datetime.fromtimestamp(timestamp, tz)
+    return convert_date_string(local_date)
 
-def get_cur_time():
-    '''Returns current time'''
-    return convert_date_string(datetime.now(pytz.timezone('Asia/Seoul')))
+def get_cur_timestr_KR() -> str:
+    '''Returns current time string in Asia/Seoul timezone'''
+    return convert_date_string(datetime.now(ZoneInfo('Asia/Seoul')))
 
-def check_time(start: str, end: str, server)->bool:
-    tz = timeserver2timezone.get(server)
-    start_timestamp = tz.localize(convert_date(start))
-    end_timestamp = tz.localize(convert_date(end))
+def get_cur_timestamp_UTC() -> int:
+    '''Returns the current time as a Unix timestamp (UTC)'''
+    return int(datetime.now(timezone.utc).timestamp())
+
+def check_time(start: str, end: str, server: Server) -> bool:
+    '''Checks if current time is within the start and end time for the given server'''
+    tz = timeserver2timezone[server.value]
+    start_timestamp = convert_date(start).replace(tzinfo=tz)
+    end_timestamp = convert_date(end).replace(tzinfo=tz)
     cur = datetime.now(tz=tz)
     return start_timestamp <= cur <= end_timestamp
     
-
 if __name__ == "__main__":
-    print(check_time('2024-06-10 04:00:00', '2100-01-01 00:00:00', 1))
+    print(check_time('2024-06-20 09:00:00', '2024-06-24 12:00:00', Server.America))

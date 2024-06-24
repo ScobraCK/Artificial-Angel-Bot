@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 from datetime import time
 
 from mementodb import async_update_guild_rankings, async_update_player_rankings, update_guild_rankings, update_player_rankings
-from timezones import get_cur_time
+from timezones import get_cur_timestr_KR
 from main import AABot
 
 
@@ -35,7 +35,7 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         # res1, status1 = await async_update_guild_rankings(self.bot.db)
         # res2, status2 = await async_update_player_rankings(self.bot.db)
         
-        msg = f'**Auto Update**\n{get_cur_time()}\n{res1}\n{res2}'
+        msg = f'**Auto Update**\n{get_cur_timestr_KR()}\n{res1}\n{res2}'
 
         if status1 and status2:
             await ch.send(msg)

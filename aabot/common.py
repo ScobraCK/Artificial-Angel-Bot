@@ -89,7 +89,6 @@ id_list = {
     85: 'Matilda',
     88: 'Rosalie(Apostle)'
 }
-MAX_CHAR_ID = len(id_list)  #TODO remove references
 
 # for use in name matching
 char_list = {
@@ -544,25 +543,26 @@ class Language(Enum):
     JaJp = 'JaJp'
     KoKR = 'KoKr'
     ZhTw = 'ZhTw'
-    ArEg = 'ArEg'
-    DeDe = 'DeDe'
-    EsMx = 'EsMx'
-    FrFr = 'FrFr'
-    IdId = 'IdId'
-    PtBr = 'Ptbr'
-    RuRu = 'RuRu'
-    ThTh = 'ThTh'
-    ViVn = 'ViVn'
-    ZhCn = 'ZhCn'
+    # ArEg = 'ArEg'
+    # DeDe = 'DeDe'
+    # EsMx = 'EsMx'
+    # FrFr = 'FrFr'
+    # IdId = 'IdId'
+    # PtBr = 'Ptbr'
+    # RuRu = 'RuRu'
+    # ThTh = 'ThTh'
+    # ViVn = 'ViVn'
+    # ZhCn = 'ZhCn'
 
 
-# timezones (hours in timedelta)
-# to be renamed
+# Server
 class Server(Enum):
-    NA = -7
-    JP_KR = 9
-    EU_GLOBAL = 1
-    ASIA = 8
+    Japan = 1
+    Korea = 2
+    Asia = 3
+    America = 4
+    Europe = 5
+    Global = 6
 
 # Towers
 class Tower(Enum):

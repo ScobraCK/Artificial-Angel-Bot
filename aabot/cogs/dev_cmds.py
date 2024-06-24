@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from typing import Optional, Literal
 from mementodb import async_update_guild_rankings, async_update_player_rankings, update_guild_rankings, update_player_rankings
-from timezones import get_cur_time
+from timezones import get_cur_timestr_KR
 
 from main import AABot
 
@@ -156,9 +156,9 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
 		try:
 			self.bot.db.update_groups(group_iter)
-			await ch.send(f"{get_cur_time()}\nUpdated world groups")
+			await ch.send(f"{get_cur_timestr_KR()}\nUpdated world groups")
 		except Exception as e:
-			await ch.send(f"{get_cur_time()}\nFailed to update groups: {e}")
+			await ch.send(f"{get_cur_timestr_KR()}\nFailed to update groups: {e}")
 
 	@commands.command()
 	async def update_guilds(
@@ -171,7 +171,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		
 		res, status = update_guild_rankings(self.bot.db)
 		# res, status = await async_update_guild_rankings(self.bot.db)
-		msg = f'{get_cur_time()}\n{res}'
+		msg = f'{get_cur_timestr_KR()}\n{res}'
 		if status:
 			await ch.send(msg)
 		else:
@@ -189,7 +189,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
   
 		res, status = update_player_rankings(self.bot.db)
 		# res, status = await async_update_player_rankings(self.bot.db)
-		msg = f'{get_cur_time()}\n{res}'
+		msg = f'{get_cur_timestr_KR()}\n{res}'
 		if status:
 			await ch.send(msg)
 		else:
