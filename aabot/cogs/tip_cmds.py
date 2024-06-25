@@ -20,11 +20,10 @@ def get_dailyinfo(server: common.Server):
     text.write(f'<t:{local(info.shop4, server)}:t> Free Shop Reset D\n\n')
     text.write(f'<t:{local(info.temple_open1, server)}:t>~<t:{local(info.temple_close1, server)}:t> Temple of Illusion Boost\n')
     text.write(f'<t:{local(info.temple_open2, server)}:t>~<t:{local(info.temple_close2, server)}:t> Temple of Illusion Boost\n\n')
+    text.write(f'<t:{local(info.pvp_reset, server)}:t> PvP Reset\n')
+    text.write(f'<t:{local(info.legend_league_start, server)}:t> Legend League Start (Tuesday~Sunday)\n\n')
     text.write(f'<t:{local(info.guild_strategy_start, server)}:t>~<t:{local(info.guild_strategy_end, server)}:t> Guild/Grand Battle: Strategy Phase\n')
     text.write(f'<t:{local(info.guild_war_start, server)}:t>~<t:{local(info.guild_war_end, server)}:t> Guild/Grand Battle: War Phase\n\n')
-    # text.write(f'<t:{local(info.grand_strategy_start, server)}:t>~<t:{local(info.grand_strategy_end, server)}:t> Grand Battle: Strategy Phase\n')
-    # text.write(f'<t:{local(info.grand_war_start, server)}:t>~<t:{local(info.grand_war_end, server)}:t> Grand Battle: War Phase\n\n')
-    # text.write(f'<t:{local(info.grand_first_strategy, server)}:t>~<t:{local(info.grand_strategy_end, server)}:t> Grand Battle: Strategy Phase **[Start of Season]**\n\n')
 
     return text.getvalue()
 
