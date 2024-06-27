@@ -298,7 +298,7 @@ class Character(commands.Cog, name='Character Commands'):
             embeds.append(embed)
         
         user=interaction.user
-        view = ButtonView(user, {'default': [embeds]})
+        view = ButtonView(user, {'default': embeds})
         await show_view(interaction, view)
     
     @app_commands.command()
