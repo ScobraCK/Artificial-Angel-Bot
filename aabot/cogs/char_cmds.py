@@ -299,7 +299,7 @@ class Character(commands.Cog, name='Character Commands'):
         
         user=interaction.user
         view = ButtonView(user, {'default': [embeds]})
-        show_view(interaction, view)
+        await show_view(interaction, view)
     
     @app_commands.command()
     @app_commands.describe(
