@@ -518,7 +518,7 @@ tower_map = {
 ############
 
 # for images
-raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/archive/Assets/'
+raw_asset_link_header='https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Assets/'
 moonheart_assets='https://list.moonheart.dev/mmtm/'
 
 ############
