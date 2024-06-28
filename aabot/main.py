@@ -58,5 +58,4 @@ if __name__ == "__main__":
     
     bot = AABot(command_prefix='!', intents=intents, owner_id=OWNER_ID, activity=activity, log_channel=LOG_CHANNEL)
     
-    bot.masterdata.load_all()  # preload main json data before running the bot
     asyncio.run(main(TOKEN))

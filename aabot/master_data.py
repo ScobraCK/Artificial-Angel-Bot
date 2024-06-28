@@ -12,7 +12,14 @@ class MasterData():
         # uses lazy loading for other jsons
         self.data = {}
         self.language = language
+        self.version=self.get_version()
+        self.load_all()
         
+    def get_version(self):
+        url = 'https://raw.githubusercontent.com/ScobraCK/MementoMori-data/main/Master/version'
+        resp = requests.get(url)
+        return resp.text.strip()
+    
     def open_MB(self, dataMB: str):
         '''
         returns the MB json(dict) directly
@@ -56,8 +63,8 @@ class MasterData():
         self.__load_MB('CharacterStoryMB')
 
     def reload_all(self):
-        self.textdata = self.open_MB('TextResourceMB')
         self.data.clear()
+        self.version=self.get_version()
         self.load_all()
 
     def get_textdata(self):
