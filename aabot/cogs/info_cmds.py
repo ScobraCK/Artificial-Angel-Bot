@@ -399,8 +399,7 @@ class Info(commands.Cog, name='Info Commands'):
         server: IoCServer,
         language: Optional[Language]=Language.EnUs):
         '''Shows IoC or IoSG logs'''
-
-        await interaction.response.defer()
+        
         embeds = []
         for server_id in server.value:
             async with aiohttp.ClientSession() as session:
