@@ -25,7 +25,11 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         ch = self.bot.get_channel(self.bot.log_channel)
         if self.bot.masterdata.version != self.bot.masterdata.get_version():
             self.bot.masterdata.reload_all()
-            await ch.send(f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}')
+            await ch.send(f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}')  
+    
+    @update_master.before_loop
+    async def before_update(self):
+        await self.bot.wait_until_ready()      
     
     @tasks.loop(
         time=[time(hour=0, tzinfo=ZoneInfo("UTC")),
