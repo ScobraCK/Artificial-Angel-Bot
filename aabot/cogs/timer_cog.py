@@ -28,7 +28,7 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
             await ch.send(f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}')  
     
     @update_master.before_loop
-    async def before_update(self):
+    async def before_update_master(self):
         await self.bot.wait_until_ready()      
     
     @tasks.loop(
@@ -57,7 +57,7 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
             await ch.send(msg)
              
     @update_ranking.before_loop
-    async def before_update(self):
+    async def before_update_ranking(self):
         await self.bot.wait_until_ready()         
              
      
