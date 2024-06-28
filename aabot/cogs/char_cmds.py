@@ -112,7 +112,7 @@ def char_info_embed(id: int, masterdata: MasterData, lang=None)->discord.Embed:
         inline=False
     )
     # thumbnail
-    image_link = common.moonheart_assets + f'AddressableConvertAssets/CharacterIcon/CHR_{char["Id"]:06}/CHR_{char["Id"]:06}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_{char["Id"]:06}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -156,7 +156,7 @@ def skill_embed(char: dict, type: common.Skill_Enum, masterdata: MasterData, lan
         embed.add_field(name='None', value='\u200b', inline=False)
 
     # thumbnail
-    image_link = common.moonheart_assets + f'AddressableConvertAssets/CharacterIcon/CHR_{char["Id"]:06}/CHR_{char["Id"]:06}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_{char["Id"]:06}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -173,7 +173,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
     embed.add_field(name='\u200b', value=uw_text(uw_description), inline=False)
 
     # thumbnail
-    image_link = common.moonheart_assets + f'AddressableConvertAssets/CharacterIcon/CHR_{char["Id"]:06}/CHR_{char["Id"]:06}_00_s.png'
+    image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_{char["Id"]:06}_00_s.png'
     embed.set_thumbnail(url=image_link)
 
     return embed
@@ -221,7 +221,7 @@ def subskill_embed(subskill: skill.Subskill, type: common.Skill_Enum, embed: dis
         
 
 def skill_detail_embeds(skill_info: skill.Skill, master: MasterData, lang) -> List[discord.Embed]:
-    icon_url = common.moonheart_assets + f"AddressableConvertAssets/Icon/Skill{skill_info.icon}"
+    icon_url = common.raw_asset_link_header + f"Characters/Skills/{skill_info.icon}"
 
     description = f"__{skill_info.type_name}__\n"
     

@@ -107,14 +107,14 @@ def detailed_enemy_embed(master: MasterData, enemy: dict)->discord.Embed:
         inline=False)
     if (icontype := enemy["UnitIconType"]) == 0:
         embed.set_thumbnail(
-            url=common.moonheart_assets + f'AddressableConvertAssets/CharacterIcon/CHR_{enemy['UnitIconId']:06}/CHR_{enemy['UnitIconId']:06}_00_s.png')
+            url=common.raw_asset_link_header+f"Characters/Sprites/CHR_{enemy['UnitIconId']:06}_00_s.png")
         
     elif icontype == 1:
         embed.set_thumbnail(
-            url=common.moonheart_assets+f"AddressableLocalAssets/Icon/Enemy/ENE_{enemy['UnitIconId']:06}.png")
+            url=common.raw_asset_link_header+f"Enemy/ENE_{enemy['UnitIconId']:06}.png")
     else:
         embed.set_thumbnail(
-            url=common.moonheart_assets+f"AddressableConvertAssets/CharacterIcon/CHR_{enemy['UnitIconId']:06}/CHR_{enemy['UnitIconId']:06}_01_s.png")
+            url=common.raw_asset_link_header+f"Characters/Sprites/CHR_{enemy['UnitIconId']:06}_01_s.png")
     return embed
 
 def quest_embed(master: MasterData, quest_data, bp)->discord.Embed:
@@ -256,7 +256,7 @@ def equipment_embed(equipment: Equipment):
         )
         
     # thumbnail
-    image_link = common.moonheart_assets + f'AddressableConvertAssets/Icon/Equipment/EQP_{equipment.icon:06}.png'
+    image_link = common.raw_asset_link_header + f'Equipment/EQP_{equipment.icon:06}.png'
     embed.set_thumbnail(url=image_link)
     
     return embed
