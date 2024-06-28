@@ -77,7 +77,7 @@ class Help(commands.Cog, name='Help Commands'):
                     + "If you find any problems with the bot, join the support server: https://discord.gg/DyATxE7saX"
                 )
             for cog in self.bot.cogs:
-                if cog == 'Dev Commands':
+                if cog == 'Dev Commands' or cog == 'Timer Cog':
                     continue
                 embed.add_field(**cog_help_field(cog, self.bot.cogs[cog]))
 

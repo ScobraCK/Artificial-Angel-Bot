@@ -58,7 +58,7 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 			length = len(extensions)-1
 			for extension in list(extensions):
 				print(extension)
-				if extension == 'cogs.dev_cmds':
+				if extension == 'cogs.dev_cmds' or extension == 'cogs.timer_cog':
 					continue
 				count += 1
 				await self.bot.unload_extension(extension)
@@ -142,8 +142,9 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		'''
 		Reloads all master data
 		'''
+		ch = self.bot.get_channel(self.bot.log_channel)
 		self.bot.masterdata.reload_all()
-		await ctx.send(f"Reloaded all data")
+		await ch.send(f'Updated master data\nVersion: {self.bot.masterdata.version}')
 
 	@commands.command()
 	async def update_groups(
