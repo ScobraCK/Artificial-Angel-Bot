@@ -446,10 +446,12 @@ class Character(commands.Cog, name='Character Commands'):
         
         name = chars.get_full_name(character, self.bot.masterdata, lang=language)
         embeds = []
+        h = html2text.HTML2Text()
+        
         for batch in batched(voicelines.items(), 6):
             embed = discord.Embed(title=f"{name}'s Voicelines", color=discord.Color.gold())
             for key, text in batch:
-                embed.add_field(name=key, value=text, inline=False)
+                embed.add_field(name=key, value=h.handle(text), inline=False)
             embeds.append(embed)
         
         user = interaction.user
