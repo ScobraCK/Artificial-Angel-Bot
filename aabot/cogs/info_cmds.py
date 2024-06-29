@@ -29,7 +29,7 @@ temple_type = {
     5: 'Rune Tickets'
 }
 
-# move out of cog later
+# TODO move out of cog later
 class GachaLog(Enum):
     IoC = 'destiny_log'
     IoSG = 'stars_guidance_log'
