@@ -56,6 +56,6 @@ if __name__ == "__main__":
     TOKEN = os.getenv('TOKEN')  # test bot token
     LOG_CHANNEL=int(os.getenv('LOG_CHANNEL'))
     
-    bot = AABot(command_prefix='!', intents=intents, owner_id=OWNER_ID, activity=activity, log_channel=LOG_CHANNEL)
+    bot = AABot(command_prefix=commands.when_mentioned_or('!'), intents=intents, owner_id=OWNER_ID, activity=activity, log_channel=LOG_CHANNEL)
     
     asyncio.run(main(TOKEN))
