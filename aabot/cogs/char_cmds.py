@@ -477,8 +477,8 @@ class Character(commands.Cog, name='Character Commands'):
         embeds = []
         h = html2text.HTML2Text()
         for i, (k, text) in enumerate(memories.items(), 1):
-            embed = discord.Embed(title=f"{name}'s Memories", color=discord.Color.dark_gold())
-            embed.add_field(name=k, value=h.handle(text), inline=False)
+            text = f'**{k}**\n{h.handle(text)}'
+            embed = discord.Embed(title=f"{name}'s Memories", description=text,color=discord.Color.dark_gold())
             
             # assets
             jp_url = f'{common.moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{character:06}/Memory/MEM_{i:06}'
