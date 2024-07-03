@@ -25,6 +25,7 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         ch = self.bot.get_channel(self.bot.log_channel)
         if self.bot.masterdata.version != self.bot.masterdata.get_version():
             self.bot.masterdata.reload_all()
+            self.bot.db.update_groups()  # add group update to master data
             await ch.send(f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}')  
     
     @update_master.before_loop

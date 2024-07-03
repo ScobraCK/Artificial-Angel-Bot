@@ -1,7 +1,7 @@
 import sqlite3, requests, json
 from enum import Enum
 from dataclasses import dataclass
-from common import Tower, tower_map
+from common import Tower, tower_map, Server
 from logging import Logger, ERROR
 import aiohttp, asyncio
 from timezones import check_time
@@ -90,10 +90,9 @@ class MememoriDB():
     # INSERT
     def update_groups(self, group_data):
         for group in group_data:
-            
             group_id = group['Id']
             server = group['TimeServerId']
-            if not check_time(group['StartTime'], group['EndTime'], server):
+            if not check_time(group['StartTime'], group['EndTime'], Server(server)):
                 continue
             world_list = []
             for world_id in group['WorldIdList']:
