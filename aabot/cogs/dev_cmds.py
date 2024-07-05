@@ -154,9 +154,9 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		Updates world groups
 		'''
 		ch = self.bot.get_channel(self.bot.log_channel)
-		group_iter = self.bot.masterdata.get_MB_iter('WorldGroupMB')
+		group_data = self.bot.masterdata.get_MB_data('WorldGroupMB')
 		try:
-			self.bot.db.update_groups(group_iter)
+			self.bot.db.update_groups(group_data)
 			await ch.send(f"{get_cur_timestr_KR()}\nUpdated world groups")
 		except Exception as e:
 			await ch.send(f"{get_cur_timestr_KR()}\nFailed to update groups: {e}")
@@ -196,6 +196,13 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		else:
 			msg = f'{msg}\n<@{self.bot.owner_id}>'
 			await ch.send(msg)
+   
+	@commands.command(aliases=['v'])
+	async def version(
+		self,
+		ctx: commands.Context):
+		'''check master version'''
+		await ctx.reply(f'{self.bot.masterdata.version}')
 
 async def setup(bot: AABot):
 	await bot.add_cog(DevCommands(bot))

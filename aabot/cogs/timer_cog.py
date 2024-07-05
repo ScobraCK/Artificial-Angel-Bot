@@ -25,9 +25,15 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         ch = self.bot.get_channel(self.bot.log_channel)
         if self.bot.masterdata.version != self.bot.masterdata.get_version():
             try:
+                group_data_old = self.bot.masterdata.get_MB_data('WorldGroupMB')
                 self.bot.masterdata.reload_all()
-                self.bot.db.update_groups()  # add group update to master data
-                await ch.send(f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}')  
+                group_data_new = self.bot.masterdata.get_MB_data('WorldGroupMB')
+                
+                msg = f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}'
+                if group_data_old != group_data_new:
+                    self.bot.db.update_groups(group_data_new)
+                    msg += '\nUpdated Groups'
+                await ch.send(msg)  
             except Exception as e:
                 await ch.send(f'**Auto Update Failed**\nFailed during master update\n{e}')  
     
