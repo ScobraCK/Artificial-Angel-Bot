@@ -347,11 +347,11 @@ def update_guild_rankings(gdb: MememoriDB):
                 server, world = split_world_id(data['world_id'])
                 guilds = data['guild_info']
                 gdb.update_guilds(server, world, guilds, timestamp)
-            return "Updated guild rankings", True
+            return "Updated guild rankings", timestamp
         except Exception as e:
-            return e, False
+            return e, None
     else:
-        return 'API fail', False
+        return 'API fail', None
 
 def update_player_rankings(gdb: MememoriDB):
     player_data, timestamp = fetch_players()
@@ -360,11 +360,11 @@ def update_player_rankings(gdb: MememoriDB):
             for data in player_data:
                 server, world = split_world_id(data['world_id'])
                 gdb.update_players(server, world, data, timestamp)
-            return "Updated player rankings", True
+            return "Updated player rankings", timestamp
         except Exception as e:
-            return e, False
+            return e, None
     else:
-        return 'API fail', False
+        return 'API fail', None
 
 
 ###### unused ######
