@@ -274,6 +274,7 @@ char_list = {
     'alter rosalie': 88,
     'apostle of caritas': 88,
     'apostle rosalie': 88,
+    'snina': 95,
     'nina summer': 95,
     'summer nina': 95,
     'nina2': 95,

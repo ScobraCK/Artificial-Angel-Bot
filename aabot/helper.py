@@ -24,3 +24,6 @@ def human_format(num: int)->str:
 
 def reverse_dict_search(dictionary, search_value):
     return [key for key, value in dictionary.items() if value == search_value][0]
+
+def remove_linebreaks(text: str):
+    return text.replace('<br>', ' ')

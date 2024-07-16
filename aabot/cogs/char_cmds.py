@@ -16,6 +16,7 @@ import equipment
 from master_data import MasterData
 from pagination import ButtonView, DropdownView, MixedView, show_view
 import emoji
+from helper import remove_linebreaks
 
 # decorator for char id check
 def check_id():
@@ -136,7 +137,7 @@ def skill_level_embeds(skill: dict, type: common.Skill_Enum, embed:discord.Embed
         unlock_lv = f"Lv.{description['Lv']}"
         embed.add_field(
             name=f"__**Skill Lv.{i}**__{emoji.level_emoji.get(i)} ({unlock_lv})",
-            value=description['Description'],
+            value=remove_linebreaks(description['Description']),
             inline=False
         )
 
@@ -170,7 +171,7 @@ def uw_skill_embed(char: dict, masterdata: MasterData, lang=None):
         description=f"__**Unique Weapon Effects**__")
 
     uw_description = equipment.get_uw_descriptions(char['Id'], masterdata, lang=lang)
-    embed.add_field(name='\u200b', value=uw_text(uw_description), inline=False)
+    embed.add_field(name='\u200b', value=remove_linebreaks(uw_text(uw_description)), inline=False)
 
     # thumbnail
     image_link = common.raw_asset_link_header + f'Characters/Sprites/CHR_{char["Id"]:06}_00_s.png'
@@ -242,13 +243,13 @@ def skill_detail_embeds(skill_info: skill.Skill, master: MasterData, lang) -> Li
             name = f"__{subskill.uw_rarity} Unique Weapon__{subskill.emoji}"
         embed.add_field(
             name=name,
-            value=subskill.description,
+            value=remove_linebreaks(subskill.description),
             inline=False)
         
         # detail embed
         detail_embed = discord.Embed(
             title=f"{skill_info.name}",
-            description=subskill.description,
+            description=remove_linebreaks(subskill.description),
             color=discord.Colour.blue())
         
         if skill_info.type is common.Skill_Enum.Active: 
