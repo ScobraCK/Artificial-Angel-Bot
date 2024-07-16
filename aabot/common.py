@@ -87,7 +87,8 @@ id_list = {
     82: 'Alexandra',
     84: 'Liselotte',
     85: 'Matilda',
-    88: 'Rosalie(Apostle)'
+    88: 'Rosalie(Apostle)',
+    95: 'Nina(Summer)'
 }
 
 # for use in name matching
@@ -273,6 +274,10 @@ char_list = {
     'alter rosalie': 88,
     'apostle of caritas': 88,
     'apostle rosalie': 88,
+    'nina summer': 95,
+    'summer nina': 95,
+    'nina2': 95,
+    'little big adventure': 95,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -357,6 +362,7 @@ char_list = {
     'リズ': 84,
     'マチルダ': 85,
     '使徒ロザリー': 88,
+    'キャラ紹介': 95,
 }
 
 ############
