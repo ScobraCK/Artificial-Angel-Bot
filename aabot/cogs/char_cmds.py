@@ -442,7 +442,7 @@ class Character(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: Optional[common.Language]=common.Language.EnUs):
         '''Shows character voicelines'''
-        voicelines = chars.get_voicelines(character, self.bot.masterdata)
+        voicelines = chars.get_voicelines(character, self.bot.masterdata, language)
         # f'{common.moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{}'
         
         name = chars.get_full_name(character, self.bot.masterdata, lang=language)
@@ -471,7 +471,7 @@ class Character(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: Optional[common.Language]=common.Language.EnUs):
         '''Shows character memories'''
-        memories = chars.get_memories(character, self.bot.masterdata)
+        memories = chars.get_memories(character, self.bot.masterdata, language)
         # f'{common.moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{:06}'
         
         name = chars.get_full_name(character, self.bot.masterdata, lang=language)

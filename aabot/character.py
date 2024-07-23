@@ -103,8 +103,8 @@ def get_voicelines(id: int, md: MasterData, lang: Optional[common.Language]='enU
     voiceline_data = md.search_voiceline(id)
     voicelines = {}
     for voice_data in voiceline_data:
-        button = md.search_string_key(voice_data['UnlockedVoiceButtonTextKey'])
-        subtitle = md.search_string_key(voice_data['SubtitleKey'])
+        button = md.search_string_key(voice_data['UnlockedVoiceButtonTextKey'], lang)
+        subtitle = md.search_string_key(voice_data['SubtitleKey'], lang)
         if subtitle:
             voicelines[button] = subtitle
     
@@ -122,8 +122,8 @@ def get_memories(id: int, md: MasterData, lang: Optional[common.Language]='enUS'
     memory_data = md.search_memories(id)
     memories = {}
     for memory in memory_data:
-        episode = md.search_string_key(memory['TitleKey'])
-        text = md.search_string_key(memory['TextKey'])
+        episode = md.search_string_key(memory['TitleKey'], lang)
+        text = md.search_string_key(memory['TextKey'], lang)
         if text:
             memories[episode] = text
     
