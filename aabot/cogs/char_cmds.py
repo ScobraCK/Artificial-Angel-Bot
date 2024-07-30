@@ -22,15 +22,15 @@ from helper import remove_linebreaks
 def check_id():
     def decorator(func):
         @wraps(func)
-        async def wrapper(_, interaction: discord.Interaction, *args, **kwargs):
+        async def wrapper(self, interaction: discord.Interaction, *args, **kwargs):
             character = kwargs.get('character', None) or args[0]
-            if not chars.check_id(character):
+            if not self.bot.masterdata.check_id(character):
                 await interaction.response.send_message(
                     f"A character id of `{character}` does not exist.",
                     ephemeral=True
                 )
                 return
-            return await func(_, interaction, *args, **kwargs)
+            return await func(self, interaction, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -287,7 +287,9 @@ class Character(commands.Cog, name='Character Commands'):
         Shows character ids
         '''
         embeds = []
-        for batch in batched(common.id_list.keys(), 20):
+        char_list = self.bot.masterdata.get_MB_data('CharacterMB')
+        id_list = (char['Id'] for char in char_list if 'Id' in char)
+        for batch in batched(id_list, 20):
             text = StringIO()
             for id in batch:
                 text.write(f"{id}: {chars.get_full_name(id, self.bot.masterdata, language)}\n")
@@ -380,7 +382,7 @@ class Character(commands.Cog, name='Character Commands'):
             for batch in batched(speed_dict.items(), 20):
                 text = StringIO()
                 for id, speed in batch:
-                    text.write(f"**{i}.** {common.id_list[id]} {int((speed+add)*(1+buff/100))}\n")
+                    text.write(f"**{i}.** {common.id_list.get(id, "Temp(not in DB)")} {int((speed+add)*(1+buff/100))}\n")
                     i += 1
                 embed = discord.Embed(
                     title='Character Speeds',

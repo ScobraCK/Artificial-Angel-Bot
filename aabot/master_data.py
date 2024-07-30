@@ -330,3 +330,7 @@ class MasterData():
     def search_memories(self, char_id):
         memories = self.__load_MB('CharacterStoryMB')
         return list(filter(lambda x: x['CharacterId'] == char_id, memories))
+    
+    def check_id(self, id):
+        chars = self.__load_MB('CharacterMB')
+        return any(char.get('Id') == id for char in chars)
