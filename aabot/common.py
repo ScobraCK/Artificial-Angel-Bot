@@ -5,7 +5,7 @@ from collections import namedtuple
 # Character id
 ############
 
-# used to limit id and faster id search
+# Rework needed
 id_list = {
     1: 'Monica',
     2: 'Illya',
@@ -88,7 +88,8 @@ id_list = {
     84: 'Liselotte',
     85: 'Matilda',
     88: 'Rosalie(Apostle)',
-    95: 'Nina(Summer)'
+    95: 'Nina(Summer)',
+    96: 'Amleth(Summer)'
 }
 
 # for use in name matching
@@ -279,6 +280,8 @@ char_list = {
     'summer nina': 95,
     'nina2': 95,
     'little big adventure': 95,
+    'amleth2': 96,
+    'samleth': 96,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -364,6 +367,7 @@ char_list = {
     'マチルダ': 85,
     '使徒ロザリー': 88,
     'キャラ紹介': 95,
+    '夏の日の夢': 96,
 }
 
 ############
