@@ -289,7 +289,7 @@ class Character(commands.Cog, name='Character Commands'):
         embeds = []
         char_list = self.bot.masterdata.get_MB_data('CharacterMB')
         id_list = (char['Id'] for char in char_list if 'Id' in char)
-        for batch in batched(id_list, 20):
+        for batch in batched(id_list, 50):
             text = StringIO()
             for id in batch:
                 text.write(f"{id}: {chars.get_full_name(id, self.bot.masterdata, language)}\n")
@@ -379,7 +379,7 @@ class Character(commands.Cog, name='Character Commands'):
         for buff in buff_list:
             i = 1
             embeds = []
-            for batch in batched(speed_dict.items(), 20):
+            for batch in batched(speed_dict.items(), 50):
                 text = StringIO()
                 for id, speed in batch:
                     text.write(f"**{i}.** {common.id_list.get(id, "Temp(not in DB)")} {int((speed+add)*(1+buff/100))}\n")
