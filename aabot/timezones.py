@@ -50,8 +50,8 @@ def convert_from_jst(date_str: str) -> int:
 def time_to_local(time: time, server: Server) -> int:
     '''Converts daily times to local timestamp'''
     current_date = datetime.now(timeserver2timezone[server.value]).date()
-    converte_date = datetime.combine(current_date, time, tzinfo=timeserver2timezone[server.value])
-    return int(converte_date.timestamp())
+    convert_date = datetime.combine(current_date, time, tzinfo=timeserver2timezone[server.value])
+    return int(convert_date.timestamp())
 
 def get_cur_timestr_KR() -> str:
     '''Returns current time string in Asia/Seoul timezone'''
