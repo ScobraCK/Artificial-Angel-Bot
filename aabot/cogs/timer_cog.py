@@ -5,6 +5,7 @@ from datetime import time
 from mementodb import async_update_guild_rankings, async_update_player_rankings, update_guild_rankings, update_player_rankings
 from timezones import get_cur_timestr_KR
 from main import AABot
+from data_parsers import parse_gacha
 
 
 
@@ -25,14 +26,26 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         ch = self.bot.get_channel(self.bot.log_channel)
         if self.bot.masterdata.version != self.bot.masterdata.get_version():
             try:
+                # Before update
+                ## Group
                 group_data_old = self.bot.masterdata.get_MB_data('WorldGroupMB')
-                self.bot.masterdata.reload_all()
-                group_data_new = self.bot.masterdata.get_MB_data('WorldGroupMB')
                 
+                # Update Master
+                self.bot.masterdata.reload_all()
                 msg = f'**Auto Update**\nUpdated master data\nVersion: {self.bot.masterdata.version}'
+
+                # After update
+                ## Group
+                group_data_new = self.bot.masterdata.get_MB_data('WorldGroupMB')
                 if group_data_old != group_data_new:
                     self.bot.db.update_groups(group_data_new)
                     msg += '\nUpdated Groups'
+
+                ## Gacha (no output)
+                gacha_list = parse_gacha(self.bot.masterdata)
+                self.bot.db.update_gacha(gacha_list)
+
+
                 await ch.send(msg)  
             except Exception as e:
                 await ch.send(f'**Auto Update Failed**\nFailed during master update\n{e}')  

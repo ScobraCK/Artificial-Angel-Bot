@@ -69,6 +69,9 @@ def check_time(start: str, end: str, server: Server) -> bool:
     cur = datetime.now(tz=tz)
     return start_timestamp <= cur <= end_timestamp
     
+def unix_to_datetime(timestamp: int):
+    return datetime.fromtimestamp(timestamp, timezone.utc)
+
 if __name__ == "__main__":
     timestamp = 1680840000  # Example Unix timestamp
     server = Server.Japan   # Example server

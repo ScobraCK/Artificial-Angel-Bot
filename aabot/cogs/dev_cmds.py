@@ -4,7 +4,9 @@
 import discord
 from discord.ext import commands
 from typing import Optional, Literal
-from mementodb import async_update_guild_rankings, async_update_player_rankings, update_guild_rankings, update_player_rankings
+
+from data_parsers import parse_gacha
+from mementodb import update_guild_rankings, update_player_rankings
 from timezones import get_cur_timestr_KR
 
 from main import AABot
@@ -196,6 +198,18 @@ class DevCommands(commands.Cog, name='Dev Commands'):
 		else:
 			msg = f'{msg}\n<@{self.bot.owner_id}>'
 			await ch.send(msg)
+
+	@commands.command()
+	async def update_gacha(
+		self,
+		ctx: commands.Context):
+		'''
+		Updates gacha
+		'''
+		gacha_list = parse_gacha(self.bot.masterdata)
+		self.bot.db.update_gacha(gacha_list)
+		await ctx.reply(f'Updated Gacha')
+
    
 	@commands.command(aliases=['v'])
 	async def version(

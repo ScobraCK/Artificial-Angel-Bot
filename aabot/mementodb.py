@@ -1,9 +1,11 @@
 import sqlite3, requests, json
 from enum import Enum
 from dataclasses import dataclass
-from common import Tower, tower_map, Server
 from logging import Logger, ERROR
 import aiohttp, asyncio
+
+from common import Tower, tower_map, Server
+from models import GachaPickup
 from timezones import check_time
 
 @dataclass
@@ -87,6 +89,17 @@ class MememoriDB():
                              )
                              """)
 
+        # Gacha
+        self.cur.execute("""
+        CREATE TABLE IF NOT EXISTS gacha (
+                         id int PRIMARY KEY,
+                         start int,
+                         end int,
+                         select_list_type int,
+                         char_id int
+            )
+        """)
+    
     # INSERT
     def update_groups(self, group_data):
         for group in group_data:
@@ -154,6 +167,21 @@ class MememoriDB():
                     "VALUES (?, ?, ?)",
                     (ele_tower['id'], ele_tower['tower_id'], timestamp))
         self.con.commit()
+
+    def update_gacha(self, gacha_list: list[GachaPickup]):
+        existing_ids = self._get_gacha_ids()
+        new_gachas = filter(lambda gacha: gacha.id not in existing_ids, gacha_list)
+        gacha_values = [(gacha.id, gacha.start, gacha.end, gacha.select_list_type, gacha.char_id) for gacha in new_gachas]
+        if gacha_values:
+            try:
+                self.cur.executemany('''
+                    INSERT INTO gacha (id, start, end, select_list_type, char_id)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', gacha_values)
+                self.con.commit()
+            except Exception as e:
+                self.con.rollback()
+                raise e
     
     # READ
     def get_group_list(self):
@@ -278,7 +306,52 @@ class MememoriDB():
     def get_last_update_player(self):
         '''Get most recent timestamp from player'''
         res = self.cur.execute('SELECT timestamp FROM players ORDER BY timestamp DESC LIMIT 1')
-        return res.fetchone()[0]    
+        return res.fetchone()[0]  
+
+    def _get_gacha_ids(self) -> bool:
+        '''get set of gacha ids to check existing'''
+        self.cur.execute('SELECT id FROM gacha')
+        return {item[0] for item in self.cur.fetchall()}
+
+    def get_gacha_current(self, current: int, future=False):
+        '''
+        Get all gachas in given current timeframe.
+        Will get future banners if future is True
+        '''
+        start = 4102444800 if future else current
+        self.cur.execute('''
+            SELECT id, start, end, select_list_type, char_id
+            FROM gacha
+            WHERE start <= ? AND end >= ?
+            ORDER BY select_list_type
+        ''', (start, current))
+
+        return self.cur.fetchall()
+    
+    def get_gacha_char(self, char_id: int):
+        '''
+        Get all gachas for a character
+        '''
+        self.cur.execute('''
+            SELECT id, start, end, select_list_type, char_id
+            FROM gacha
+            WHERE char_id = ?
+            ORDER BY select_list_type
+        ''', (char_id,))
+
+        return self.cur.fetchall()
+
+    def get_rerun_count(self, start: int, char_id: int) -> int:
+        '''get rerun count of banners'''
+        self.cur.execute('''
+            SELECT COUNT(*)
+            FROM gacha
+            WHERE char_id = ?
+            AND select_list_type IN (1, 3)  -- Only include fleeting and iosg
+            AND start <= ?                  -- Include records that happened on or before the given start time
+        ''', (char_id, start))
+
+        return self.cur.fetchone()[0]
 
     def close(self):
         self.con.close()
@@ -294,6 +367,7 @@ def fetch_guildlist(server: int, world: int):
     else:
         return None
     
+
 def fetch_guilds():
     url = f"https://api.mentemori.icu/0/guild_ranking/latest"
     resp = requests.get(url)
@@ -339,33 +413,32 @@ def split_world_id(world_id):
     world_id = str(world_id)
     return int(world_id[0]), int(world_id[1:])
 
-def update_guild_rankings(gdb: MememoriDB):
+def update_guild_rankings(mdb: MememoriDB):
     guild_data, timestamp = fetch_guilds()
     if guild_data:
         try:
             for data in guild_data:
                 server, world = split_world_id(data['world_id'])
                 guilds = data['guild_info']
-                gdb.update_guilds(server, world, guilds, timestamp)
+                mdb.update_guilds(server, world, guilds, timestamp)
             return "Updated guild rankings", timestamp
         except Exception as e:
             return e, None
     else:
         return 'API fail', None
 
-def update_player_rankings(gdb: MememoriDB):
+def update_player_rankings(mdb: MememoriDB):
     player_data, timestamp = fetch_players()
     if player_data:
         try:
             for data in player_data:
                 server, world = split_world_id(data['world_id'])
-                gdb.update_players(server, world, data, timestamp)
+                mdb.update_players(server, world, data, timestamp)
             return "Updated player rankings", timestamp
         except Exception as e:
             return e, None
     else:
         return 'API fail', None
-
 
 ###### unused ######
 

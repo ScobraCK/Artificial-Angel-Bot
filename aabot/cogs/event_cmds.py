@@ -1,15 +1,23 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from typing import List, Optional, Iterator, Dict, Tuple
+from io import StringIO
 from itertools import batched
+from typing import List, Optional, Iterator, Dict, Tuple
 
-from pagination import MyView
+import emoji
 import events as evt
 import mission as msn
-from common import Language, Server
+import models
 
+from common import Language, Server
+from character import get_full_name
+from cogs.char_cmds import check_id, IdTransformer
+from main import AABot
 from master_data import MasterData
+from pagination import MyView, ButtonView, DropdownView, MixedView, show_view
+from timezones import get_cur_timestamp_UTC
+
 
 def event_mission_texts(missions: Iterator[msn.Mission])->List[str]:
     texts = []
@@ -204,7 +212,7 @@ class Event_Commands(commands.Cog, name='Event Commands'):
     '''Commands for game events'''
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: AABot = bot
 
     @app_commands.command()
     @app_commands.describe(
@@ -240,6 +248,112 @@ class Event_Commands(commands.Cog, name='Event Commands'):
         await interaction.followup.send(embed=main_embed, view=view)
         message = await interaction.original_response()
         view.message = message
+
+    def _generate_banner_text(self, banners, current, language, banner_emoji):
+        banner_text = StringIO()
+        for banner in banners:
+            character_name = get_full_name(banner.char_id, self.bot.masterdata, language)  # Get the character name
+            ongoing = ":white_check_mark:" if banner.start <= current <= banner.end else ":x:"  # Ongoing status
+            rerun_count = self.bot.db.get_rerun_count(banner.start, banner.char_id)  # Get rerun count
+
+            # Format the text for each banner using StringIO
+            banner_text.write(f"**{banner_emoji}{character_name}**\n")
+            banner_text.write(f"**Date:** <t:{banner.start}> ~ <t:{banner.end}>\n")
+            banner_text.write(f"**Ongoing:** {ongoing} | **Run {rerun_count}**\n\n")
+
+        return banner_text.getvalue() if banner_text.tell() > 0 else "No banners available."
+
+    @app_commands.command()
+    @app_commands.describe(
+        language='Text language. Defaults to English.'
+    )
+    async def gachabanner(
+        self, interaction: discord.Interaction,
+        language: Optional[Language]=Language.EnUs,):
+        '''Shows gacha banners'''
+        current = get_cur_timestamp_UTC()
+        banners = self.bot.db.get_gacha_current(current, future=True)
+        fleeting = []
+        ioc = []
+        iosg = []
+        
+        # Iterate over banners and split into the respective lists
+        for banner in banners:
+            gacha_pickup = models.GachaPickup(
+                id=banner[0],
+                start=banner[1],
+                end=banner[2],
+                select_list_type=banner[3],
+                char_id=banner[4]
+            )
+
+            if banner[3] == 1:
+                fleeting.append(gacha_pickup)
+            elif banner[3] == 2:
+                ioc.append(gacha_pickup)
+            elif banner[3] == 3:
+                iosg.append(gacha_pickup)
+            
+        embed = discord.Embed(title="Gacha Banners", color=discord.Color.blue())
+
+        # Fleeting field (select_list_type == 2)
+        embed.add_field(name="**Prayer of Fleeting**", value=self._generate_banner_text(fleeting, current, language, emoji.item_emoji[9]), inline=False)
+
+        # IoC field (select_list_type == 3)
+        embed.add_field(name="\u200b\n**Invocation of Chance**", value=self._generate_banner_text(ioc, current, language, emoji.item_emoji[54]), inline=False)
+
+        # IoSG field (select_list_type == 4)
+        embed.add_field(name="\u200b\n**Invocation of Stars' Guidance**", value=self._generate_banner_text(iosg, current, language, emoji.item_emoji[121]), inline=False)
+        
+        await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        language='Text language. Defaults to English.'
+    )
+    @check_id()
+    async def gachahistory(
+        self, 
+        interaction: discord.Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: Optional[Language]=Language.EnUs,):
+        '''Shows gacha history of a character'''
+        current = get_cur_timestamp_UTC()
+        banners = self.bot.db.get_gacha_char(character)
+        fleeting = []
+        ioc = []
+        iosg = []
+        
+        # Iterate over banners and split into the respective lists
+        for banner in banners:
+            gacha_pickup = models.GachaPickup(
+                id=banner[0],
+                start=banner[1],
+                end=banner[2],
+                select_list_type=banner[3],
+                char_id=banner[4]
+            )
+
+            if banner[3] == 1:
+                fleeting.append(gacha_pickup)
+            elif banner[3] == 2:
+                ioc.append(gacha_pickup)
+            elif banner[3] == 3:
+                iosg.append(gacha_pickup)
+            
+        embed = discord.Embed(title="Gacha Banners", color=discord.Color.blue())
+
+        # Fleeting field (select_list_type == 2)
+        embed.add_field(name="**Prayer of Fleeting**", value=self._generate_banner_text(fleeting, current, language, emoji.item_emoji[9]), inline=False)
+
+        # IoC field (select_list_type == 3)
+        embed.add_field(name="\u200b\n**Invocation of Chance**", value=self._generate_banner_text(ioc, current, language, emoji.item_emoji[54]), inline=False)
+
+        # IoSG field (select_list_type == 4)
+        embed.add_field(name="\u200b\n**Invocation of Stars' Guidance**", value=self._generate_banner_text(iosg, current, language, emoji.item_emoji[121]), inline=False)
+        
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
