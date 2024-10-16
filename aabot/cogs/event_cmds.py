@@ -10,7 +10,7 @@ import events as evt
 import mission as msn
 import models
 
-from common import Language, Server
+from common import Language, Server, raw_asset_link_header
 from character import get_full_name
 from cogs.char_cmds import check_id, IdTransformer
 from main import AABot
@@ -249,7 +249,7 @@ class Event_Commands(commands.Cog, name='Event Commands'):
         message = await interaction.original_response()
         view.message = message
 
-    def _generate_banner_text(self, banners, current, language, banner_emoji):
+    def _generate_banner_text(self, banners, current, language):
         banner_text = StringIO()
         for banner in banners:
             character_name = get_full_name(banner.char_id, self.bot.masterdata, language)  # Get the character name
@@ -257,7 +257,7 @@ class Event_Commands(commands.Cog, name='Event Commands'):
             rerun_count = self.bot.db.get_rerun_count(banner.start, banner.char_id)  # Get rerun count
 
             # Format the text for each banner using StringIO
-            banner_text.write(f"**{banner_emoji}{character_name}**\n")
+            banner_text.write(f"**{character_name}**\n")
             banner_text.write(f"**Date:** <t:{banner.start}> ~ <t:{banner.end}>\n")
             banner_text.write(f"**Ongoing:** {ongoing} | **Run {rerun_count}**\n\n")
 
@@ -296,14 +296,14 @@ class Event_Commands(commands.Cog, name='Event Commands'):
             
         embed = discord.Embed(title="Gacha Banners", color=discord.Color.blue())
 
-        # Fleeting field (select_list_type == 2)
-        embed.add_field(name="**Prayer of Fleeting**", value=self._generate_banner_text(fleeting, current, language, emoji.item_emoji[9]), inline=False)
+        # Fleeting field (select_list_type == 1)
+        embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of Fleeting**{emoji.item_emoji[9]}", value=self._generate_banner_text(fleeting, current, language), inline=False)
 
-        # IoC field (select_list_type == 3)
-        embed.add_field(name="\u200b\n**Invocation of Chance**", value=self._generate_banner_text(ioc, current, language, emoji.item_emoji[54]), inline=False)
+        # IoC field (select_list_type == 2)
+        embed.add_field(name=f"\u200b\n{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=self._generate_banner_text(ioc, current, language), inline=False)
 
-        # IoSG field (select_list_type == 4)
-        embed.add_field(name="\u200b\n**Invocation of Stars' Guidance**", value=self._generate_banner_text(iosg, current, language, emoji.item_emoji[121]), inline=False)
+        # IoSG field (select_list_type == 3)
+        embed.add_field(name=f"\u200b\n{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=self._generate_banner_text(iosg, current, language), inline=False)
         
         await interaction.response.send_message(embed=embed)
     
@@ -344,14 +344,16 @@ class Event_Commands(commands.Cog, name='Event Commands'):
             
         embed = discord.Embed(title="Gacha Banners", color=discord.Color.blue())
 
-        # Fleeting field (select_list_type == 2)
-        embed.add_field(name="**Prayer of Fleeting**", value=self._generate_banner_text(fleeting, current, language, emoji.item_emoji[9]), inline=False)
+        # Fleeting field (select_list_type == 1)
+        embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of Fleeting**{emoji.item_emoji[9]}", value=self._generate_banner_text(fleeting, current, language), inline=False)
 
-        # IoC field (select_list_type == 3)
-        embed.add_field(name="\u200b\n**Invocation of Chance**", value=self._generate_banner_text(ioc, current, language, emoji.item_emoji[54]), inline=False)
+        # IoC field (select_list_type == 2)
+        embed.add_field(name=f"\u200b\n{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=self._generate_banner_text(ioc, current, language), inline=False)
 
-        # IoSG field (select_list_type == 4)
-        embed.add_field(name="\u200b\n**Invocation of Stars' Guidance**", value=self._generate_banner_text(iosg, current, language, emoji.item_emoji[121]), inline=False)
+        # IoSG field (select_list_type == 3)
+        embed.add_field(name=f"\u200b\n{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=self._generate_banner_text(iosg, current, language), inline=False)
+        
+        embed.set_thumbnail(url=f'{raw_asset_link_header}Characters/Sprites/CHR_{character:06}_00_s.png')
         
         await interaction.response.send_message(embed=embed)
 
