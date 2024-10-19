@@ -82,7 +82,7 @@ class Equipment:
     basestat: int
     bonus_parameters: int
     is_uw: bool
-    upgrade_type: int # 1: weapon 2: other
+    # upgrade_type: int # 1: weapon 2: other
     upgrade_level: int
     evolution_id: int
     composite_id: int
@@ -259,7 +259,7 @@ def get_equipment(
         stat=calc_stats(basestat, upgrade, masterdata),
         basestat=int(basestat),
         bonus_parameters=equipment_data['AdditionalParameterTotal'],
-        upgrade_type=equipment_data['EquipmentReinforcementMaterialId'],
+        # upgrade_type=equipment_data['EquipmentReinforcementMaterialId'],
         upgrade_level=upgrade,
         evolution_id=equipment_data['EquipmentEvolutionId'],
         composite_id=equipment_data['CompositeId'],
@@ -307,17 +307,18 @@ def get_enhance_cost(start, end, id, masterdata: MasterData, lang: Optional[comm
                     
     return total_items
 
-def get_reinforcement_cost(start, end, id, masterdata: MasterData, lang: Optional[common.Language]='enUS'):
+def get_reinforcement_cost(start, end, is_wep, masterdata: MasterData, lang: Optional[common.Language]='enUS'):
     total_items = {}
     
     if end > 0:  # no 0 in data
-        reinforcement_data = masterdata.search_id(id, 'EquipmentReinforcementMaterialMB')
-        for reinforcement_info in reinforcement_data['ReinforcementMap']:
-            lv = reinforcement_info['Lv']
+        reinforcement_data = masterdata.get_MB_data('EquipmentReinforcementMaterialMB')
+        for reinforcement_info in reinforcement_data:
+            lv = reinforcement_info['ReinforcementLevel']
             if lv == end:
                 break
             if start <= lv:
-                item_list = get_item_list(masterdata, reinforcement_info['RequiredItemList'],lang)
+                item_list_key = 'WeaponRequiredItemList' if is_wep else 'OthersRequiredItemList'
+                item_list = get_item_list(masterdata, reinforcement_info[item_list_key],lang)
                 for item in item_list:
                     if total_items.get(item.name):
                         total_items[item.name] += item
@@ -330,8 +331,7 @@ def get_upgrade_costs(
     if equip2:
         ## unable to calculate
         if (
-            equip1.upgrade_type != equip2.upgrade_type 
-            or equip1.equip_type != equip2.equip_type 
+            equip1.equip_type != equip2.equip_type 
             or equip1.is_uw != equip2.is_uw
             ):
             return None
@@ -377,7 +377,7 @@ def get_upgrade_costs(
         return None
                
     total_cost = get_enhance_cost(level1, level2, equip1.evolution_id, masterdata, lang, composite_id=comp)
-    reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, equip1.upgrade_type, masterdata, lang)
+    reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, masterdata, lang)
     
     if reinforcement_cost:
         for item in reinforcement_cost.values():
