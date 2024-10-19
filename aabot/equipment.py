@@ -377,7 +377,7 @@ def get_upgrade_costs(
         return None
                
     total_cost = get_enhance_cost(level1, level2, equip1.evolution_id, masterdata, lang, composite_id=comp)
-    reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, masterdata, lang)
+    reinforcement_cost = get_reinforcement_cost(upgrade1, upgrade2, (equip1.equip_type==1),masterdata, lang)
     
     if reinforcement_cost:
         for item in reinforcement_cost.values():
