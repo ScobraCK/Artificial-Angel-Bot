@@ -8,6 +8,7 @@ from common import Skill_Enum, Language, equip_rarity
 from equipment import get_uw_descriptions
 import emoji
 
+# for /skill (to be changed)
 def skill_info(
     char: dict,
     type: Skill_Enum,
@@ -39,7 +40,11 @@ def skill_info(
         skill = {}
         skill_data = master.search_id(id, skill_MB)
         
-        skill['Name'] = master.search_string_key(skill_data["NameKey"], language=lang)
+
+        name = master.search_string_key(skill_data["NameKey"], language=lang)
+        if name is None:
+            continue
+        skill['Name'] = name
         skill['Cooldown'] = skill_data.get('SkillMaxCoolTime')
         
         if descriptions:
@@ -109,6 +114,8 @@ def get_subskill(
 
     if ((rarity := subskill_data["EquipmentRarityFlags"]) == 0):  # normal skill description
         description = master.search_string_key(subskill_data["DescriptionKey"], language=lang)
+        if not description:  # sr rosalie
+            description = 'No Description'
         subskill = Subskill(skill_level, unlock_lv, description, subsetskills)
     else:
         uw_rarity = equip_rarity.get(rarity)
