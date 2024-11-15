@@ -95,6 +95,7 @@ id_list = {
     95: 'Nina(Summer)',
     96: 'Amleth(Summer)',
     105: 'Natasha(Blossom)',
+    106: 'Eureka',
 }
 
 # for use in name matching
@@ -302,6 +303,8 @@ char_list = {
     'natasha2': 105,
     'altasha': 105,
     'festive blossoms': 105,
+    'eureka': 106,
+    'carrot':106,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -394,6 +397,7 @@ char_list = {
     'キャラ紹介': 95,
     '夏の日の夢': 96,
     '花束の魔女': 105,
+    'ユリーカ':106,
 }
 
 ############
