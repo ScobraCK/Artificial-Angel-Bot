@@ -96,6 +96,7 @@ id_list = {
     96: 'Amleth(Summer)',
     105: 'Natasha(Blossom)',
     106: 'Eureka',
+    107: 'Soltina(Xmas)',
 }
 
 # for use in name matching
@@ -305,6 +306,9 @@ char_list = {
     'festive blossoms': 105,
     'eureka': 106,
     'carrot':106,
+    'soltina2': 107,
+    'xsoltina': 107,
+    'heartwarming memories': 107,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
