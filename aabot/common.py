@@ -92,11 +92,13 @@ id_list = {
     85: 'Matilda',
     86: 'Meria',
     88: 'Rosalie(Apostle)',
+    93: 'Artoria',
     95: 'Nina(Summer)',
     96: 'Amleth(Summer)',
     105: 'Natasha(Blossom)',
     106: 'Eureka',
     107: 'Soltina(Xmas)',
+    108: 'Lunalynn(Xmas)',
 }
 
 # for use in name matching
@@ -294,6 +296,9 @@ char_list = {
     'alter rosalie': 88,
     'apostle of caritas': 88,
     'apostle rosalie': 88,
+    'artoria': 93,
+    'seiba': 93,
+    'saber': 93,
     'snina': 95,
     'nina summer': 95,
     'summer nina': 95,
@@ -309,6 +314,10 @@ char_list = {
     'soltina2': 107,
     'xsoltina': 107,
     'heartwarming memories': 107,
+    'holy nights fairy': 108,
+    'xlunalynn': 108,
+    'luna2': 108,
+    'lunalynn2': 108,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -398,10 +407,13 @@ char_list = {
     'マチルダ': 85,
     'メリア': 86,
     '使徒ロザリー': 88,
+    'アルトリア': 93,
     'キャラ紹介': 95,
     '夏の日の夢': 96,
     '花束の魔女': 105,
     'ユリーカ':106,
+    '温かな記憶':107,
+    '聖夜の妖精': 108
 }
 
 ############
