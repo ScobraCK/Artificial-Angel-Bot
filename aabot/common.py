@@ -174,6 +174,7 @@ char_list = {
     'qlipha1': 45,
     'pope': 45,
     'lunalynn': 46,
+    'luna': 46,
     'snowy illusions': 46,
     'qlipha9': 46,
     'valeriede': 47,
