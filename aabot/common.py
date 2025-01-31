@@ -99,6 +99,7 @@ id_list = {
     106: 'Eureka',
     107: 'Soltina(Xmas)',
     108: 'Lunalynn(Xmas)',
+    111: 'Tillie'
 }
 
 # for use in name matching
@@ -320,6 +321,7 @@ char_list = {
     'luna2': 108,
     'lunalynn2': 108,
     'eirene': 109,
+    'tillie': 111,
     # japanese
     'モニカ': 1, 
     'イリア': 2,
@@ -417,6 +419,7 @@ char_list = {
     '温かな記憶':107,
     '聖夜の妖精': 108,
     'アイリーン': 109,
+    'ティリー':111,
 }
 
 ############
