@@ -173,6 +173,11 @@ class CharacterMemories(BaseModel):
     
 
 async def get_character(md: MasterData, id: int) -> _Character:
+    # Prevents character leaks from non-released characters with pve data (no profile data)
+    release_check = await md.search_id(id, 'CharacterProfileMB')
+    if release_check is None:
+        raise APIError(f'Could not find character info with id {id}')
+    
     char_data = await md.search_id(id, 'CharacterMB')
     uw_data = await search_uw_info(md, id)
     uw = uw_data.get('NameKey') if uw_data else None

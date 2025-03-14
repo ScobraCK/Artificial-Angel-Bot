@@ -11,12 +11,16 @@ logger = get_logger(__name__)
 
 async def upsert_chars(session: Session, md: masterdata.MasterData):
     char_data = await md.get_MB('CharacterMB')
+    profile_data = await md.get_MB('CharacterProfileMB')
+    release_check = {char['Id'] for char in profile_data}  # Only update released characters
     inserted_ids = []
 
     for char in char_data:
         rarity = CharacterRarity(char['RarityFlags']).name
         try:
             validated_char = CharacterDBModel(**char, base_rarity=rarity)
+            if validated_char.id not in release_check:  # Only update released characters
+                continue
             char_dict = validated_char.model_dump()
             xmax = column('xmax')  # access system column xmax
             stmt = (
