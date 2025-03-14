@@ -42,12 +42,17 @@ def command_help_embed(cmd_name: str, cmd: app_commands.Command)->discord.Embed:
             else:
                 format_text += f"[{param.display_name}] "
             param_text += get_param_text(param)
+        
+        description = f"{cmd.description}\n\n"\
+                + f"**Format:** {format_text}\n\n"\
+                + f"**Parameters:**\n{param_text}"
+        
+        if cmd.extras.get('help'):
+            description += f"\n{cmd.extras['help']()}"
 
         embed = discord.Embed(
             title=f"{cmd_name.title()} Command",
-            description=f"{cmd.description}\n\n"\
-                + f"**Format:** {format_text}\n\n"\
-                + f"**Parameters:**\n{param_text}"
+            description=description
         )
 
     else:

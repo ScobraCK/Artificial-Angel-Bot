@@ -6,7 +6,7 @@ from discord.ext import commands
 from aabot.main import AABot
 from aabot.api import api
 
-from aabot.pagination.items import equipment_help_embed
+from aabot.pagination.items import equipment_help_description
 from aabot.pagination import items as item_response
 from aabot.pagination.views import show_view
 from aabot.utils.enums import Language
@@ -44,7 +44,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         await interaction.response.send_message(embed=embed)
         
     @app_commands.command(
-        extras={'help': equipment_help_embed}
+        extras={'help': equipment_help_description}
     )
     @app_commands.describe(
         string="Search string. Use /help equipment for instructions.",

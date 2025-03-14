@@ -409,41 +409,29 @@ async def equipment_view(interaction: Interaction, equip_string: str, language: 
     return MixedView(interaction.user, embed_dict, 'Equipment Details')
 
 
-def equipment_help_embed():
-    embed = Embed(
-        title=f"Equipment Command Help",
-        description="If you find an error with the command please report it on https://discord.gg/DyATxE7saX.",
-        color=Color.green()
+def equipment_help_description():
+    text = StringIO()
+    text.write(
+        "## Equipment Help\n"
+        "**String Parameters**\n"
+        'Equipment String: `[Equipment Type] [Equipment Details 1] [Equipment Details 2]...`\n\n'
+        "**Equipment Type:**\n"
+        "Character Name or Equipment Type."
+        f"Tries to search for equipment type in `{', '.join(equip_type_string.keys())}`.\n"
+        "If not found, will search for a Unique Weapon with that character name match.\n\n"
+        
+        '**Equipment Details**\n'
+        "Provides details for equipment rarity, level, and upgrade level. Can add up to 5 equipment details to compare.\n"
+        "**Rarity:** D, C, B, A, S, SP(S+), R, SR, SSR, UR, LR. Lowercase is allowed.\n\n"
+        "**Level:** integer for the gear level. If the level doesn't exist will return error.\n\n"
+        "**Upgrade Level:** Upgrade Level of gear. Integer after '+' prefix (Ex: +120). Will default to 0 if not provided. Additionally it is possible to omit the equipment level and write only the upgrade level. This will assume the upgrade level is the same as the equipment level.\n\n"
+        "```Examples: \n"
+        "ssr240+120 -> Rarity: SSR Level: 240 Upgrade Level:120\n"
+        "UR300 -> Rarity: UR Level: 300 Upgrade Level:0\n"
+        "LR+240 -> Rarity: LR Level: 240 Upgrade Level:240```"
     )
 
-    embed.add_field(
-        name="String Parameters",
-        value=(
-            "Provides details for equipment rarity, level, and upgrade level.\n"
-            "**Rarity:** D, C, B, A, S, SP(S+), R, SR, SSR, UR, LR. Lowercase is allowed.\n\n"
-            "**Level:** integer for the gear level. If the level doesn't exist will return error.\n\n"
-            "**Upgrade Level:** Upgrade Level of gear. Integer after '+' prefix (Ex: +120). Will default to 0 if not provided. Additionally it is possible to omit the equipment level and write only the upgrade level. This will assume the upgrade level is the same as the equipment level.\n\n"
-            "```Examples: \n"
-            "ssr240+120 -> Rarity: SSR Level: 240 Upgrade Level:120\n"
-            "UR300 -> Rarity: UR Level: 300 Upgrade Level:0\n"
-            "LR+240 -> Rarity: LR Level: 240 Upgrade Level:240```"
-            )
-    )
-
-    embed.add_field(
-        name="Equipment Upgrade Cost",
-        value=(
-            "Equipment upgrade costs will be also calculated\n"
-            "By default it will show the cost of making the specified equipment."
-            "However adding a 2nd equipment string will allow you to compare and upgrade from the first equipment. The first equipment must be lower level than the 2nd.\n\n"
-
-            "```Examples: \n"
-            "aa ssr180+120 -> will show costs up to ssr240+120\n"
-            "aa ssr180+180 LR240+240 -> will show costs from ssr180+180 to LR240+240```"
-        )
-    )
-
-    return embed
+    return text.getvalue()
 
     
         
