@@ -1,9 +1,11 @@
-python-dotenv
-discord
-requests
+discord.py
+httpx
 fuzzywuzzy[speedup]
 dacite
 table2ascii
 pytz
 pynacl
 html2text
+pydantic
+psycopg[binary]
+sqlalchemy

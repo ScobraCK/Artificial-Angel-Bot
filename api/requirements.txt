@@ -1,0 +1,9 @@
+fastapi
+httpx
+msgpack
+psycopg[binary]
+pydantic
+pytz
+sqlalchemy
+uvicorn
+passlib

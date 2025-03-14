@@ -8,7 +8,9 @@ Artificial Angel Bot (the "Bot", "AABot") is committed to protecting your privac
 ## Data Access
 The Bot only accesses baseline data as provided by Discord, which includes basic user information such as usernames, discriminators, and messages or interactions with the Bot. This access is in accordance with the guidelines specified by Discord, detailed [here](https://support.discord.com/hc/en-us/articles/7933951485975-Visibility-of-Bot-Data-Access). The Bot does NOT have any access to Privileged Gateway Intents, concerning more sensitive data, which are further explained in the [Discord Developer Documentation](https://discord.com/developers/docs/topics/gateway#privileged-intents).
 
-While any data submitted by users during interactions with the Bot is not stored, on an instance when an error occurs it may be logged solely for the purpose of identifying and resolving errors.
+There are 2 cases where data the user provides with the interaction may also be stored. None 
+1. When an error occurs the interaction data may be logged for the purpose of improving the bot.
+2. Using the `/setpreference` command which allows the user to save some options for other commands. This will be sotred in a database and the user will always ba able to delete the data with `/deletepreference` command.
 
 ## Data Usage
 Information accessed by the Bot is used exclusively to provide the services and functionalities described in the Terms of Service. User data is not shared, sold, or disclosed to third parties, except as required by law or to protect our rights.
