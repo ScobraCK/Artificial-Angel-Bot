@@ -4,7 +4,9 @@ import os
 from discord.ext import commands
 
 from aabot.db.database import Base, engine
+from aabot.db.models import UserPreference, Alias
 from aabot.utils.error import BotError
+
 
 from aabot.utils.logger import get_logger
 logger = get_logger(__name__)
