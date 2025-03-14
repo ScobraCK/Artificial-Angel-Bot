@@ -89,7 +89,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         Updates api strings. 
         '''
         await interaction.response.defer()
-        await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_STR_PATH}', params={'key': self.bot.api_key}, timeout=10)
+        await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_STR_PATH}', params={'key': self.bot.api_key}, timeout=60)
         await interaction.followup.send('Successfully updated strings.')
 
     @app_commands.command()
@@ -101,7 +101,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         Updates api chars. 
         '''
         await interaction.response.defer()
-        response = await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_CHAR_PATH}', params={'key': self.bot.api_key})
+        response = await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_CHAR_PATH}', params={'key': self.bot.api_key}, timeout=60)
         data = response.json()
         chars = data.get('new')
         aliases = []
