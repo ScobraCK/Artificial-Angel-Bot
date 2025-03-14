@@ -34,7 +34,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
             api.UPDATE_API_GUILD_PATH,
             base_url=api.API_BASE_PATH,
             params={'key': self.bot.api_key},
-            timeout=10
+            timeout=60
         )
         await interaction.followup.send('Successfully updated guilds.')
 
@@ -52,7 +52,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
             api.UPDATE_API_PLAYERS_PATH,
             base_url=api.API_BASE_PATH,
             params={'key': self.bot.api_key},
-            timeout=10
+            timeout=60
         )
         await interaction.followup.send('Successfully updated players.')
 
@@ -65,7 +65,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         Updates api master. 
         '''
         await interaction.response.defer()
-        response = await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_PATH}', params={'key': self.bot.api_key}, timeout=10)
+        response = await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_PATH}', params={'key': self.bot.api_key}, timeout=60)
         data = response.json()
         updated = data.get('updated', [])
         chars = data.get('new_chars')
