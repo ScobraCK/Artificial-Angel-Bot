@@ -96,7 +96,7 @@ class HelpCommands(commands.Cog, name='Help Commands'):
                 .set_thumbnail(url=RAW_ASSET_BASE + 'Characters/CHR_000029_00_s.png')
         )
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
