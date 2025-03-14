@@ -133,7 +133,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         serial: Optional[int]
     ):
         with SessionAABot() as session:
-            results = auto_alias(session, character, serial=serial)
+            results = await auto_alias(session, character, serial=serial)
             aliases = ', '. join((f'`{alias.alias}`' for alias in results))
             await interaction.response.send_message(f'Added aliases {aliases} for character {character}')
 
@@ -146,9 +146,9 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         with SessionAABot() as session:
             result = delete_alias(session, alias)
             if result:
-                await interaction.response.send_message(f'Removed alias `{result.alias}`.')
+                await interaction.response.send_message(f'Removed alias `{alias}`.')
             else:
-                await interaction.response.send_message(f'Alias `{result.alias}` did not exist.')
+                await interaction.response.send_message(f'Alias `{alias}` did not exist.')
         
 async def setup(bot: AABot):
     await bot.add_cog(AdminCommands(bot))

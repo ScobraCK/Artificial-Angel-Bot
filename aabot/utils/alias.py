@@ -28,7 +28,7 @@ def alias_lookup(session: Session, alias: str) -> int:
 
 def add_alias(session: Session, char_id: int, alias: str, is_custom=False, ignore_duplicate=False) -> Alias:
     try:
-        result = insert_alias(session, char_id, normalize_alias(alias))
+        result = insert_alias(session, char_id, normalize_alias(alias), is_custom=is_custom)
         return result
     except IntegrityError as e:
         session.rollback()
