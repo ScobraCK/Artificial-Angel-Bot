@@ -68,8 +68,11 @@ async def fetch_api(
             return parse_response(data, response_model)
             
         except httpx.HTTPStatusError as e:
-            error = e.response.json()
-            raise BotError(f"Error in API: {e.response.status_code} - {html2text.HTML2Text().handle(error.get('error', 'No details'))}")
+            if response:
+                error = response.json()
+                raise BotError(f"Error in API: {response.status_code} - {html2text.HTML2Text().handle(error.get('error', 'No details'))}")
+            else:
+                raise BotError(f"Error in API: Details unknown.")
         except httpx.RequestError as e:
             raise e
 

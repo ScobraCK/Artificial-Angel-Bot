@@ -231,8 +231,8 @@ class Tower:
     tower_id: int
     tower_type: str
     floor: int
-    fixed_rewards: List['ItemCount']
-    first_rewards: List['ItemCount']
+    fixed_rewards: Optional[List['ItemCount']]
+    first_rewards: Optional[List['ItemCount']]
     enemy_list: List['Enemy']
 
 @dataclass

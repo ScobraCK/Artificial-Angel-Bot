@@ -59,7 +59,7 @@ class PvECommands(commands.Cog, name='PvE Commands'):
             response_model=response.Tower,
             query_params={
                 'floor': floor,
-                'tower_type': towertype.value,
+                'tower_type': towertype,
                 'language': 'enus'  # TODO add later
             }
         )

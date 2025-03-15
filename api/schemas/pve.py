@@ -81,8 +81,8 @@ class _Tower(BaseModel):
     tower_id: int = Field(..., validation_alias='Id')
     tower_type: enums.TowerType = Field(..., validation_alias='TowerType')
     floor: int = Field(..., validation_alias='Floor')
-    fixed_rewards: List[ItemCount] = Field([], validation_alias='BattleRewardsConfirmed')
-    first_rewards: List[ItemCount] = Field([], validation_alias='BattleRewardsFirst')
+    fixed_rewards: Optional[List[ItemCount]] = Field(..., validation_alias='BattleRewardsConfirmed')
+    first_rewards: Optional[List[ItemCount]] = Field(..., validation_alias='BattleRewardsFirst')
     enemy_list: List[_Enemy]
 
     _serialize_enum = field_serializer(
@@ -94,8 +94,8 @@ class Tower(BaseModel):
     tower_id: int = Field(...)
     tower_type: str = Field(...)
     floor: int = Field(...)
-    fixed_rewards: List[ItemCount] = Field(...)
-    first_rewards: List[ItemCount] = Field(...)
+    fixed_rewards: Optional[List[ItemCount]] = Field(...)
+    first_rewards: Optional[List[ItemCount]] = Field(...)
     enemy_list: List[Enemy] = Field(...)
 
 # Request
@@ -149,6 +149,7 @@ async def get_tower(md: MasterData, payload: TowerRequest) -> _Tower:
     }
     try:
         tower_data = next(await md.search_filter('TowerBattleQuestMB', **args))
+        logger.error(tower_data)
     except StopIteration:
         raise APIError(f'Tower {payload.tower_type} floor {payload.floor} not found')
     enemies = await parse_tower_enemies(md, tower_data.get('EnemyIds'))
