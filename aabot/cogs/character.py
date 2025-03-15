@@ -58,12 +58,14 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         '''List character speeds in decreasing order'''
         name_resp = await api.fetch_api(
             api.STRING_CHARACTER_PATH_ALL,
+            response_model=Dict[int, response.Name],
             query_params={'language': language}
         )
         name_data = api.parse_response(name_resp, Dict[int, response.Name])
         
         speed_resp = await api.fetch_api(
             api.CHARACTER_LIST_PATH,
+            response_model=List[response.CharacterDBModel],
             query_params={'option': 'speed'}
         )
         speed_data = api.parse_response(name_resp, List[response.CharacterDBModel])
