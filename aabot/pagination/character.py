@@ -99,7 +99,7 @@ def speed_view(
     for batch in batched(speed_list, 50):
         description = StringIO()
         for char in batch:
-            name = name_data.data.get(char.char_id)
+            name = name_data.data.get(char.id)
             char_name = character_title(name.title, name.name) if name else '[Undefined]'
             if add or buffs:
                 speed = calc_buff(char.speed+add, buffs) if buffs else (char.speed+add)

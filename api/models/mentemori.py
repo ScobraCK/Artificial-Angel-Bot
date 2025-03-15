@@ -14,7 +14,7 @@ PlayerCriteria = Literal["bp", "quest", "tower", "azure_tower", "crimson_tower",
 class PlayerORM(Base):
     __tablename__ = "players"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     world_id: Mapped[int] = mapped_column(Integer)
     name: Mapped[str] = mapped_column(Text)
     auto_bp: Mapped[int] = mapped_column(BigInteger)
@@ -56,7 +56,7 @@ class PlayerORM(Base):
 class GuildORM(Base):
     __tablename__ = "guilds"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     world_id: Mapped[int] = mapped_column(Integer)
     name: Mapped[str] = mapped_column(Text)
     bp: Mapped[int] = mapped_column(BigInteger)

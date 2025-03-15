@@ -22,6 +22,7 @@ def update_players(session: Session, player_data: dict):
         for player_id, player in player_info.items():
             player_id = int(player_id)
             update_data = {
+                "id": player_id,
                 "world_id": world_id,
                 "name": player["name"],
                 "auto_bp": player["bp"],
@@ -63,6 +64,7 @@ def update_guilds(session: Session, guild_data: dict):
         for guild_id, guild in guild_info.items():
             guild_id = int(guild_id)
             update_data = {
+                "guild_id": guild_id,
                 "world_id": world_id,
                 "name": guild["name"],
                 "bp": guild["bp"],

@@ -138,7 +138,7 @@ class Profile:
 
 @dataclass
 class CharacterDBModel:
-    char_id: int
+    id: int
     speed: int
     element: int
     job: int
