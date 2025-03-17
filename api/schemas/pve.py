@@ -149,7 +149,6 @@ async def get_tower(md: MasterData, payload: TowerRequest) -> _Tower:
     }
     try:
         tower_data = next(await md.search_filter('TowerBattleQuestMB', **args))
-        logger.error(tower_data)
     except StopIteration:
         raise APIError(f'Tower {payload.tower_type} floor {payload.floor} not found')
     enemies = await parse_tower_enemies(md, tower_data.get('EnemyIds'))
