@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import List
 
 import api.schemas.character as char_schema
-from api.crud.character import get_filtered_chars
+from api.crud.character import get_filtered_chars, get_char_ids
 from api.models.character import CharacterDBModel, CharacterDBRequest
 from api.schemas.api_models import APIResponse
 from api.schemas.skills import Skills, get_skills_char
@@ -83,12 +83,16 @@ async def lament_req(
     description='Returns character skill information',
     response_model=APIResponse[Skills]
 )
-async def lament_req(
+async def skill_req(
     session: SessionDep,
     request: Request,
     char_id: int,
     language: Language = Depends(language_parameter)
 ):
+    # Prevents pve only character skill text showing up in bot
+    char_ids = await get_char_ids(session)
+    if char_id not in char_ids:
+        raise HTTPException(status_code=404, detail=f'Could not find character id {char_id}')
     md: MasterData = request.app.state.md
     skills = await get_skills_char(md, char_id)
     return APIResponse[Skills].create(request, skills.model_dump(context={'db': session, 'language': language}))
