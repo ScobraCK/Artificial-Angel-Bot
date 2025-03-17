@@ -65,9 +65,9 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         Updates api master. 
         '''
         await interaction.response.defer()
-        response = await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_PATH}', params={'key': self.bot.api_key}, timeout=60)
+        response = await api.fetch(api.UPDATE_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=60)
         data = response.json()
-        updated = data.get('updated', [])
+        updated = data.get('updated')
         chars = data.get('new_chars')
 
         aliases = []

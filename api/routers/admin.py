@@ -27,9 +27,11 @@ async def update_master(key: str, session: SessionDep, request: Request):
     if md.version is None or not md.catalog:  # In case MasterData is not initialized
         updated = await md._preload()
 
-    inserted_ids = None
+    inserted_ids = []
     if 'CharacterMB' in updated:
         inserted_ids = await upsert_chars(session, md)
+        if inserted_ids is None:
+            raise HTTPException(status_code=500, detail='Failed to update characters.')
 
     return {'data': updated, 'new_chars': inserted_ids}
 
@@ -48,7 +50,8 @@ async def update_chars(key: str, session: SessionDep, request: Request):
         raise HTTPException(status_code=403, detail="Unauthorized")
     md: MasterData = request.app.state.md
     inserted_ids = await upsert_chars(session, md)
-
+    if inserted_ids is None:
+        raise HTTPException(status_code=500, detail='Failed to update characters.')
     return {'new': inserted_ids}
 
 @router.get('/admin/mentemori')
