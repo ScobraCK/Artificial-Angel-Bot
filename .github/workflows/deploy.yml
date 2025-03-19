@@ -1,4 +1,4 @@
-name: Deploy to server
+name: Restart Containers
 
 on:
   push:
@@ -25,6 +25,4 @@ jobs:
         script: |
           cd ./Artificial-Angel-Bot
           git pull
-          # docker compose down
-          docker compose up --build -d
-          docker image prune -f
+          docker compose restart api aabot
