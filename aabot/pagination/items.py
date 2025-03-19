@@ -262,9 +262,10 @@ def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], 
         description.write('```')
 
     # UW
-    if isinstance(equip_data, resp.UniqueWeapon):
+    if isinstance(equipment, resp.UniqueWeapon):
         description.write('**Unique Passive Effect**\n```\n')
-        description.write('\n'.join(param_string(param) for param in equip_data.uw_bonus))
+        description.write('\n'.join(param_string(param) for param in equipment.uw_bonus))
+        description.write('```')
 
     return BaseEmbed(
         version=equip_data.version,
