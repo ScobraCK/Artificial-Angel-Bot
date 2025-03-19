@@ -25,6 +25,6 @@ jobs:
         script: |
           cd ./Artificial-Angel-Bot
           git pull
-          docker compose down
+          # docker compose down
           docker compose up --build -d
           docker image prune -f
