@@ -12,6 +12,7 @@ from aabot.pagination.skills import uw_skill_description
 from aabot.pagination.views import DropdownView, MixedView
 from aabot.utils import enums, emoji
 from aabot.utils.alias import alias_lookup
+from aabot.utils.assets import EQUIPMENT_THUMBNAIL
 from aabot.utils.error import BotError
 from aabot.utils.utils import param_string
 
@@ -272,7 +273,7 @@ def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], 
         title=f'{emoji.rarity_emoji.get(equipment.rarity)} {equipment.rarity} {equipment.name}',
         description=description.getvalue(),
         color=Color.blurple()
-    )
+    ).set_thumbnail(url= EQUIPMENT_THUMBNAIL.format(equip_id=equipment.icon_id))
 
 def uw_embed(equipment_data: resp.APIResponse[resp.UniqueWeapon]):
     '''UW Descriptions Embed'''
