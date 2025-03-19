@@ -273,7 +273,7 @@ def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], 
         title=f'{emoji.rarity_emoji.get(equipment.rarity)} {equipment.rarity} {equipment.name}',
         description=description.getvalue(),
         color=Color.blurple()
-    ).set_thumbnail(url= EQUIPMENT_THUMBNAIL.format(equip_id=equipment.icon_id))
+    ).set_thumbnail(url=EQUIPMENT_THUMBNAIL.format(equip_id=equipment.icon_id))
 
 def uw_embed(equipment_data: resp.APIResponse[resp.UniqueWeapon]):
     '''UW Descriptions Embed'''
