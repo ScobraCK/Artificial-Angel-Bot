@@ -14,10 +14,11 @@ logger = get_logger(__name__)
 OWNER_ID = int(os.getenv('OWNER_ID'))
 TOKEN = os.getenv('TOKEN')  # test bot token
 LOG_CHANNEL=int(os.getenv('LOG_CHANNEL'))
+ERROR_CHANNEL=int(os.getenv('ERROR_CHANNEL'))
 API_KEY = os.getenv('API_KEY')
 
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-    log_channel = interaction.client.get_channel(LOG_CHANNEL)
+    err_channel = interaction.client.get_channel(ERROR_CHANNEL)
     data = interaction.data
     command_name = data.get('name')
     options = data.get('options')
@@ -41,7 +42,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
             description=f"Arguments:\n```{arguments}```",
             color=discord.Color.red()
         )
-        await log_channel.send(embed=embed)
+        await err_channel.send(embed=embed)
         await interaction.response.send_message(f'An unexpected error occured. Message @habenyan if this persists.', ephemeral=True)
 
 class AABot(commands.Bot):  # include masterdata in the class
