@@ -17,6 +17,12 @@ LOG_CHANNEL=int(os.getenv('LOG_CHANNEL'))
 API_KEY = os.getenv('API_KEY')
 
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+    log_channel = interaction.client.get_channel(LOG_CHANNEL)
+    data = interaction.data
+    command_name = data.get('name')
+    options = data.get('options')
+    arguments = "\n".join([f"{option.get('name')}: {option.get('value')}" for option in options]) if options else "None"
+
     if isinstance(error, BotError):
         logger.error(f'{error} - {interaction.data}')
         embed = discord.Embed(
@@ -30,7 +36,13 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
         await interaction.response.send_message('You do not have permission to use this command.', ephemeral=True)
     else:
         logger.error(f'{error} - {interaction.data}', exc_info=True)
-        await interaction.response.send_message(f'An unexpected error occured. Message @habenyan if this persists.', ephemeral=True)   
+        embed = discord.Embed(
+            title=f"{type(error).__name__}: /{command_name}",
+            description=f"Arguments:\n```{arguments}```",
+            color=discord.Color.red()
+        )
+        await log_channel.send(embed=embed)
+        await interaction.response.send_message(f'An unexpected error occured. Message @habenyan if this persists.', ephemeral=True)
 
 class AABot(commands.Bot):  # include masterdata in the class
     def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity, log_channel, api_key):
