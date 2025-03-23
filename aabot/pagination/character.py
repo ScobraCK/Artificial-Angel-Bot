@@ -87,7 +87,7 @@ def speed_view(
     char_data: resp.APIResponse[List[resp.CharacterDBModel]],
     name_data: resp.APIResponse[Dict[int, resp.Name]],
     add: int, buffs: List[int]=None):
-    speed_list = char_data.data
+    speed_list = reversed(char_data.data)
     
     if add or buffs:
         header = '__No.__ __Character__ __Speed__ __(Base)__\n'
