@@ -35,7 +35,7 @@ def id_list_view(interaction: Interaction, name_data: resp.APIResponse[Dict[int,
     return ButtonView(interaction.user, {'default': embeds})
 
 def char_info_embed(char_data: resp.APIResponse[resp.Character], skill_data: resp.APIResponse[resp.Skills]):
-    embed = BaseEmbed(char_data.version)
+    embed = BaseEmbed(char_data.version, color=Color.green())
     char = char_data.data
 
     embed.title=character_title(char.title, char.name)
@@ -81,6 +81,29 @@ def char_info_embed(char_data: resp.APIResponse[resp.Character], skill_data: res
     embed.set_thumbnail(url=image_link)
 
     return embed
+
+def profile_embed(profile_data: resp.APIResponse[resp.Profile], name_data: resp.APIResponse[resp.Name]):
+    profile = profile_data.data
+    name = character_title(name_data.data.title, name_data.data.name)
+
+    description = (
+        f'**Id:** {profile.char_id}\n'
+        f'**Birthday:** {profile.birthday//100}/{profile.birthday%100}\n'
+        f'**Blood Type:** {profile.blood_type}\n'
+        f'**Height:** {profile.height}cm\n'
+        f'**Weight:** {profile.weight}kg\n\n'
+        f'**Song by:** {profile.vocalJP}\n'
+        # f'**Vocal (US):** {profile.vocalUS}\n'
+        f'**CV (JP):** {profile.voiceJP}\n'
+        f'**CV (US):** {profile.voiceUS}\n'
+    )
+
+    return BaseEmbed(
+        profile_data.version,
+        title=name,
+        description=description,
+        color=Color.green()
+    ).set_thumbnail(url=CHARACTER_THUMBNAIL.format(char_id=profile.char_id, qlipha=False))
 
 def speed_view(
     interaction: Interaction,

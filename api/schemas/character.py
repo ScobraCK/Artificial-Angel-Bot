@@ -53,6 +53,7 @@ class _Profile(BaseModel):
         return self
 
     _serialize_str = field_serializer('gacha_message', 'voiceJP', 'voiceUS', 'vocalJP', 'vocalUS')(serializers.serialize_str)
+    _serialize_enum = field_serializer('blood_type')(serializers.serialize_enum)
 
 class Character(BaseModel):
     char_id: int = Field(..., )

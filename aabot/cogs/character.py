@@ -119,6 +119,31 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
 
     @app_commands.command()
     @app_commands.describe(
+    character='The name or id of the character',
+    language='Text language. Defaults to English.'
+    )
+    @apply_user_preferences()
+    async def profile(
+        self,
+        interaction: Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: Optional[Language]=None):  
+        '''Shows a character's profile info'''
+
+        profile_data = await api.fetch_api(
+            api.CHARACTER_PROFILE_PATH,
+            path_params={'char_id': character},
+            query_params={'language': language},
+            response_model=response.Profile
+        )
+        name_data = await api.fetch_name(character, language)
+        
+        embed = char_page.profile_embed(profile_data, name_data)
+
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command()
+    @app_commands.describe(
         character='The name or id of the character',
         language='Text language. Defaults to English.'
     )
