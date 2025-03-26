@@ -33,7 +33,7 @@ def skill_description(skills: List[resp.ActiveSkill|resp.PassiveSkill], uw_desc:
         for info in skill.skill_infos:
             if (rarity := info.uw_rarity):
                 uw_description = getattr(uw_desc, rarity) if uw_desc else 'Description unavaliable.'
-                description.write(f"**{rarity} Weapon**{rarity_emoji.get(rarity)}\n{uw_description}\n")
+                description.write(f"**{rarity} Weapon**{rarity_emoji.get(rarity)}\n{remove_linebreaks(uw_description)}\n")
             else:
                 description.write(
                     f'**Skill Lv.{info.order_number}**{level_emoji.get(info.order_number)} (Lv.{info.level})\n'
