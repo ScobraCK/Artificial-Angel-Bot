@@ -15,7 +15,7 @@ class Language(StrEnum):
     # RuRu = 'RuRu'
     # ThTh = 'ThTh'
     # ViVn = 'ViVn'
-    # ZhCn = 'ZhCn'
+    zhcn = 'zhcn'
 
 class Server(IntEnum):
     Japan = 1
@@ -104,41 +104,6 @@ class Tower(IntEnum):
     Emerald = 4
     Amber = 5
 
-######################################################
-# if flag/enum has a string key
-class _EnumMixin:
-    def __new__(cls, value, str_key=None):
-        obj = object.__new__(cls)
-        obj._value_ = value
-        obj.str_key = str_key
-        return obj
-
-class _Enum(_EnumMixin, Enum):
-    pass
-
-class _Flag(_EnumMixin, Flag):
-    @property
-    def str_keys(self):
-        return [flag.str_key for flag in self.__class__ if self & flag]
-
-
-class Job(_Flag):
-    Warrior = (1, '[JobFlagsWarrior]')
-    Sniper = (2, '[JobFlagsSniper]')
-    Sorcerer = (4, '[JobFlagsSorcerer]')
-
-
-equip_type = {
-    (1, Job.Warrior): '[EquipmentSlotTypeSword]',
-    (1, Job.Sniper): '[EquipmentSlotTypePistol]',
-    (1, Job.Sorcerer): '[EquipmentSlotTypeTome]',
-    (2, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeSub]',
-    (3, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeHelmet]',
-    (4, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeArmor]',
-    (5, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeGauntlet]',
-    (6, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeShoes]',
-}
-
 class CharacterRarity(Flag):
     N = 1
     R = 2
@@ -160,34 +125,3 @@ class CharacterRarity(Flag):
     LRPlus8 = 131072
     LRPlus9 = 262144
     LRPlus10 = 524288
-
-class BaseParameter(_Enum):
-    STR = (1, '[BaseParameterTypeMuscle]')
-    DEX = (2, '[BaseParameterTypeEnergy]')
-    MAG = (3, '[BaseParameterTypeIntelligence]')
-    STA = (4, '[BaseParameterTypeHealth]')
-
-class BattleParameter(_Enum):
-    HP = (1, '[BattleParameterTypeHp]')
-    ATK = (2, '[BattleParameterTypeAttackPower]')
-    P_DEF = (3, '[BattleParameterTypePhysicalDamageRelax]')
-    M_DEF = (4, '[BattleParameterTypeMagicDamageRelax]')
-    ACC = (5, '[BattleParameterTypeHit]')
-    EVD = (6, '[BattleParameterTypeAvoidance]')
-    CRIT = (7, '[BattleParameterTypeCritical]')
-    CRIT_RES = (8, '[BattleParameterTypeCriticalResist]')
-    CRIT_DMG_BOOST = (9, '[BattleParameterTypeCriticalDamageEnhance]')
-    P_CRIT_DMG_CUT = (10, '[BattleParameterTypePhysicalCriticalDamageRelax]')
-    M_CRIT_DMG_CUT = (11, '[BattleParameterTypeMagicCriticalDamageRelax]')
-    DEF_BREAK = (12, '[BattleParameterTypeDefensePenetration]')
-    DEF = (13, '[BattleParameterTypeDefense]')
-    PM_DEF_BREAK = (14, '[BattleParameterTypeDamageEnhance]')
-    DEBUFF_ACC = (15, '[BattleParameterTypeDebuffHit]')
-    DEBUFF_RES = (16, '[BattleParameterTypeDebuffResist]')
-    COUNTER = (17, '[BattleParameterTypeDamageReflect]')
-    HP_DRAIN = (18, '[BattleParameterTypeHpDrain]')
-    SPD = (19, '[BattleParameterTypeSpeed]')
-
-
-
-    
