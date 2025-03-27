@@ -11,13 +11,6 @@ import api.models.string_keys as skeys
 
 from api.utils.logger import get_logger, log_text_changes
 logger = get_logger(__name__)
-
-language_mappings = {
-    'jajp': skeys.StringORM.jajp,
-    'kokr': skeys.StringORM.kokr,
-    'enus': skeys.StringORM.enus,
-    'zhtw': skeys.StringORM.zhtw,
-}
     
 async def upsert_string_keys(session: Session, md: MasterData, update_list=None):
     languages = {

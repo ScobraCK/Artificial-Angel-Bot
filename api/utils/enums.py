@@ -30,6 +30,15 @@ class Language(StrEnum):
     kokr = 'kokr'
     enus = 'enus'
     zhtw = 'zhtw'
+    dede = 'dede'
+    esmx = 'esmx'
+    frfr = 'frfr'
+    idid = 'idid'
+    ptbr = 'ptbr'
+    ruru = 'ruru'
+    thth = 'thth'
+    vivn = 'vivn'
+    zhcn = 'zhcn'
 
 class Element(_Enum):
     Azure = (1, '[ElementTypeBlue]')
