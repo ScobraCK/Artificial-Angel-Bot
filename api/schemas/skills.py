@@ -70,7 +70,7 @@ class ActiveSkill(BaseModel):
 
 class _PassiveSkill(BaseModel):
     id: int = Field(..., validation_alias='Id')
-    name: str = Field(..., validation_alias='NameKey')
+    name: str = Field(validation_alias='NameKey')
     skill_infos: List[_SkillInfo] = Field(..., validation_alias='PassiveSkillInfos')
 
     _serialize_str = field_serializer('name')(serializers.serialize_str)
@@ -116,6 +116,8 @@ async def parse_skill(md: MasterData, id: int) -> Union[_ActiveSkill, _PassiveSk
     else:  # Check Passive
         skill_data = await md.search_id(id, 'PassiveSkillMB')
         if skill_data: # Not found
+            if skill_data.get('NameKey') is None:
+                skill_data['NameKey'] = '*'  # Skill 57005 and some pve skills have null names
             return _PassiveSkill(**skill_data)
     raise APIError(f'Could not find skill id of {id}')
 
