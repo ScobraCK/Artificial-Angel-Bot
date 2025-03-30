@@ -40,11 +40,11 @@ def basic_enemy_field(enemy: resp.Enemy)->dict:
     returns a basic embed field for an enemy
     '''
     soul_emj = emoji.soul_emoji.get(enemy.element)  # TODO I made a big mistake
-
     name = f"[{enemy.rarity}] Lv.{enemy.level} {enemy.name} {soul_emj}"
     value = (
                 f":crossed_swords: {hf(enemy.battle_params.attack)} :heart: {hf(enemy.battle_params.hp)} "
-                f":shield: {hf(enemy.battle_params.defense)}\n**Speed:** {enemy.battle_params.speed}\n"
+                f":shield: {hf(enemy.battle_params.defense)}\n"
+                f"**Speed:** {enemy.battle_params.speed}\n"
                 f"**{emoji.emoji_list['str']}** {hf(enemy.base_params.str)} "
                 f"**{emoji.emoji_list['dex']}** {hf(enemy.base_params.dex)} "
                 f"**{emoji.emoji_list['mag']}** {hf(enemy.base_params.mag)} "
@@ -73,14 +73,14 @@ def battle_param_text(params: resp.BattleParameters)->str:
         f'SPD: {params.speed}\n'
         f'```'
         f'```json\n'
-        f'{f"PM.DEF Break: {params.def_break}":<27}{f"P.DEF: {params.pdef}":<22}\n'
-        f'{"":<27}{f"M.DEF: {params.mdef}":<22}\n'
-        f'{f"ACC: {params.acc}":<27}{f"EVD: {params.evade}":<22}\n'
-        f'{f"CRIT: {params.crit}":<27}{f"CRIT RES: {params.crit_res}":<22}\n'
-        f'{f"CRIT DMG Boost: {params.crit_dmg}%":<27}{f"P.CRIT DMG Cut: {params.pcut}%":<22}\n'
-        f'{"":<27}{f"M.CRIT DMG Cut: {params.mcut}%":<22}\n'
-        f'{f"Debuff ACC: {params.debuff_acc}":<27}{f"Debuff RES: {params.debuff_res}":<22}\n'
-        f'{f"Counter: {params.counter}%":<27}{f"HP Drain: {params.hp_drain}%":<22}\n'
+        f'{f"PM.DEF Break: {params.def_break}":<25}{f"P.DEF: {params.pdef}":<22}\n'
+        f'{"":<25}{f"M.DEF: {params.mdef}":<22}\n'
+        f'{f"ACC: {params.acc}":<25}{f"EVD: {params.evade}":<22}\n'
+        f'{f"CRIT: {params.crit}":<25}{f"CRIT RES: {params.crit_res}":<22}\n'
+        f'{f"CRIT DMG Boost: {params.crit_dmg}%":<25}{f"P.CRIT DMG Cut: {params.pcut}%":<22}\n'
+        f'{"":<25}{f"M.CRIT DMG Cut: {params.mcut}%":<22}\n'
+        f'{f"Debuff ACC: {params.debuff_acc}":<25}{f"Debuff RES: {params.debuff_res}":<22}\n'
+        f'{f"Counter: {params.counter}%":<25}{f"HP Drain: {params.hp_drain}%":<22}\n'
         f'```'
     )
     return text
@@ -103,6 +103,16 @@ def detailed_enemy_embed(enemy: resp.Enemy, version: str)->Embed:
         name='Battle Parameters',
         value=battle_param_text(enemy.battle_params),
         inline=False)
+    embed.add_field(
+        name='Skills',
+        value=(
+            f'```json\n'
+            f"Actives: {enemy.actives}\n"
+            f"Passives: {enemy.passives}\n"
+            f"UW Rarity: {enemy.uw_rarity}\n"
+            f'```'
+        )
+    )
     if (icontype := enemy.icon_type) == 0:
         embed.set_thumbnail(
             url=RAW_ASSET_BASE+f"Characters/Sprites/CHR_{enemy.icon_id:06}_00_s.png")
