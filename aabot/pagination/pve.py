@@ -8,7 +8,7 @@ from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.views import MixedView
 from aabot.utils import emoji
 from aabot.utils.assets import RAW_ASSET_BASE, SOUL_BONUS
-from aabot.utils.utils import human_format as hf, from_quest_id
+from aabot.utils.utils import human_format as hf, from_quest_id, decimal_format
 
 
 def get_bonus_url(soul_list):
@@ -56,31 +56,31 @@ def basic_enemy_field(enemy: resp.Enemy)->dict:
 def base_param_text(params: resp.BaseParameters)->str:
     text = (
         f'```json\n'
-        f'STR: {params.str}\n'
-        f'DEX: {params.dex}\n'
-        f'MAG: {params.mag}\n'
-        f'STA: {params.sta}```'
+        f'STR: {params.str:,}\n'
+        f'DEX: {params.dex:,}\n'
+        f'MAG: {params.mag:,}\n'
+        f'STA: {params.sta:,}```'
     )
     return text
 
 def battle_param_text(params: resp.BattleParameters)->str:
     text = (
         f'```json\n'
-        f'HP: {params.hp}\n'
-        f'ATK: {params.attack}\n'
-        f'DEF: {params.defense}\n'
-        f'DEF Break: {params.def_break}\n'
-        f'SPD: {params.speed}\n'
+        f'HP: {params.hp:,}\n'
+        f'ATK: {params.attack:,}\n'
+        f'DEF: {params.defense:,}\n'
+        f'DEF Break: {params.def_break:,}\n'
+        f'SPD: {params.speed:,}\n'
         f'```'
         f'```json\n'
-        f'{f"PM.DEF Break: {params.def_break}":<25}{f"P.DEF: {params.pdef}":<22}\n'
-        f'{"":<25}{f"M.DEF: {params.mdef}":<22}\n'
-        f'{f"ACC: {params.acc}":<25}{f"EVD: {params.evade}":<22}\n'
-        f'{f"CRIT: {params.crit}":<25}{f"CRIT RES: {params.crit_res}":<22}\n'
-        f'{f"CRIT DMG Boost: {params.crit_dmg}%":<25}{f"P.CRIT DMG Cut: {params.pcut}%":<22}\n'
-        f'{"":<25}{f"M.CRIT DMG Cut: {params.mcut}%":<22}\n'
-        f'{f"Debuff ACC: {params.debuff_acc}":<25}{f"Debuff RES: {params.debuff_res}":<22}\n'
-        f'{f"Counter: {params.counter}%":<25}{f"HP Drain: {params.hp_drain}%":<22}\n'
+        f'{f"PM.DEF Break: {params.def_break:,}":<24}{f"P.DEF: {params.pdef:,}":<22}\n'
+        f'{"":<24}{f"M.DEF: {params.mdef:,}":<22}\n'
+        f'{f"ACC: {params.acc:,}":<24}{f"EVD: {params.evade:,}":<22}\n'
+        f'{f"CRIT: {params.crit:,}":<24}{f"CRIT RES: {params.crit_res:,}":<22}\n'
+        f'{f"CRIT DMG Boost: {decimal_format(params.crit_dmg)}%":<24}{f"P.CRIT DMG Cut: {decimal_format(params.pcut)}%":<22}\n'
+        f'{"":<24}{f"M.CRIT DMG Cut: {decimal_format(params.mcut)}%":<22}\n'
+        f'{f"Debuff ACC: {params.debuff_acc:,}":<24}{f"Debuff RES: {params.debuff_res:,}":<22}\n'
+        f'{f"Counter: {decimal_format(params.counter)}%":<24}{f"HP Drain: {decimal_format(params.hp_drain)}%":<22}\n'
         f'```'
     )
     return text

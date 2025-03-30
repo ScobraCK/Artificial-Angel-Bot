@@ -26,11 +26,14 @@ def human_format(num: int)->str:
         num /= 1000.0
     return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T'][magnitude])
 
+def decimal_format(num: int)->str:
+    decimal = 1 if num % 10 == 0 else 2
+    return f'{num/100:.{decimal}f}'
+
 def param_string(param: BaseParameterModel|BattleParameterModel):
     if param.change_type == 1:
         if isinstance(param, BattleParameterModel) and param.is_percentage:
-            decimal = 1 if param.value % 10 == 0 else 2
-            return f'{param.type} {param.value/100:.{decimal}f}%'
+            return f'{param.type} {decimal_format(param.value)}%'
         else:
             return f'{param.type} {param.value:,}'
     elif param.change_type == 2:
