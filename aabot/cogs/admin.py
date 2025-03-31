@@ -71,8 +71,9 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         chars = data.get('new_chars')
 
         aliases = []
-        for char in chars:
-            aliases.extend(await auto_alias(char))
+        with SessionAABot() as session:
+            for char in chars:
+                aliases.extend(await auto_alias(session, char))
 
         await interaction.followup.send(
             'Successfully updated masterdata.\n'

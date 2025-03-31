@@ -1,14 +1,16 @@
 import asyncio
 import discord
 import os
+import traceback
+
 from discord.ext import commands
 
 from aabot.db.database import Base, engine
 from aabot.db.models import UserPreference, Alias
 from aabot.utils.error import BotError
 
-
 from aabot.utils.logger import get_logger
+
 logger = get_logger(__name__)
 
 OWNER_ID = int(os.getenv('OWNER_ID'))
@@ -37,9 +39,12 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
         await interaction.response.send_message('You do not have permission to use this command.', ephemeral=True)
     else:
         logger.error(f'{error} - {interaction.data}', exc_info=True)
+        trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+        if len(trace) > 4000:
+            trace = trace[:trace.rfind('\n', 0, 3997)] + "\n..."  # Truncate the trace to 4000 characters
         embed = discord.Embed(
-            title=f"{type(error).__name__}: /{command_name}",
-            description=f"Arguments:\n```{arguments}```",
+            title=f"/{command_name}",
+            description=f"Arguments:\n```{arguments}```\n\nDetails:\n```{trace}```",
             color=discord.Color.red()
         )
         await err_channel.send(embed=embed)
