@@ -114,6 +114,9 @@ class ButtonView(MyView):
         self.add_item(self.right2_btn)
 
     async def update(self):
+        # No data
+        if self.max_page == 0:
+            return
         # Update button states based on the current page
         self.left2_btn.disabled = self.current_page == 1
         self.left_btn.disabled = self.current_page == 1

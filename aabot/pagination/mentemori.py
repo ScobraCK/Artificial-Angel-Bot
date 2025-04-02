@@ -27,6 +27,20 @@ temple_type = {
     5: 'Rune Tickets'
 }
 
+def world_ids_help():
+    text = (
+        "**World Id Help**\n"
+        'World Ids are 4 digit integers in the format of SWWW, where S is the server id and W is the world.\n'
+        'Server. 1 = Japan, 2 = Korea, 3 = Asia, 4 = North America, 5 = Europe, 6 = Global\n\n'
+        'Examples:\n'
+        '```\n'
+        'JP1: 1001\n'
+        'JP101: 1101\n'
+        'NA1: 4001\n```'
+    )
+
+    return text
+
 def temple_embed(data, server: Server, world: int):
     description = StringIO()
     quest_ids = data['data']['quest_ids']

@@ -56,6 +56,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         string: str,
         language: Optional[Language]=None
     ):
+        '''Shows equipment information'''
         view = await item_response.equipment_view(interaction, string, language)
         await show_view(interaction, view)
 

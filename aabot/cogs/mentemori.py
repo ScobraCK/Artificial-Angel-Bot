@@ -101,7 +101,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         view = mentemori_page.group_ranking_view(interaction, ranking_data, server, group_id)
         await show_view(interaction, view)
             
-    @app_commands.command()
+    @app_commands.command(
+        extras={'help': mentemori_page.world_ids_help}
+    )
     @app_commands.describe(
         server='Option to filter by server',
         world='Option to filter by world (only when server is specified)',
@@ -128,9 +130,12 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         if world_ids:
             try:
                 world_ids = list(map(int, re.split(r'[,\s]+', world_ids.strip())))
+                for world_id in world_ids:
+                    if not (1000 <= world_id <= 7000):  # Simple check for invalid world ids
+                        raise ValueError()
             except ValueError:
                 await interaction.response.send_message(
-                    "Invalid world id(s)",
+                    mentemori_page.world_ids_help(),
                     ephemeral=True
                 )
                 return
@@ -152,7 +157,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         view = mentemori_page.guild_ranking_view(interaction, ranking_data, filter_text)
         await show_view(interaction, view)
 
-    @app_commands.command()
+    @app_commands.command(
+        extras={'help': mentemori_page.world_ids_help}
+    )
     @app_commands.describe(
         category='The ranking category. Default BP',
         server='Option to filter by server',
@@ -181,9 +188,12 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         if world_ids:
             try:
                 world_ids = list(map(int, re.split(r'[,\s]+', world_ids.strip())))
+                for world_id in world_ids:
+                    if not (1000 <= world_id <= 7000):  # Simple check for invalid world ids
+                        raise ValueError()
             except ValueError:
                 await interaction.response.send_message(
-                    "Invalid world id(s)",
+                    mentemori_page.world_ids_help(),
                     ephemeral=True
                 )
                 return
@@ -205,7 +215,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         view = mentemori_page.player_ranking_view(interaction, ranking_data, category,filter_text)
         await show_view(interaction, view)
         
-    @app_commands.command()
+    @app_commands.command(
+        extras={'help': mentemori_page.world_ids_help}
+    )
     @app_commands.describe(
         category='The ranking category. Default BP',
         server='Option to filter by server',
@@ -234,9 +246,12 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         if world_ids:
             try:
                 world_ids = list(map(int, re.split(r'[,\s]+', world_ids.strip())))
+                for world_id in world_ids:
+                    if not (1000 <= world_id <= 7000):  # Simple check for invalid world ids
+                        raise ValueError()
             except ValueError:
                 await interaction.response.send_message(
-                    "Invalid world id(s)",
+                    mentemori_page.world_ids_help(),
                     ephemeral=True
                 )
                 return
