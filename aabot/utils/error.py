@@ -6,4 +6,4 @@ class BotError(AppCommandError):
         super().__init__(self.message)
 
     def to_dict(self):
-        return {"error": self.message}
+        return {"detail": self.message}

@@ -65,7 +65,7 @@ async def update_mentemori(key: str, session: SessionDep):
         update_guilds(session, guilds)
         return Response(status_code=204)
     except MentemoriError as e:
-        return {'error': e.response}
+        return {'detail': e.response}
     except Exception as e:
         logger.error(str(e))
         raise e
@@ -79,7 +79,7 @@ async def update_mentemori_players(key: str, session: SessionDep):
         update_players(session, players)
         return Response(status_code=204)
     except MentemoriError as e:
-        return {'error': e.response}
+        return {'detail': e.response}
     except Exception as e:
         logger.error(str(e))
         raise e
@@ -93,7 +93,7 @@ async def update_mentemori_guilds(key: str, session: SessionDep):
         update_guilds(session, guilds)
         return Response(status_code=204)
     except MentemoriError as e:
-        return {'error': e.response}
+        return {'detail': e.response}
     except Exception as e:
         logger.error(str(e))
         raise e

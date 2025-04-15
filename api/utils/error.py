@@ -5,7 +5,7 @@ class APIError(Exception):
         super().__init__(self.message)
 
     def to_dict(self):
-        return {"error": self.message, "status_code": self.status_code}
+        return {"detail": self.message, "status_code": self.status_code}
 
 class MentemoriError(Exception):
     def __init__(self, response):
