@@ -109,6 +109,7 @@ class CharacterRarity(IntFlag):
     LRPlus10 = 524288
 
 class BloodType(Enum):
+    Unknown = 0   # Liz, Matilda
     A = 1
     B = 2
     O = 3

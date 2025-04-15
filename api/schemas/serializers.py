@@ -3,6 +3,9 @@ from pydantic import FieldSerializationInfo
 import api.utils.enums as enums
 from api.crud.string_keys import read_string_key_language
 
+from api.utils.logger import get_logger
+logger = get_logger(__name__)
+
 def serialize_str(v: str | enums._Enum | enums._Flag, info: FieldSerializationInfo):
     '''
     Translates string keys into their language.
@@ -13,6 +16,7 @@ def serialize_str(v: str | enums._Enum | enums._Flag, info: FieldSerializationIn
     if v and isinstance(context, dict):
         language = context.get('language', enums.Language.enus)
         session = context.get('db', None)
+        nullable = context.get('nullable', False)
 
         if isinstance(v, enums._Enum):
             s = [v.str_key]
@@ -28,7 +32,10 @@ def serialize_str(v: str | enums._Enum | enums._Flag, info: FieldSerializationIn
             if key.startswith('[') and key.endswith(']'):
                 if session is None:
                     raise ValueError('DB session could not be found')
-                results.append(read_string_key_language(session, key, language))
+                result = read_string_key_language(session, key, language)
+                if nullable and result is None:  # stella's case ([CharacterProfileVocalUS57])
+                    return None
+                results.append(result)
             else:
                 results.append(key)  # not a string key, return text
         return str.join('|', results)

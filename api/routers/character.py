@@ -59,7 +59,8 @@ async def profile_req(
 ):
     md: MasterData = request.app.state.md
     profile = await char_schema.get_profile(md, char_id)
-    return APIResponse[char_schema.Profile].create(request, profile.model_dump(context={'db': session, 'language': language}))
+    # nullable str conversion due to stella
+    return APIResponse[char_schema.Profile].create(request, profile.model_dump(context={'db': session, 'language': language, 'nullable': True}))
 
 @router.get(
     '/character/{char_id}/lament',
