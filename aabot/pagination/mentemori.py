@@ -161,10 +161,10 @@ def player_ranking_view(
 
 class TowerCategory(Enum):
     Infinity = 'tower'
-    Azure = 'azure'
-    Crimson = 'crimson'
-    Emerald = 'emerald'
-    Amber = 'amber'
+    Azure = 'azure_tower'
+    Crimson = 'crimson_tower'
+    Emerald = 'emerald_tower'
+    Amber = 'amber_tower'
 
 def tower_ranking_view(
     interaction: Interaction,
