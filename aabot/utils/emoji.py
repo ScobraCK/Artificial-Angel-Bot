@@ -38,7 +38,7 @@ soul_emoji = {
     'Crimson': '<:crimson:1067039297930280990>',
     'Emerald': '<:emerald:1067039301172473906>',
     'Amber': '<:amber:1067039303030546493>',
-    'Radiant': '<:radiant:1067039306025283624>',
+    'Radiance': '<:radiant:1067039306025283624>',
     'Chaos': '<:chaos:1067039307744952340>'
 }
 
