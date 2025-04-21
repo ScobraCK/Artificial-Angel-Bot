@@ -112,7 +112,7 @@ async def voiceline_req(
 ):
     md: MasterData = request.app.state.md
     voicelines = await char_schema.get_voicelines(md, char_id)
-    return APIResponse[char_schema.CharacterVoicelines].create(request, voicelines.model_dump(context={'db': session, 'language': language}))
+    return APIResponse[char_schema.CharacterVoicelines].create(request, voicelines.model_dump(context={'db': session, 'language': language, 'nullable': True}))
 
 @router.get(
     '/character/{char_id}/memory',

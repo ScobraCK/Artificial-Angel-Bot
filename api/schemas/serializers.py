@@ -16,7 +16,7 @@ def serialize_str(v: str | enums._Enum | enums._Flag, info: FieldSerializationIn
     if v and isinstance(context, dict):
         language = context.get('language', enums.Language.enus)
         session = context.get('db', None)
-        nullable = context.get('nullable', False)
+        nullable = context.get('nullable', False)  # Note: Applies to every string
 
         if isinstance(v, enums._Enum):
             s = [v.str_key]
@@ -35,6 +35,8 @@ def serialize_str(v: str | enums._Enum | enums._Flag, info: FieldSerializationIn
                 result = read_string_key_language(session, key, language)
                 if nullable and result is None:  # stella's case ([CharacterProfileVocalUS57])
                     return None
+                elif result is None:
+                    result=''  # prevent NoneType error
                 results.append(result)
             else:
                 results.append(key)  # not a string key, return text
