@@ -150,7 +150,7 @@ def player_ranking_view(
                 rankings.append([rank, player.server, player.world, player.rank, quest, bp, player.name])
             else:
                 if category == PlayerCategory.BP:
-                    category_value = f'{player.bp:,}'
+                    category_value = f'{player.bp:,}' if player.bp else 'N/A'
                 elif category == PlayerCategory.Quest:
                     category_value = from_quest_id(player.quest_id)
                 else:
