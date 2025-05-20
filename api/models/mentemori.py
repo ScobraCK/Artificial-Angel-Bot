@@ -17,8 +17,7 @@ class PlayerORM(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     world_id: Mapped[int] = mapped_column(Integer)
     name: Mapped[str] = mapped_column(Text)
-    auto_bp: Mapped[int] = mapped_column(BigInteger)
-    bp: Mapped[Optional[int]] = mapped_column(BigInteger)
+    bp: Mapped[int] = mapped_column(BigInteger)
     rank: Mapped[int] = mapped_column(Integer)
     quest_id: Mapped[int] = mapped_column(Integer)
     tower_id: Mapped[int] = mapped_column(Integer)
@@ -91,8 +90,7 @@ class PlayerDBModel(BaseModel):
     id: int
     world_id: int
     name: str
-    auto_bp: int
-    bp: Optional[int]
+    bp: int
     rank: int
     quest_id: int
     tower_id: int

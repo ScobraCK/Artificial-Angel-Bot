@@ -28,7 +28,6 @@ def update_players(session: Session, player_data: dict):
                 "id": player_id,
                 "world_id": world_id,
                 "name": player["name"],
-                "auto_bp": player["bp"],  # to be removed 
                 "bp": player["bp"],
                 "rank": player["rank"],
                 "quest_id": player["quest_id"],

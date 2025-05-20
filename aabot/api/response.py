@@ -336,8 +336,7 @@ class PlayerDBModel:
     id: int
     world_id: int
     name: str
-    auto_bp: int
-    bp: Optional[int]
+    bp: int
     rank: int
     quest_id: int
     tower_id: int
