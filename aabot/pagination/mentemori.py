@@ -129,29 +129,41 @@ def guild_ranking_view(
 class PlayerCategory(Enum):
     BP = 'bp'
     Quest = 'quest'
+    Rank = 'rank'
 
 def player_ranking_view(
     interaction: Interaction,
     ranking_data: response.APIResponse[List[response.PlayerRankInfo]],
     category: PlayerCategory,
-    filter_text: str
+    filter_text: str,
+    show_all: bool
     ) -> ButtonView:
     embed_dict = {'default': []}
     rank = 1
+    test = 0
     for batch in batched(ranking_data.data, 50):
         rankings = []
         for player in batch:
-            if category == PlayerCategory.BP:
-                category_value = f'{player.bp:,}'
+            if show_all:
+                bp = f'{player.bp:,}'
+                quest = from_quest_id(player.quest_id)
+                rankings.append([rank, player.server, player.world, player.rank, quest, bp, player.name])
             else:
-                category_value = from_quest_id(player.quest_id)
-            rankings.append([rank, player.server, player.world, category_value, player.name])
+                if category == PlayerCategory.BP:
+                    category_value = f'{player.bp:,}'
+                elif category == PlayerCategory.Quest:
+                    category_value = from_quest_id(player.quest_id)
+                else:
+                    category_value = player.rank
+                rankings.append([rank, player.server, player.world, category_value, player.name])
             rank += 1
-        table = make_table(rankings, ['Rank', 'Server', 'World', category.name,  'Name'])
-
+        if show_all:
+            table = make_table(rankings, ['No.', 'Server', 'World', 'Rank', 'Quest', 'BP', 'Name'])
+        else:
+            table = make_table(rankings, ['Rank', 'Server', 'World', category.name, 'Name'])
         embed_dict['default'].append(
             Embed(
-                title=f'Player Rankings [{filter_text}]',
+                title=f'Player Rankings by {category.name} [{filter_text}]',
                 description=f'```{table}```',
                 color=Color.orange()
             )

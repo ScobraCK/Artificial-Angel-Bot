@@ -161,7 +161,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         extras={'help': mentemori_page.world_ids_help}
     )
     @app_commands.describe(
-        category='The ranking category. Default BP',
+        category='The ranking category (Default: BP)',
+        limit='Number of results to show (Default: 1000, Max: 5000)',
+        show_all='Show all categories (Default: False)',
         server='Option to filter by server',
         world='Option to filter by world (only when server is specified)',
         world_ids='Standalone option to filter by multiple world ids',
@@ -170,6 +172,8 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         self,
         interaction: Interaction,
         category: mentemori_page.PlayerCategory=mentemori_page.PlayerCategory.BP,
+        limit: app_commands.Range[int, 1, 5000]=1000,
+        show_all: bool=False,
         server: Optional[Server] = None,
         world: Optional[int] = None,
         world_ids: Optional[str] = None
@@ -183,7 +187,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             return
         
         filter_text = 'All'
-        query_params = {'count': 500, 'order_by': category.value}
+        query_params = {'count': limit, 'order_by': category.value}
 
         if world_ids:
             try:
@@ -212,7 +216,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             query_params=query_params
         )
                 
-        view = mentemori_page.player_ranking_view(interaction, ranking_data, category,filter_text)
+        view = mentemori_page.player_ranking_view(interaction, ranking_data, category, filter_text, show_all)
         await show_view(interaction, view)
         
     @app_commands.command(
@@ -220,6 +224,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
     )
     @app_commands.describe(
         category='The ranking category. Default BP',
+        limit='Number of results to show (Default: 1000, Max: 5000)',
         server='Option to filter by server',
         world='Option to filter by world (only when server is specified)',
         world_ids='Standalone option to filter by multiple world ids',
@@ -228,6 +233,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         self,
         interaction: Interaction,
         category: mentemori_page.TowerCategory=mentemori_page.TowerCategory.Infinity,
+        limit: app_commands.Range[int, 1, 5000]=1000,
         server: Optional[Server] = None,
         world: Optional[int] = None,
         world_ids: Optional[str] = None
@@ -241,7 +247,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             return
         
         filter_text = 'All'
-        query_params = {'count': 500, 'order_by': category.value}
+        query_params = {'count': limit, 'order_by': category.value}
 
         if world_ids:
             try:

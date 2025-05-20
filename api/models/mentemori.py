@@ -9,7 +9,7 @@ from api.database import Base
 from api.utils.enums import Server
 from api.utils.error import APIError
 
-PlayerCriteria = Literal["bp", "quest", "tower", "azure_tower", "crimson_tower", "emerald_tower", "amber_tower"]
+PlayerCriteria = Literal["bp", "quest", "rank", "tower", "azure_tower", "crimson_tower", "emerald_tower", "amber_tower"]
 
 class PlayerORM(Base):
     __tablename__ = "players"
@@ -115,6 +115,7 @@ class PlayerRankInfo(BaseModel):
     server: int
     world: int
     bp: Optional[int]
+    rank: Optional[int]
     quest_id: Optional[int]
     tower_id: Optional[int]
     azure_tower_id: Optional[int]
@@ -155,7 +156,7 @@ class GuildRankInfo(BaseModel):
         from_attributes = True
 
 class PlayerRankingRequest(BaseModel):
-    count: int = Field(Query(200, gt=0, le=500), description="Number of players to fetch.")
+    count: int = Field(Query(200, gt=0, le=5000), description="Number of players to fetch.")
     order_by: PlayerCriteria = Field(Query(...), description="Sorting criteria for ranking.")
     world_id: Optional[List[int]] = Field(Query(None), description="Filter by a list of world IDs")
     server: Optional[Server] = Field(Query(None, description="Filter by server"))
@@ -168,7 +169,7 @@ class PlayerRankingRequest(BaseModel):
         return values
     
 class GuildRankingRequest(BaseModel):
-    count: int = Field(Query(50, gt=0, le=500), description="Number of guilds to fetch.")
+    count: int = Field(Query(50, gt=0, le=2000), description="Number of guilds to fetch.")
     world_id: Optional[List[int]] = Field(Query(None), description="Filter by a list of world IDs")
     server: Optional[Server] = Field(Query(None, description="Filter by server"))
 

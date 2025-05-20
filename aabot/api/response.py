@@ -358,6 +358,7 @@ class PlayerRankInfo:
     server: int
     world: int
     bp: Optional[int]
+    rank: int
     quest_id: Optional[int]
     tower_id: Optional[int]
     azure_tower_id: Optional[int]

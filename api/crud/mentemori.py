@@ -5,6 +5,9 @@ from typing import Dict, Optional, List
 
 from api.models.mentemori import PlayerORM, GuildORM, PlayerCriteria
 
+from api.utils.logger import get_logger
+logger = get_logger(__name__)
+
 def update_players(session: Session, player_data: dict):
     timestamp = player_data["timestamp"]
 
@@ -25,8 +28,8 @@ def update_players(session: Session, player_data: dict):
                 "id": player_id,
                 "world_id": world_id,
                 "name": player["name"],
-                "auto_bp": player["bp"],
-                "bp": bp_ranking.get(player_id),
+                "auto_bp": player["bp"],  # to be removed 
+                "bp": player["bp"],
                 "rank": player["rank"],
                 "quest_id": player["quest_id"],
                 "tower_id": player["tower_id"],
@@ -41,6 +44,9 @@ def update_players(session: Session, player_data: dict):
                 "prev_legend_league_class": player["prev_legend_league_class"],
                 "timestamp": timestamp
             }
+            # Used to be inconsistent, this is a check
+            if bp_ranking.get(player_id) and player["bp"] != bp_ranking.get(player_id):
+                logger.error(f"Player {player['name']} has inconsistent BP data: {player['bp']} vs {bp_ranking.get(player_id)}")
             update_list.append(update_data)
         stmt = insert(PlayerORM).values(update_list)
         update_dict = {
@@ -99,6 +105,7 @@ def get_top_players(
 ):
     valid_columns: Dict[str, InstrumentedAttribute] = {
         "bp": PlayerORM.bp,
+        "rank": PlayerORM.rank,
         "quest": PlayerORM.quest_id,
         "tower": PlayerORM.tower_id,
         "azure_tower": PlayerORM.azure_tower_id,
@@ -112,6 +119,7 @@ def get_top_players(
         PlayerORM.server,
         PlayerORM.world,
         PlayerORM.bp,
+        PlayerORM.rank,
         PlayerORM.quest_id,
         PlayerORM.tower_id,
         PlayerORM.azure_tower_id,
