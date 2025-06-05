@@ -53,6 +53,7 @@ equip_type_string = {
     'armor': enums.EquipType.Chest,
     'armour': enums.EquipType.Chest,
     'body': enums.EquipType.Chest,
+    'dress': enums.EquipType.Chest,
     'boot': enums.EquipType.Boots,
     'boots': enums.EquipType.Boots,
     'feet': enums.EquipType.Boots,
@@ -240,7 +241,7 @@ def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], 
     )
     
     # Stats
-    max_value = int(equipment.bonus_parameters * 0.6)
+    max_value = int(equipment.bonus_parameters * 0.6) + 2  # locking can cause +1/+2
     sub_value = equipment.bonus_parameters - max_value
     mainstat = int(equipment.basestat.value * upgrade_coeff)
     description.write(
