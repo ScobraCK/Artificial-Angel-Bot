@@ -1,14 +1,16 @@
 from enum import Enum
-from discord import Embed, Color, Interaction
 from io import StringIO
 from itertools import batched
-from table2ascii import table2ascii as t2a, PresetStyle, Alignment
 from typing import List
 
-from aabot.api import api, response
+from discord import Color, Embed, Interaction
+from table2ascii import table2ascii as t2a, Alignment, PresetStyle
+
 from aabot.pagination.views import ButtonView
-from aabot.utils.enums import Server, Language
+from aabot.utils import api
 from aabot.utils.utils import from_world_id, from_quest_id, character_title
+from common import schemas
+from common.enums import Server, Language
 
 def make_table(data, header: List[str]):
     return t2a(
@@ -82,7 +84,7 @@ def group_embed(group_data):
     
     return Embed(title="Groups", description=description.getvalue(), color=Color.blue())
 
-def group_ranking_view(interaction: Interaction, ranking_data: response.APIResponse[List[response.GuildRankInfo]], server: Server, group: int):
+def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIResponse[List[schemas.GuildRankInfo]], server: Server, group: int):
     embed_dict = {'default': []}
     rank = 1
     for batch in batched(ranking_data.data, 50):
@@ -104,7 +106,7 @@ def group_ranking_view(interaction: Interaction, ranking_data: response.APIRespo
 
 def guild_ranking_view(
     interaction: Interaction,
-    ranking_data: response.APIResponse[List[response.GuildRankInfo]],
+    ranking_data: schemas.APIResponse[List[schemas.GuildRankInfo]],
     filter_text: str
     ) -> ButtonView:
     embed_dict = {'default': []}
@@ -133,7 +135,7 @@ class PlayerCategory(Enum):
 
 def player_ranking_view(
     interaction: Interaction,
-    ranking_data: response.APIResponse[List[response.PlayerRankInfo]],
+    ranking_data: schemas.APIResponse[List[schemas.PlayerRankInfo]],
     category: PlayerCategory,
     filter_text: str,
     show_all: bool
@@ -180,7 +182,7 @@ class TowerCategory(Enum):
 
 def tower_ranking_view(
     interaction: Interaction,
-    ranking_data: response.APIResponse[List[response.PlayerRankInfo]],
+    ranking_data: schemas.APIResponse[List[schemas.PlayerRankInfo]],
     category: PlayerCategory,
     filter_text: str
 ):
@@ -220,6 +222,7 @@ game_server = {
 
 async def gacha_view(interaction: Interaction, gacha: GachaLog, server: Server, language: Language):
     embed_dict = {'default': []}
+    item_cache = {}
 
     for server_id in game_server[server]:
         description = StringIO()
@@ -230,12 +233,21 @@ async def gacha_view(interaction: Interaction, gacha: GachaLog, server: Server, 
         data = resp.json()
 
         for player in data['data']:
-            item_id = player['UserItem']['ItemId']  # TODO change to actual item fetch
-            if item_id == 1:  # 30k
-                result = '**__30,000x Diamond__**'  # TODO change to dia emote
+            item_type = player['UserItem']['ItemType']
+            item_id = player['UserItem']['ItemId']
+
+            if (item_id, item_type) not in item_cache:
+                item_resp = await api.fetch_item(item_id, item_type, language=language)
+                item = item_resp.data
+                item_cache[(item_id, item_type)] = item
             else:
-                name_data = await api.fetch_name(char_id=item_id, language=language)  # TODO optimize later with gacha data
-                result = f'**Character:** {character_title(name_data.data.title, name_data.data.name)}'
+                item = item_cache[(item_id, item_type)]
+
+            if isinstance(item, schemas.CharacterItem):
+                result = f'**Character:** {character_title(item.title, item.name)}'
+            else:  # Diamonds
+                result = f'**__30,000x {item.name}__**'
+                
             description.write(
                 f"**Player:** {player['Name']}\n"
                 f"{result}\n\n"

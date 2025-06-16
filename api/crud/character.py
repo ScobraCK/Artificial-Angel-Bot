@@ -1,15 +1,16 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import select, column
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.models.character import CharacterORM, CharacterDBModel, CharacterColumns
-import api.utils.masterdata as masterdata
-from api.utils.enums import CharacterRarity
+from api.utils.masterdata import MasterData
+from common.enums import CharacterRarity
+from common.models import CharacterORM, CharacterColumns
+from common.schemas import CharacterDBModel
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
 
-async def upsert_chars(session: Session, md: masterdata.MasterData):
+async def upsert_chars(session: AsyncSession, md: MasterData):
     char_data = await md.get_MB('CharacterMB')
     inserted_ids = []
 
@@ -31,7 +32,7 @@ async def upsert_chars(session: Session, md: masterdata.MasterData):
                     (xmax == 0).label("inserted")
                 )
             )
-            result = session.execute(stmt)
+            result = await session.execute(stmt)
             for row in result:
                 if row.inserted:
                     inserted_ids.append(row.id)
@@ -39,23 +40,25 @@ async def upsert_chars(session: Session, md: masterdata.MasterData):
             logger.error(f"Failed to update characters - {str(e)}")
             return None
 
-    session.commit()
+    await session.commit()
 
     logger.info(f"New characters: {inserted_ids}")
 
     return inserted_ids
 
-async def get_char(session: Session, id: int):
+async def get_char(session: AsyncSession, id: int):
     stmt = select(CharacterORM).where(CharacterORM.id == id).limit(1)
-    return session.scalar(stmt)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
 
 # identical to filtered with no values
-async def get_sorted_chars(session: Session, sorted_by: CharacterColumns):
+async def get_sorted_chars(session: AsyncSession, sorted_by: CharacterColumns):
     col = column(sorted_by)
     stmt = select(CharacterORM).order_by(col, CharacterORM.id)
-    return session.scalars(stmt).all()
+    result = await session.execute(stmt)
+    return result.scalars().all()
 
-async def get_filtered_chars(session: Session, filter_by: CharacterColumns, *, value=None, minvalue=None, maxvalue=None):
+async def get_filtered_chars(session: AsyncSession, filter_by: CharacterColumns, *, value=None, minvalue=None, maxvalue=None):
     col = column(filter_by)
     stmt = select(CharacterORM)
     if value is not None:
@@ -70,9 +73,11 @@ async def get_filtered_chars(session: Session, filter_by: CharacterColumns, *, v
         stmt = stmt.where(col <= maxvalue)
     stmt = stmt.order_by(col, CharacterORM.id)
     
-    return session.scalars(stmt).all()
+    result = await session.execute(stmt)
+    return result.scalars().all()
 
-async def get_char_ids(session: Session):
+async def get_char_ids(session: AsyncSession):
     '''returns all character ids'''
     stmt = select(CharacterORM.id).order_by(CharacterORM.id)
-    return session.scalars(stmt).all()
+    result = await session.execute(stmt)
+    return result.scalars().all()

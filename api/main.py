@@ -1,14 +1,13 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
-from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
-import api.models  # DO NOT REMOVE, registers models for Base
-
-from api.database import Base, engine
 from api.utils.masterdata import MasterData
 from api.utils.error import APIError
+
+from common import models  # DO NOT REMOVE, registers models for Base
+from common.database import Base, engine
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -16,11 +15,11 @@ logger = get_logger(__name__)
 
 # manually import all routers (maybe change to dynamic)
 from api.routers import (
-    admin, string_keys,
+    admin, master, string_keys,
     character, skills,
     items, equipment,
     pve, events,
-    mentemori,raw,
+    mentemori,
 )
 
 ROUTERS = [
@@ -28,7 +27,7 @@ ROUTERS = [
     character.router, skills.router,
     items.router, equipment.router,
     pve.router, events.router,
-    mentemori.router, raw.router,
+    mentemori.router, master.router,
 ]
 
 ADMIN_USERS = [
@@ -37,7 +36,8 @@ ADMIN_USERS = [
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     # app.state.md = MasterData()  # for testing
     app.state.md = MasterData(preload=True)
     yield

@@ -1,6 +1,5 @@
 import logging
 import logging.handlers
-import sys
 from pathlib import Path
 
 log_dir = Path("aabot/logs")

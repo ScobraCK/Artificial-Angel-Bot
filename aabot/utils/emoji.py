@@ -17,6 +17,7 @@ item_emoji = {
     121: '<:Item_0121:1294543092871073793>',
 }
 
+# used for both item and char
 rarity_emoji = {
     'N': '<:white_diamond:1067005869147033641>',
     'R': ':small_blue_diamond:',
@@ -34,12 +35,12 @@ level_emoji = {
 }
 
 soul_emoji = {
-    'Azure': '<:azure:1067039292226019328>',
-    'Crimson': '<:crimson:1067039297930280990>',
-    'Emerald': '<:emerald:1067039301172473906>',
-    'Amber': '<:amber:1067039303030546493>',
-    'Radiance': '<:radiant:1067039306025283624>',
-    'Chaos': '<:chaos:1067039307744952340>'
+    1: '<:azure:1067039292226019328>',
+    2: '<:crimson:1067039297930280990>',
+    3: '<:emerald:1067039301172473906>',
+    4: '<:amber:1067039303030546493>',
+    5: '<:radiant:1067039306025283624>',
+    6: '<:chaos:1067039307744952340>'
 }
 
 # TODO fix to use int not str

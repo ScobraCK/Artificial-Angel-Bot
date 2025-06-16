@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 
-import api.schemas.pve as pve
-from api.schemas.api_models import APIResponse
+from common.schemas import APIResponse
+from api.schemas.pve import get_quest, get_tower
+from api.schemas.requests import TowerRequest
 from api.utils.deps import SessionDep, language_parameter
-from api.utils.enums import Language
 from api.utils.masterdata import MasterData
+from api.utils.transformer import Transformer
+from common import schemas
+from common.enums import Language
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -15,7 +18,7 @@ router = APIRouter()
     '/quest/{quest_id}',
     summary='Quest search',
     description='Returns main quest data',
-    response_model=APIResponse[pve.Quest]
+    response_model=APIResponse[schemas.Quest]
 )
 async def quest_req(
     session: SessionDep,
@@ -24,21 +27,23 @@ async def quest_req(
     language: Language = Depends(language_parameter)
 ):
     md: MasterData = request.app.state.md
-    quest = await pve.get_quest(md, quest_id)
-    return APIResponse[pve.Quest].create(request, quest.model_dump(context={'db': session, 'language': language}))
+    tf = Transformer(session, language)
+    quest = await tf.transform(await get_quest(md, quest_id))
+    return APIResponse[schemas.Quest].create(request, quest)
 
 @router.get(
     '/tower',
     summary='tower search',
     description='Returns tower data',
-    response_model=APIResponse[pve.Tower]
+    response_model=APIResponse[schemas.Tower]
 )
 async def tower_req(
     session: SessionDep,
     request: Request,
-    payload: pve.TowerRequest = Depends(),
+    payload: TowerRequest = Depends(),
     language: Language = Depends(language_parameter)
 ):
     md: MasterData = request.app.state.md
-    tower = await pve.get_tower(md, payload)
-    return APIResponse[pve.Tower].create(request, tower.model_dump(context={'db': session, 'language': language}))
+    tf = Transformer(session, language)
+    tower = await tf.transform(await get_tower(md, payload))
+    return APIResponse[schemas.Tower].create(request, tower)

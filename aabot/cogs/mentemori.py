@@ -1,16 +1,17 @@
+from typing import List, Optional
+from re import split
+
 from discord import app_commands, Interaction
 from discord.ext import commands
-import re
-from typing import List, Optional
 
 from aabot.main import AABot
-from aabot.api import api, response
-
 from aabot.pagination import mentemori as mentemori_page
 from aabot.pagination.views import show_view
-from aabot.utils.command_utils import apply_user_preferences
-from aabot.utils.enums import Server, Language
+from aabot.utils import api
+from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
 from aabot.utils.utils import to_world_id
+from common import schemas
+from common.enums import Server
 
 
 class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
@@ -94,7 +95,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.GUILD_RANKING_PATH,
-            response_model=List[response.GuildRankInfo],
+            response_model=List[schemas.GuildRankInfo],
             query_params={'count': 200, 'world_id': worlds}
         )
 
@@ -129,7 +130,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         if world_ids:
             try:
-                world_ids = list(map(int, re.split(r'[,\s]+', world_ids.strip())))
+                world_ids = list(map(int, split(r'[,\s]+', world_ids.strip())))
                 for world_id in world_ids:
                     if not (1000 <= world_id <= 7000):  # Simple check for invalid world ids
                         raise ValueError()
@@ -150,7 +151,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.GUILD_RANKING_PATH,
-            response_model=List[response.GuildRankInfo],
+            response_model=List[schemas.GuildRankInfo],
             query_params=query_params
         )
                 
@@ -191,7 +192,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         if world_ids:
             try:
-                world_ids = list(map(int, re.split(r'[,\s]+', world_ids.strip())))
+                world_ids = list(map(int, split(r'[,\s]+', world_ids.strip())))
                 for world_id in world_ids:
                     if not (1000 <= world_id <= 7000):  # Simple check for invalid world ids
                         raise ValueError()
@@ -212,7 +213,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.PLAYER_RANKING_PATH,
-            response_model=List[response.PlayerRankInfo],
+            response_model=List[schemas.PlayerRankInfo],
             query_params=query_params
         )
                 
@@ -251,7 +252,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         if world_ids:
             try:
-                world_ids = list(map(int, re.split(r'[,\s]+', world_ids.strip())))
+                world_ids = list(map(int, split(r'[,\s]+', world_ids.strip())))
                 for world_id in world_ids:
                     if not (1000 <= world_id <= 7000):  # Simple check for invalid world ids
                         raise ValueError()
@@ -272,7 +273,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.PLAYER_RANKING_PATH,
-            response_model=List[response.PlayerRankInfo],
+            response_model=List[schemas.PlayerRankInfo],
             query_params=query_params
         )
                 
@@ -292,13 +293,13 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         interaction: Interaction, 
         gacha: mentemori_page.GachaLog,
         server: Server,
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows IoC or IoSG logs'''
         await interaction.response.defer()
         view = await mentemori_page.gacha_view(interaction, gacha, server, language)
         await show_view(interaction, view, defered=True)
 
 
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(MentemoriCommands(bot))
         

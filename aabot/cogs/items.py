@@ -4,17 +4,11 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.api import api
-
 from aabot.pagination.items import equipment_help_description
 from aabot.pagination import items as item_response
 from aabot.pagination.views import show_view
-from aabot.utils.enums import Language
-from aabot.utils.command_utils import apply_user_preferences
-
-from aabot.utils.logger import get_logger
-logger = get_logger(__name__)
-
+from aabot.utils import api
+from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
 
 class ItemCommands(commands.Cog, name='Item Commands'):
     '''Commands related to items'''
@@ -33,7 +27,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         self, interaction: Interaction, 
         item_id: int, 
         item_type: int,
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''
         Command for quick searching from ItemId and ItemType
         '''
@@ -54,11 +48,11 @@ class ItemCommands(commands.Cog, name='Item Commands'):
     async def equipment(
         self, interaction: Interaction, 
         string: str,
-        language: Optional[Language]=None
+        language: Optional[LanguageOptions]=None
     ):
         '''Shows equipment information'''
-        view = await item_response.equipment_view(interaction, string, language)
+        view = await item_response.equipment_view(interaction, string, self.bot.common_strings[language], language)
         await show_view(interaction, view)
 
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(ItemCommands(bot))

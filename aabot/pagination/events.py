@@ -1,21 +1,21 @@
-from discord import Embed, Color
 from io import StringIO
 from typing import List
 
+from discord import Color
 
-from aabot.api import api, response
 from aabot.pagination.embeds import BaseEmbed
-from aabot.utils import emoji, enums
+from aabot.utils import api, emoji
 from aabot.utils.utils import character_title
-from aabot.utils.timezones import get_cur_timestamp_UTC
+from common import schemas
+from common.enums import Language, Server
+from common.timezones import check_active
 
-async def generate_banner_text(gacha_list: List[response.GachaPickup], language: enums.Language):
-    current = get_cur_timestamp_UTC()
+async def generate_banner_text(gacha_list: List[schemas.GachaPickup], language: Language):
     banner_text = StringIO()
     for gacha in gacha_list:
         name_data = await api.fetch_name(gacha.char_id, language)
         name = character_title(name_data.data.title, name_data.data.name)
-        ongoing = ":white_check_mark:" if gacha.start <= current <= gacha.end else ":x:"  # Ongoing status
+        ongoing = ":white_check_mark:" if check_active(gacha.start, gacha.end, Server.Japan) else ":x:"  # Ongoing status
         rerun_count = gacha.run_count
 
         # Format the text for each banner using StringIO
@@ -26,7 +26,7 @@ async def generate_banner_text(gacha_list: List[response.GachaPickup], language:
     return banner_text.getvalue()
 
 
-async def gacha_banner_embed(gacha_data: response.APIResponse[List[response.GachaPickup]], language: enums.Language):
+async def gacha_banner_embed(gacha_data: schemas.APIResponse[List[schemas.GachaPickup]], language: Language):
     fleeting = []
     ioc = []
     iosg = []

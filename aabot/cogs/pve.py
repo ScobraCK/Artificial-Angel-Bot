@@ -2,13 +2,13 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.api import api, response
-
 from aabot.pagination import pve as pve_page
 from aabot.pagination.views import show_view
-from aabot.utils.enums import Tower
+from aabot.utils import api
 from aabot.utils.error import BotError
 from aabot.utils.utils import to_quest_id
+from common import schemas
+from common.enums import TowerType
 
 class PvECommands(commands.Cog, name='PvE Commands'):
     '''Commands for pve information'''
@@ -32,11 +32,11 @@ class PvECommands(commands.Cog, name='PvE Commands'):
         
         quest_data = await api.fetch_api(
             api.QUEST_PATH.format(quest_id=quest_id), 
-            response_model=response.Quest,
+            response_model=schemas.Quest,
             query_params={'language': 'enus'}  # TODO add later
         )
 
-        view = pve_page.quest_view(interaction, quest_data)
+        view = pve_page.quest_view(interaction, quest_data, self.bot.common_strings['enus'])  # spacing issue for other languages
         await show_view(interaction, view)
 
     @app_commands.command()
@@ -47,7 +47,7 @@ class PvECommands(commands.Cog, name='PvE Commands'):
     async def tower(
         self, interaction: Interaction, 
         floor: int, 
-        towertype: Tower=Tower.Infinity):
+        towertype: TowerType=TowerType.Infinity):
         '''
         Searches enemy data for specified tower floor
 
@@ -56,7 +56,7 @@ class PvECommands(commands.Cog, name='PvE Commands'):
         
         tower_data = await api.fetch_api(
             api.TOWER_PATH,
-            response_model=response.Tower,
+            response_model=schemas.Tower,
             query_params={
                 'floor': floor,
                 'tower_type': towertype,
@@ -64,9 +64,9 @@ class PvECommands(commands.Cog, name='PvE Commands'):
             }
         )
 
-        view = await pve_page.tower_view(interaction, tower_data)
+        view = await pve_page.tower_view(interaction, tower_data, self.bot.common_strings['enus'])  # spacing issue for other languages
         await show_view(interaction, view)
 
 
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(PvECommands(bot))

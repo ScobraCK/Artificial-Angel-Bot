@@ -1,8 +1,8 @@
 from fastapi import Depends
 from typing import Annotated, Optional, Literal
 
-from api.database import Session
-from api.utils.enums import Language
+from common.database import AsyncSession
+from common.enums import Language
 
 language_codes = Literal['enus']
 
@@ -14,8 +14,8 @@ async def language_parameter(language: Optional[Language]=None):
     else:
         return Language.enus
 
-def get_session():
-    with Session() as session:
+async def get_session():
+    async with AsyncSession() as session:
         yield session
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]

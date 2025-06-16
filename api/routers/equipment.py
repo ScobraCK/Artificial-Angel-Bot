@@ -1,11 +1,14 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import Union
 
-import api.schemas.equipment as equipment
-from api.schemas.api_models import APIResponse
+from api.schemas import requests
+from common.schemas import APIResponse
+from api.schemas.equipment import get_equipment, get_upgrade_costs
 from api.utils.deps import SessionDep, language_parameter
-from api.utils.enums import Language
 from api.utils.masterdata import MasterData
+from api.utils.transformer import Transformer
+from common import schemas
+from common.enums import Language
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -16,63 +19,58 @@ router = APIRouter()
     '/equipment/search',
     summary='Equipment Search',
     description='Search equipment info.',
-    response_model=APIResponse[equipment.Equipment]
+    response_model=APIResponse[schemas.Equipment]
 )
 async def search_equipment_req(
     session: SessionDep,
     request: Request,
-    payload: equipment.EquipmentRequest = Depends(),
+    payload: requests.EquipmentRequest = Depends(),
     language: Language = Depends(language_parameter)
  ):
     md: MasterData = request.app.state.md
-    eq = await equipment.get_equipment(md, payload)
-    
-    eq_resp = equipment.Equipment(**eq.model_dump(context={'language': language, 'db': session}, exclude_none=True))
-    return APIResponse[equipment.Equipment].create(request, eq_resp)
+    tf = Transformer(session, language)
+    eq = await tf.transform(await get_equipment(md, payload))
+    return APIResponse[schemas.Equipment].create(request, eq)
 
 @router.get(
     '/equipment/unique/search',
     summary='Unique Equipment Search',
     description='Search unique equipment info.',
-    response_model=APIResponse[equipment.UniqueWeapon],
+    response_model=APIResponse[schemas.UniqueWeapon],
 )
 async def search_uw_req(
     session: SessionDep,
     request: Request,
-    payload: equipment.UniqueWeaponRequest = Depends(),
+    payload: requests.UniqueWeaponRequest = Depends(),
     language: Language = Depends(language_parameter)
 ):
     md: MasterData = request.app.state.md
-    eq = await equipment.get_equipment(md, payload)
-
-    if not isinstance(eq, equipment._UniqueWeapon):  # should be impossible
-        logger.error(f'Equipment should be a unique weapon\n{str(eq.model_dump_json(indent=4))}')
-    eq_resp = equipment.UniqueWeapon(**eq.model_dump(context={'language': language, 'db': session}, exclude_none=True))
-    return APIResponse[equipment.UniqueWeapon].create(request, eq_resp)
+    tf = Transformer(session, language)
+    eq = await tf.transform(await get_equipment(md, payload))
+    return APIResponse[schemas.UniqueWeapon].create(request, eq)
 
 @router.get(
     '/equipment/upgrade',
     summary='Equipment Upgrade Costs',
-    description='Get upgrade costs for equipment. Use /equipment/search or equipment/unique/search for equip_id.',
-    response_model=APIResponse[equipment.EquipmentCosts]
+    description='Get upgrade costs for schemas. Use /equipment/search or equipment/unique/search for equip_id.',
+    response_model=APIResponse[schemas.EquipmentCosts]
 )
 async def upgrade_cost_req(
     session: SessionDep,
     request: Request,
-    payload: equipment.EquipmentCostRequest = Depends(),
+    payload: requests.EquipmentCostRequest = Depends(),
     language: Language = Depends(language_parameter)
 ):
     md: MasterData = request.app.state.md
-    costs = await equipment.get_upgrade_costs(md, payload)
-    costs_resp = equipment.EquipmentCosts(**costs.model_dump(context={'language': language, 'db': session}, exclude_none=True))
-    
-    return APIResponse[equipment.EquipmentCosts].create(request, costs_resp)
+    tf = Transformer(session, language)
+    costs = await tf.transform(await get_upgrade_costs(md, payload))
+    return APIResponse[schemas.EquipmentCosts].create(request, costs)
 
 @router.get(
     '/equipment/{eqp_id}',
     summary='Equipment',
     description='Get equipment info.',
-    response_model=Union[APIResponse[equipment.Equipment],APIResponse[equipment.UniqueWeapon]]
+    response_model=Union[APIResponse[schemas.Equipment],APIResponse[schemas.UniqueWeapon]]
 )
 async def equipment_req(
     session: SessionDep,
@@ -82,11 +80,9 @@ async def equipment_req(
 ):
     '''Direct equipment id query'''
     md: MasterData = request.app.state.md
-    eq = await equipment.get_equipment(md, eqp_id)
+    tf = Transformer(session, language)
+    eq_schema = await get_equipment(md, eqp_id)
 
-    if isinstance(eq, equipment._UniqueWeapon):
-        eq_resp = equipment.UniqueWeapon(**eq.model_dump(context={'language': language, 'db': session}, exclude_none=True))
-        return APIResponse[equipment.UniqueWeapon].create(request, eq_resp)
-    
-    eq_resp = equipment.Equipment(**eq.model_dump(context={'language': language, 'db': session}, exclude_none=True))
-    return APIResponse[equipment.Equipment].create(request, eq_resp)
+    if isinstance(eq_schema, schemas.UniqueWeapon):
+        return APIResponse[schemas.UniqueWeapon].create(request, await tf.transform(eq_schema))
+    return APIResponse[schemas.Equipment].create(request, await tf.transform(eq_schema))

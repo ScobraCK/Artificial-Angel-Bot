@@ -1,21 +1,19 @@
-from discord import Color, Interaction
-from html2text import HTML2Text
 from io import StringIO
 from itertools import batched
-from typing import List, Dict
+from typing import Dict, List
 
-import aabot.api.response as resp
-from aabot.api.api import fetch_name
+from discord import Color, Interaction
+from html2text import HTML2Text
+
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.views import ButtonView
+from aabot.utils.api import fetch_name
 from aabot.utils.assets import RAW_ASSET_BASE, CHARACTER_THUMBNAIL, MOONHEART_ASSET_MEMORY
-from aabot.utils.enums import Language
+from aabot.utils.command_utils import LanguageOptions
 from aabot.utils.utils import character_title, calc_buff, possessive_form
+from common import enums, schemas
 
-from aabot.utils.logger import get_logger
-logger = get_logger(__name__)
-
-def id_list_view(interaction: Interaction, name_data: resp.APIResponse[Dict[int, resp.Name]]):
+def id_list_view(interaction: Interaction, name_data: schemas.APIResponse[Dict[int, schemas.Name]]):
     names = name_data.data.values()
     
     embeds = []
@@ -34,17 +32,16 @@ def id_list_view(interaction: Interaction, name_data: resp.APIResponse[Dict[int,
     
     return ButtonView(interaction.user, {'default': embeds})
 
-def char_info_embed(char_data: resp.APIResponse[resp.Character], skill_data: resp.APIResponse[resp.Skills]):
+def char_info_embed(char_data: schemas.APIResponse[schemas.Character], skill_data: schemas.APIResponse[schemas.Skills], cs: schemas.CommonStrings):
     embed = BaseEmbed(char_data.version, color=Color.green())
     char = char_data.data
 
     embed.title=character_title(char.title, char.name)
     embed.description=(
         f'**Id:** {char.char_id}\n'
-        f'**Element:** {char.element}\n'
-        f'**Base Rarity:** {char.rarity}\n'
-        f'**Class:** {char.job}\n'
-        f'**Attack Type:** {char.attack_type}\n'
+        f'**Element:** {cs.element[char.element]}\n'
+        f'**Base Rarity:** {enums.CharacterRarity(char.rarity).name}\n'
+        f'**Class:** {cs.job[char.job]}\n'
         f'**Base Speed:** {char.speed}\n'
         f'**UW:** {char.uw}\n'
     )
@@ -82,7 +79,7 @@ def char_info_embed(char_data: resp.APIResponse[resp.Character], skill_data: res
 
     return embed
 
-def profile_embed(profile_data: resp.APIResponse[resp.Profile], name_data: resp.APIResponse[resp.Name]):
+def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name_data: schemas.APIResponse[schemas.Name]):
     profile = profile_data.data
     name = character_title(name_data.data.title, name_data.data.name)
 
@@ -107,8 +104,8 @@ def profile_embed(profile_data: resp.APIResponse[resp.Profile], name_data: resp.
 
 def speed_view(
     interaction: Interaction,
-    char_data: resp.APIResponse[List[resp.CharacterDBModel]],
-    name_data: resp.APIResponse[Dict[int, resp.Name]],
+    char_data: schemas.APIResponse[List[schemas.CharacterDBModel]],
+    name_data: schemas.APIResponse[Dict[int, schemas.Name]],
     add: int, buffs: List[int]=None):
     speed_list = reversed(char_data.data)
     
@@ -145,9 +142,9 @@ def speed_view(
 
 async def voiceline_view(
     interaction: Interaction,
-    voiceline_data: resp.APIResponse[resp.CharacterVoicelines],
-    profile_data: resp.APIResponse[resp.Profile],
-    language: Language):
+    voiceline_data: schemas.APIResponse[schemas.CharacterVoicelines],
+    profile_data: schemas.APIResponse[schemas.Profile],
+    language: LanguageOptions):
     h = HTML2Text()
     voicelines = voiceline_data.data
     profile = profile_data.data
@@ -172,7 +169,7 @@ async def voiceline_view(
     
     return ButtonView(interaction.user, {'default': embeds})
 
-async def memory_view(interaction: Interaction, memory_data: resp.APIResponse[resp.CharacterMemories], language: Language):
+async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse[schemas.CharacterMemories], language: LanguageOptions):
     h = HTML2Text()
     memories = memory_data.data
     name_data = await fetch_name(memories.char_id, language)

@@ -1,21 +1,18 @@
-import re
 from typing import Optional, Dict, List
+from re import split
 
 from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.api import api, response
 from aabot.pagination.views import show_view
 from aabot.pagination import character as char_page
 from aabot.pagination.skills import skill_view, skill_detail_view
-
-from aabot.utils.error import BotError
-from aabot.utils.enums import Language
+from aabot.utils import api
 from aabot.utils.alias import IdTransformer
-from aabot.utils.command_utils import apply_user_preferences
-
-
+from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
+from aabot.utils.error import BotError
+from common import schemas
 
 class CharacterCommands(commands.Cog, name='Character Commands'):
     '''Commands related to characters'''
@@ -31,14 +28,14 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
     async def idlist(
         self, 
         interaction: Interaction,
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''
         Shows character ids
         '''
         name_data = await api.fetch_api(
             api.STRING_CHARACTER_PATH_ALL,
             query_params={'language': language},
-            response_model=Dict[int, response.Name]
+            response_model=Dict[int, schemas.Name]
         )
         view = char_page.id_list_view(interaction, name_data)
         await show_view(interaction, view)
@@ -54,17 +51,17 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         interaction: Interaction, 
         add: Optional[int]=0, 
         buffs: Optional[str]=None,
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''List character speeds in decreasing order'''
         name_data = await api.fetch_api(
             api.STRING_CHARACTER_PATH_ALL,
-            response_model=Dict[int, response.Name],
+            response_model=Dict[int, schemas.Name],
             query_params={'language': language}
         )
         
         speed_data = await api.fetch_api(
             api.CHARACTER_LIST_PATH,
-            response_model=List[response.CharacterDBModel],
+            response_model=List[schemas.CharacterDBModel],
             query_params={'option': 'speed'}
         )
         
@@ -72,7 +69,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
             buff_list = None
         else:
             try:
-                buff_list = [int(buff) for buff in re.split(r'[,\s]+', buffs) if buff]
+                buff_list = [int(buff) for buff in split(r'[,\s]+', buffs) if buff]
             except ValueError:
                 await interaction.response.send_message(
                     "Invalid input for buffs. Please enter a list of integers separated by commas or spaces. Example /speed `-15 15 30`", 
@@ -94,26 +91,26 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[Language]=None):  
+        language: Optional[LanguageOptions]=None):  
         '''Shows a character's basic info'''
 
         char_data = await api.fetch_api(
             api.CHARACTER_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Character
+            response_model=schemas.Character
         )
         try:
             skill_data = await api.fetch_api(
                 api.CHARACTER_SKILL_PATH,
                 path_params={'char_id': character},
                 query_params={'language': language},
-                response_model=response.Skills
+                response_model=schemas.Skills
             )
         except BotError as e:
             skill_data = None  # Case where skill data is not avaliable when basic info is
         
-        embed = char_page.char_info_embed(char_data, skill_data)
+        embed = char_page.char_info_embed(char_data, skill_data, self.bot.common_strings[language])
 
         await interaction.response.send_message(embed=embed)
 
@@ -127,14 +124,14 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[Language]=None):  
+        language: Optional[LanguageOptions]=None):  
         '''Shows a character's profile info'''
 
         profile_data = await api.fetch_api(
             api.CHARACTER_PROFILE_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Profile
+            response_model=schemas.Profile
         )
         name_data = await api.fetch_name(character, language)
         
@@ -152,21 +149,21 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows character skills including unique weapon upgrade effects'''
 
         skill_data = await api.fetch_api(
             api.CHARACTER_SKILL_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Skills
+            response_model=schemas.Skills
         )
 
         char_data = await api.fetch_api(
             api.CHARACTER_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Character
+            response_model=schemas.Character
         )
 
         view = skill_view(interaction, skill_data, char_data)
@@ -182,21 +179,21 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows character skills and details'''
 
         skill_data = await api.fetch_api(
             api.CHARACTER_SKILL_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Skills
+            response_model=schemas.Skills
         )
 
         char_data = await api.fetch_api(
             api.CHARACTER_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Character
+            response_model=schemas.Character
         )
 
         view = skill_detail_view(interaction, skill_data, char_data)
@@ -212,7 +209,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows character voicelines'''
 
         # f'{moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{}'
@@ -221,14 +218,14 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
             api.CHARACTER_VOICE_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.CharacterVoicelines
+            response_model=schemas.CharacterVoicelines
         )
 
         profile_data = await api.fetch_api(
             api.CHARACTER_PROFILE_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.Profile
+            response_model=schemas.Profile
         )
 
         view = await char_page.voiceline_view(interaction, voice_data, profile_data, language)
@@ -244,18 +241,18 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows character memories'''
         memory_data = await api.fetch_api(
             api.CHARACTER_MEMORY_PATH,
             path_params={'char_id': character},
             query_params={'language': language},
-            response_model=response.CharacterMemories
+            response_model=schemas.CharacterMemories
         )
 
         view = await char_page.memory_view(interaction, memory_data, language)
         await show_view(interaction, view)
         
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(CharacterCommands(bot))
  

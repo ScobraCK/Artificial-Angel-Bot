@@ -1,14 +1,15 @@
 from sqlalchemy import select, desc
-from sqlalchemy.orm import Session, InstrumentedAttribute
+from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Optional, List
 
-from api.models.mentemori import PlayerORM, GuildORM, PlayerCriteria
+from common.models import PlayerORM, GuildORM, PlayerColumns
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
 
-def update_players(session: Session, player_data: dict):
+async def update_players(session: AsyncSession, player_data: dict):
     timestamp = player_data["timestamp"]
 
     for world in player_data["data"]:
@@ -54,11 +55,11 @@ def update_players(session: Session, player_data: dict):
             if c.name != 'id'
             }
         stmt = stmt.on_conflict_do_update(index_elements=['id'], set_=update_dict)
-        session.execute(stmt)
+        await session.execute(stmt)
 
-    session.commit()
+    await session.commit()
 
-def update_guilds(session: Session, guild_data: dict):
+async def update_guilds(session: AsyncSession, guild_data: dict):
     timestamp = guild_data["timestamp"]
 
     for world in guild_data["data"]:
@@ -91,14 +92,14 @@ def update_guilds(session: Session, guild_data: dict):
             if c.name != 'id'
             }
         stmt = stmt.on_conflict_do_update(index_elements=['id'], set_=update_dict)
-        session.execute(stmt)
+        await session.execute(stmt)
 
-    session.commit()
+    await session.commit()
 
-def get_top_players(
-    session: Session,
+async def get_top_players(
+    session: AsyncSession,
     count: int,
-    order_by: PlayerCriteria,
+    order_by: PlayerColumns,
     world_id: Optional[List[int]] = None,
     server: Optional[int] = None,
 ):
@@ -136,10 +137,11 @@ def get_top_players(
     stmt = stmt.where(valid_columns[order_by].isnot(None))  # Exclude NULLs
     stmt = stmt.order_by(desc(valid_columns[order_by])).limit(count)
 
-    return session.execute(stmt).fetchall()
+    result = await session.execute(stmt)
+    return result.all()
 
-def get_top_guilds(
-    session: Session,
+async def get_top_guilds(
+    session: AsyncSession,
     count: int,
     world_id: Optional[List[int]] = None,
     server: Optional[int] = None,
@@ -159,17 +161,21 @@ def get_top_guilds(
 
     stmt = stmt.order_by(desc(GuildORM.bp)).limit(count)
 
-    return session.execute(stmt).fetchall()
+    result = await session.execute(stmt)
+    return result.all()
 
-def get_player(session: Session, player_id: int):
+async def get_player(session: AsyncSession, player_id: int):
     stmt = select(PlayerORM).where(PlayerORM.id == player_id)
-    return session.execute(stmt).fetchone()
+    result = await session.execute(stmt)
+    return result.fetchone()
 
-def get_guild(session: Session, guild_id: int):
+async def get_guild(session: AsyncSession, guild_id: int):
     stmt = select(GuildORM).where(GuildORM.id == guild_id)
-    return session.execute(stmt).fetchone()
+    result = await session.execute(stmt)
+    return result.fetchone()
 
-def get_guild_members(session: Session, guild_id: int):
+async def get_guild_members(session: AsyncSession, guild_id: int):
     '''Only shows members in the DB'''
     stmt = select(PlayerORM).where(PlayerORM.guild_id == guild_id)
-    return session.execute(stmt).all()
+    result = await session.execute(stmt)
+    return result.all()

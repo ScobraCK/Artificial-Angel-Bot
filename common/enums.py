@@ -1,20 +1,4 @@
-from enum import Enum, Flag, StrEnum, IntEnum, IntFlag
-
-# if flag/enum has a string key
-class _EnumMixin:
-    def __new__(cls, value, str_key=None):
-        obj = object.__new__(cls)
-        obj._value_ = value
-        obj.str_key = str_key
-        return obj
-
-class _Enum(_EnumMixin, Enum):
-    pass
-
-class _Flag(_EnumMixin, Flag):
-    @property
-    def str_keys(self):
-        return [flag.str_key for flag in self.__class__ if self & flag]
+from enum import Enum, StrEnum, IntEnum, IntFlag
 
 # General
 class Server(IntEnum):
@@ -40,48 +24,43 @@ class Language(StrEnum):
     vivn = 'vivn'
     zhcn = 'zhcn'
 
-class Element(_Enum):
-    Azure = (1, '[ElementTypeBlue]')
-    Crimson = (2, '[ElementTypeRed]')
-    Emerald = (3, '[ElementTypeGreen]')
-    Amber = (4, '[ElementTypeYellow]')
-    Radiance = (5, '[ElementTypeLight]')
-    Chaos = (6, '[ElementTypeDark]')
+class Element(IntEnum):
+    Azure = 1
+    Crimson = 2
+    Emerald = 3
+    Amber = 4
+    Radiance = 5
+    Chaos = 6
 
-class BaseParameter(_Enum):
-    STR = (1, '[BaseParameterTypeMuscle]')
-    DEX = (2, '[BaseParameterTypeEnergy]')
-    MAG = (3, '[BaseParameterTypeIntelligence]')
-    STA = (4, '[BaseParameterTypeHealth]')
+class BaseParameter(IntEnum):
+    STR = 1
+    DEX = 2
+    MAG = 3
+    STA = 4
 
-class BattleParameter(_Enum):
-    HP = (1, '[BattleParameterTypeHp]')
-    ATK = (2, '[BattleParameterTypeAttackPower]')
-    P_DEF = (3, '[BattleParameterTypePhysicalDamageRelax]')
-    M_DEF = (4, '[BattleParameterTypeMagicDamageRelax]')
-    ACC = (5, '[BattleParameterTypeHit]')
-    EVD = (6, '[BattleParameterTypeAvoidance]')
-    CRIT = (7, '[BattleParameterTypeCritical]')
-    CRIT_RES = (8, '[BattleParameterTypeCriticalResist]')
-    CRIT_DMG_BOOST = (9, '[BattleParameterTypeCriticalDamageEnhance]')
-    P_CRIT_DMG_CUT = (10, '[BattleParameterTypePhysicalCriticalDamageRelax]')
-    M_CRIT_DMG_CUT = (11, '[BattleParameterTypeMagicCriticalDamageRelax]')
-    DEF_BREAK = (12, '[BattleParameterTypeDefensePenetration]')
-    DEF = (13, '[BattleParameterTypeDefense]')
-    PM_DEF_BREAK = (14, '[BattleParameterTypeDamageEnhance]')
-    DEBUFF_ACC = (15, '[BattleParameterTypeDebuffHit]')
-    DEBUFF_RES = (16, '[BattleParameterTypeDebuffResist]')
-    COUNTER = (17, '[BattleParameterTypeDamageReflect]')
-    HP_DRAIN = (18, '[BattleParameterTypeHpDrain]')
-    SPD = (19, '[BattleParameterTypeSpeed]')
+class BattleParameter(IntEnum):
+    HP = 1
+    ATK = 2
+    P_DEF = 3
+    M_DEF = 4
+    ACC = 5
+    EVD = 6
+    CRIT = 7
+    CRIT_RES = 8
+    CRIT_DMG_BOOST = 9
+    P_CRIT_DMG_CUT = 10
+    M_CRIT_DMG_CUT = 11
+    DEF_BREAK = 12
+    DEF = 13
+    PM_DEF_BREAK = 14
+    DEBUFF_ACC = 15
+    DEBUFF_RES = 16
+    COUNTER = 17
+    HP_DRAIN = 18
+    SPD = 19
 
 # Character
-class Job(_Flag):
-    Warrior = (1, '[JobFlagsWarrior]')
-    Sniper = (2, '[JobFlagsSniper]')
-    Sorcerer = (4, '[JobFlagsSorcerer]')
-
-class JobFlag(IntFlag):  # For Request
+class Job(IntFlag):
     Warrior = 1
     Sniper = 2
     Sorcerer = 4
@@ -172,17 +151,18 @@ class EquipSlot(IntEnum):
     Armor = 5
     Shoes = 6
 
-equip_type = {
-    (EquipSlot.Weapon, Job.Warrior): '[EquipmentSlotTypeSword]',
-    (EquipSlot.Weapon, Job.Sniper): '[EquipmentSlotTypePistol]',
-    (EquipSlot.Weapon, Job.Sorcerer): '[EquipmentSlotTypeTome]',
-    (EquipSlot.Sub, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeSub]',
-    (EquipSlot.Gauntlet, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeHelmet]',
-    (EquipSlot.Helmet, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeArmor]',
-    (EquipSlot.Armor, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeGauntlet]',
-    (EquipSlot.Shoes, Job.Warrior | Job.Sniper | Job.Sorcerer): '[EquipmentSlotTypeShoes]',
-}
-
+class EquipRarity(IntFlag):
+    D = 1
+    C = 2
+    B = 4
+    A = 8
+    S = 16
+    R = 32
+    SR = 64
+    SSR = 128
+    UR = 256
+    LR = 512
+    
 # Items
 class ItemRarity(IntFlag):
     D = 1
@@ -242,23 +222,23 @@ class ItemType(IntEnum):
     EventExchangePlaceItem = 50
     StripeCoupon = 1001
 
-class RuneType(_Enum):
-    STR = (1, '[SphereCategoryTypeMuscle]')
-    DEX = (2, '[SphereCategoryTypeEnergy]')
-    MAG = (3, '[SphereCategoryTypeIntelligence]')
-    ATK = (4, '[SphereCategoryTypeAttackPower]')
-    PM_DEF_BREAK = (5, '[SphereCategoryTypeDamageEnhance]')
-    ACC = (6, '[SphereCategoryTypeHit]')
-    CRIT = (7, '[SphereCategoryTypeCritical]')
-    DEBUFF_ACC = (8, '[SphereCategoryTypeDebuffHit]')
-    SPD = (9, '[SphereCategoryTypeSpeed]')
-    STA = (10, '[SphereCategoryTypeHealth]')
-    HP = (11, '[SphereCategoryTypeHp]')
-    P_DEF = (12, '[SphereCategoryTypePhysicalDamageRelax]')
-    M_DEF = (13, '[SphereCategoryTypeMagicDamageRelax]')
-    EVD = (14, '[SphereCategoryTypeAvoidance]')
-    CRIT_RES = (15, '[SphereCategoryTypeCriticalResist]')
-    DEBUFF_RES = (16, '[SphereCategoryTypeDebuffResist]')
+class RuneType(IntEnum):
+    STR = 1
+    DEX = 2
+    MAG = 3
+    ATK = 4
+    PM_DEF_BREAK = 5
+    ACC = 6
+    CRIT = 7
+    DEBUFF_ACC = 8
+    SPD = 9
+    STA = 10
+    HP = 11
+    P_DEF = 12
+    M_DEF = 13
+    EVD = 14
+    CRIT_RES = 15
+    DEBUFF_RES = 16
 
 # Skills
 class NormalSkill(IntEnum):
@@ -310,6 +290,7 @@ class PassiveTrigger(IntEnum):
     CheckReceiveDamage = 42
     NextCheckReceiveDamageSelf = 43
     NextCheckReceiveDamage = 44
+    AlwaysEnemyDead = 45
     RecoveryFromInstantDeathDamage = 52
     SpecialDamageDead = 62
     MissingData = -1
@@ -324,9 +305,3 @@ class GachaType(IntEnum):
     IoC = 2
     IoSG = 3
 
-if __name__ == '__main__':
-    assert Job(1).str_key == '[JobFlagsWarrior]'
-    assert (Job.Sniper|Job.Warrior) == Job(3)
-    
-    print(ItemRarity(3).name)
-    

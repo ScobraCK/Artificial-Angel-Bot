@@ -1,29 +1,13 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Dict, List
+from typing import Dict, List
 
-from api.utils.enums import GachaType
 from api.utils.masterdata import MasterData
-from api.utils.timezones import get_current
-from api.schemas import validators
+from common import schemas
+from common.enums import GachaType, Server
+from common.timezones import check_active
+
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
-
-class GachaPickup(BaseModel):
-    start: int = Field(..., validation_alias='StartTimeFixJST', description='Start time in UNIX timestamp')
-    end: int = Field(..., validation_alias='EndTimeFixJST', description='End time in UNIX timestamp')
-    gacha_type: GachaType = Field(..., validation_alias='GachaSelectListType')
-    run_count: int
-    char_id: int
-
-    _convert_date = field_validator('start', 'end', mode='before')(validators.val_date_jst)
-
-    class Config:
-        populate_by_name = True
-
-class GachaRequest(BaseModel):
-    char_id: Optional[int] = Field(None, description='Character ID to filter by')
-    is_active: bool = Field(True, description='Filter by currently active banners')
 
 class RunCounter:
     def __init__(self):
@@ -36,7 +20,7 @@ class RunCounter:
             self.run_counts[char_id].append(run)
         return self.run_counts[char_id].index(run) + 1
 
-async def parse_gacha(md: MasterData) -> list[GachaPickup]:
+async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     gachacase_data = await md.get_MB('GachaCaseMB')
     gachacaseui_data = await md.get_MB('GachaCaseUiMB')
     gachadestiny_data = await md.get_MB('GachaDestinyAddCharacterMB')
@@ -53,7 +37,7 @@ async def parse_gacha(md: MasterData) -> list[GachaPickup]:
             char = int(ui_data['PickUpCharacterId'])
             run = (banner['StartTimeFixJST'], banner['EndTimeFixJST'])
             run_count = run_counter.get_run_count(char, run)
-            gacha = GachaPickup(
+            gacha = schemas.GachaPickup(
                 **banner,
                 char_id=char,
                 run_count=run_count
@@ -68,7 +52,7 @@ async def parse_gacha(md: MasterData) -> list[GachaPickup]:
         char = banner['CharacterId']
         run = (start_data['StartTimeFixJST'], end_data['EndTimeFixJST'])
         run_count = run_counter.get_run_count(char, run)
-        gacha = GachaPickup(
+        gacha = schemas.GachaPickup(
             start=start_data['StartTimeFixJST'],
             end=end_data['EndTimeFixJST'],
             gacha_type=GachaType.IoC,
@@ -84,7 +68,7 @@ async def parse_gacha(md: MasterData) -> list[GachaPickup]:
             char = int(character)
             run = (banner['StartTimeFixJST'], banner['EndTimeFixJST'])
             run_count = run_counter.get_run_count(char, run)
-            gacha = GachaPickup(
+            gacha = schemas.GachaPickup(
                 **banner,
                 char_id=char,
                 run_count=run_count
@@ -93,7 +77,7 @@ async def parse_gacha(md: MasterData) -> list[GachaPickup]:
 
     return gacha_list
 
-async def get_gacha(md: MasterData, char_id: int=None, is_active=True) -> list[GachaPickup]:
+async def get_gacha(md: MasterData, char_id: int=None, is_active=True) -> list[schemas.GachaPickup]:
     gacha_list = await parse_gacha(md)
     filtered = []
     for gacha in gacha_list:
@@ -101,8 +85,7 @@ async def get_gacha(md: MasterData, char_id: int=None, is_active=True) -> list[G
             if gacha.char_id != char_id:
                 continue    
         if is_active:
-            current = get_current()
-            if gacha.end < current or gacha.start > current:
-                continue 
+            if not check_active(gacha.start, gacha.end, Server.Japan):
+                continue
         filtered.append(gacha)
     return filtered

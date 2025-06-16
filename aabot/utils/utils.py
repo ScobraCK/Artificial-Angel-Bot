@@ -1,6 +1,14 @@
 import re
-from aabot.api.response import BaseParameterModel, BattleParameterModel
-from aabot.utils.enums import Server
+from common.enums import BattleParameter, Server
+from common.schemas import BaseParameterModel, BattleParameterModel, CommonStrings
+
+PERCENTAGE_PARAMS = [
+    BattleParameter.CRIT_DMG_BOOST,
+    BattleParameter.M_CRIT_DMG_CUT,
+    BattleParameter.P_CRIT_DMG_CUT,
+    BattleParameter.COUNTER,
+    BattleParameter.HP_DRAIN
+]
 
 def remove_linebreaks(text: str):
     return text.replace('<br>', ' ')
@@ -30,16 +38,20 @@ def decimal_format(num: int)->str:
     decimal = 1 if num % 10 == 0 else 2
     return f'{num/100:.{decimal}f}'
 
-def param_string(param: BaseParameterModel|BattleParameterModel):
+def param_string(param: BaseParameterModel|BattleParameterModel, cs: CommonStrings):
+    if isinstance(param, BaseParameterModel):
+        param_type_dict = cs.base_param
+    else:
+        param_type_dict = cs.battle_param
     if param.change_type == 1:
-        if isinstance(param, BattleParameterModel) and param.is_percentage:
-            return f'{param.type} {decimal_format(param.value)}%'
+        if isinstance(param, BattleParameterModel) and param in PERCENTAGE_PARAMS:
+            return f'{param_type_dict[param.type]} {decimal_format(param.value)}%'
         else:
-            return f'{param.type} {param.value:,}'
+            return f'{param_type_dict[param.type]} {param.value:,}'
     elif param.change_type == 2:
-        return f'{param.type} {param.value/100:.1f}%'
+        return f'{param_type_dict[param.type]} {param.value/100:.1f}%'
     else:  # [BattleParameterCharacterLevelConstantMultiplicationAddition]
-        return f'{param.type} Chara. Lv×{param.value:,}'
+        return f'{param_type_dict[param.type]} Chara. Lv×{param.value:,}'
 
 def to_world_id(server: Server, world: int):
     return int(f'{server}{world:03}')

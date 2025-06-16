@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from typing import List
 
-from api.schemas.api_models import APIResponse
+from common.schemas import APIResponse
 from api.utils.masterdata import MasterData
 
 from api.utils.logger import get_logger
@@ -10,9 +10,9 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/raw/master/{mb}',
+    '/master/{mb}',
     summary='MasterData',
-    description='Returns raw masterdata',
+    description='Returns masterdata json',
     response_model=APIResponse[List[dict]]
 )
 async def master_req(

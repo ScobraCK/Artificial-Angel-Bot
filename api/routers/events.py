@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Request, Depends
 from typing import List
 
-from api.schemas import events as event_schema
-from api.schemas.api_models import APIResponse
+from common.schemas import APIResponse
+from api.schemas.events import get_gacha
+from api.schemas.requests import GachaRequest
 from api.utils.masterdata import MasterData
+from common import schemas
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -14,12 +16,12 @@ router = APIRouter()
     '/gacha',
     summary='Gacha Banner Info',
     description='Returns gacha banner information',
-    response_model=APIResponse[List[event_schema.GachaPickup]]
+    response_model=APIResponse[List[schemas.GachaPickup]]
 )
 async def filtered_req(
     request: Request,
-    payload: event_schema.GachaRequest = Depends()
+    payload: GachaRequest = Depends()
     ):
     md: MasterData = request.app.state.md
-    gacha = await event_schema.get_gacha(md, payload.char_id, payload.is_active)
-    return APIResponse[List[event_schema.GachaPickup]].create(request, gacha)
+    gacha = await get_gacha(md, payload.char_id, payload.is_active)
+    return APIResponse[List[schemas.GachaPickup]].create(request, gacha)

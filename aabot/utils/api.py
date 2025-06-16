@@ -1,15 +1,16 @@
 import httpx
 import html2text
-from typing import Type, TypeVar, Optional, Any, Union
+from typing import Dict, Type, TypeVar
 
-from aabot.api import response
-from aabot.utils.enums import Language
 from aabot.utils.error import BotError
+from common.enums import Language
+from common.schemas import APIResponse, CommonStrings, Item, Name, StringKey
 
 API_BASE_PATH = 'http://api:8000/'
 STRING_PATH = 'strings/{key}'
-STRING_CHARACTER_PATH_ALL = 'strings/characters'
-STRING_CHARACTER_PATH = 'strings/characters/{char_id}'
+STRING_COMMON_PATH = 'strings/common'
+STRING_CHARACTER_PATH_ALL = 'strings/character'
+STRING_CHARACTER_PATH = 'strings/character/{char_id}'
 EQUIPMENT_PATH = 'equipment/{eqp_id}'
 EQUIPMENT_NORMAL_PATH = 'equipment/search'
 EQUIPMENT_UNIQUE_PATH = 'equipment/unique/search'
@@ -29,7 +30,7 @@ GUILD_RANKING_PATH = 'guild/ranking'
 PLAYER_RANKING_PATH = 'player/ranking'
 GACHA_PATH = 'gacha'
 
-RAW_MASTER = 'raw/master/{mb}'
+MASTER_PATH = 'master/{mb}'
 
 UPDATE_PATH = 'admin/update'
 UPDATE_STR_PATH = 'admin/update/strings'
@@ -44,8 +45,8 @@ MENTEMORI_GACHA_PATH = '{server_id}/{gacha}/latest'
 
 T = TypeVar('T')
 
-def parse_response(data: dict, data_type: Type[T]) -> response.APIResponse[T]:
-    return response.APIResponse.parse(data, data_type)
+def parse_response(data: dict, data_type: Type[T]) -> APIResponse[T]:
+    return APIResponse.parse(data, data_type)
 
 async def fetch_api(
     path: str,
@@ -93,22 +94,33 @@ async def fetch(
         except httpx.RequestError as e:
             raise e
 
-async def fetch_string(key: str) -> response.APIResponse[response.StringDBModel]:
-    string_data = await fetch_api(STRING_PATH.format(key=key), response_model=response.StringDBModel)
+async def fetch_string(key: str) -> APIResponse[StringKey]:
+    string_data = await fetch_api(STRING_PATH.format(key=key), response_model=StringKey)
     return string_data
 
-async def fetch_name(char_id: int, language: Language = Language.enus) -> response.APIResponse[response.Name]:
+async def fetch_name(char_id: int, language: Language = Language.enus) -> APIResponse[Name]:
     name_data = await fetch_api(
         STRING_CHARACTER_PATH.format(char_id=char_id),
-        response_model=response.Name,
+        response_model=Name,
         query_params={'language': language}
     )
     return name_data
 
-async def fetch_item(item_id: int, item_type: int, language: Language = Language.enus) -> response.APIResponse[response.Item]:
+async def fetch_item(item_id: int, item_type: int, language: Language = Language.enus) -> APIResponse[Item]:
     item_data = await fetch_api(
         ITEM_PATH,
-        response_model=response.Item,
+        response_model=Item,
         query_params={'item_id': item_id, 'item_type': item_type, 'language': language}
     )
     return item_data
+
+async def fetch_common_strings() -> Dict[Language, CommonStrings]:
+    data = {}
+    for lang in Language:
+        lang_data = await fetch_api(
+            STRING_COMMON_PATH,
+            query_params={'language': lang},
+            response_model=CommonStrings
+        )
+        data[lang] = lang_data.data
+    return data

@@ -1,10 +1,29 @@
-from discord import Interaction
+from enum import StrEnum
 from functools import wraps
 from typing import Callable
 
-from aabot.db.crud import get_user
-from aabot.db.database import SessionAABot
-from aabot.utils.enums import Language
+from discord import Interaction
+
+from aabot.db.user import get_user
+from common.database import AsyncSession as SessionAABot
+# from common.enums import Language
+
+# limit language options to officially supported languages
+class LanguageOptions(StrEnum):  
+    jajp = 'jajp'
+    kokr = 'kokr'
+    enus = 'enus'
+    zhtw = 'zhtw'
+    # dede = 'dede'
+    # esmx = 'esmx'
+    # frfr = 'frfr'
+    # idid = 'idid'
+    # ptbr = 'ptbr'
+    # ruru = 'ruru'
+    # thth = 'thth'
+    # vivn = 'vivn'
+    zhcn = 'zhcn'
+
 
 def apply_user_preferences():
     """
@@ -13,12 +32,12 @@ def apply_user_preferences():
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(self, interaction: Interaction, *args, **kwargs):
-            with SessionAABot() as session:
+            async with SessionAABot() as session:
                 user_id = interaction.user.id
-                user_pref = get_user(session, user_id)
+                user_pref = await get_user(session, user_id)
 
                 if "language" in kwargs and kwargs["language"] is None:
-                    kwargs["language"] = user_pref.language if user_pref and user_pref.language else Language.enus
+                    kwargs["language"] = user_pref.language if user_pref and user_pref.language else LanguageOptions.enus
 
                 if "server" in kwargs and kwargs["server"] is None:
                     if user_pref and user_pref.server:

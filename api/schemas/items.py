@@ -1,73 +1,7 @@
-from fastapi import Query
-from pydantic import (
-    BaseModel, Field, AliasChoices,
-    FieldSerializationInfo, field_serializer,
-    ValidationInfo, field_validator, model_validator,
-    )
-from typing import List, Optional, Literal, Union
-
-import api.schemas.parameters as params
-import api.schemas.serializers as serializers
-import api.utils.enums as enums
+from api.schemas import requests
 from api.utils.masterdata import MasterData
 from api.utils.error import APIError
-
-
-class _ItemBase(BaseModel):
-    id: int = Field(..., validation_alias='Id')
-    item_id: int = Field(..., validation_alias='ItemId')
-    item_type: enums.ItemType = Field(..., validation_alias='ItemType')
-    name: str = Field(..., validation_alias='NameKey')
-    description: str = Field(..., validation_alias='DescriptionKey')
-    icon: int = Field(..., validation_alias='IconId')
-    rarity: enums.ItemRarity = Field(..., validation_alias=AliasChoices('ItemRarityFlags', 'RarityFlags'))
-    max_count: int = Field(0, validation_alias='MaxItemCount')
-
-    _serialize_str = field_serializer(
-        'name', 'description',
-        )(serializers.serialize_str)
-    
-    _serialize_enum = field_serializer(
-        'rarity',
-        )(serializers.serialize_enum)
-
-class ItemBase(BaseModel):
-    id: int = Field(...)
-    item_id: int = Field(...)
-    item_type: str = Field(...)
-    name: str = Field(...)
-    description: str = Field(...)
-    icon: int = Field(...)
-    rarity: Optional[str] = Field(...)  # Rarity may be 0 (None)
-    max_count: int = Field(0)
-
-class _Rune(_ItemBase):
-    item_id: int = Field(..., validation_alias='Id')
-    item_type: enums.ItemType = enums.ItemType.Sphere
-    base_parameter: Optional[params._BaseParameterModel] = Field(...,validation_alias='BaseParameterChangeInfo')
-    battle_parameter: Optional[params._BattleParameterModel] = Field(...,validation_alias='BattleParameterChangeInfo')
-    category: enums.RuneType = Field(..., validation_alias='CategoryId')
-    level: int = Field(..., validation_alias='Lv')
-    sphere_type: int = Field(
-        ..., ge=0, le=3,
-        exclude=True,
-        validation_alias='SphereType'
-    )
-    icon: Optional[int] = None  # added later, icon = {Category:02}{SphereType:02}
-
-    @model_validator(mode='after')
-    def add_icon(self):
-        self.icon = int(f'{self.category.value:02}{self.sphere_type:02}')
-
-        return self
-    
-class Rune(ItemBase):
-    '''Item type 14, runes'''
-    parameter: Union[params.BaseParameterModel, params.BattleParameterModel] = Field(
-        ..., validation_alias=AliasChoices('base_parameter', 'battle_parameter')
-    )
-    category: str = Field(...)
-    level: int = Field(...)
+from common import enums, schemas
 
 '''
 # [Description("宝箱抽選タイプ")]
@@ -87,55 +21,42 @@ class TreasureChestLotteryType(_Enum):
     # [Description("抽選アイテムと固定アイテム")]
     RandomFix = 6
 '''
-# TODO
-class _TreasureChest(_ItemBase):
-    bulk_enabled: bool = Field(..., validation_alias='BulkUseEnabled')
-    min_open_count: int = Field(..., validation_alias='MinOpenCount')
-    lottery_type: int = Field(..., validation_alias='TreasureChestLotteryType')
 
-Item = Union[Rune, ItemBase]
-
-# Used to show an amount of item. Cost, reward etc
-class ItemCount(BaseModel):
-    item_id: int = Field(..., validation_alias='ItemId', examples=[1])
-    item_type: int = Field(..., validation_alias='ItemType', examples=[3])
-    count: int = Field(..., validation_alias='ItemCount', examples=[1000])
-
-    class Config:
-        populate_by_name = True
-        
-# Request
-class ItemRequest(BaseModel):
-    item_id: int = Field(Query())
-    item_type: enums.ItemType = Field(Query())
-
-class RuneRequest(BaseModel):
-    category: enums.RuneType = Field(..., description='Rune type')
-    level: int = Field(..., description='Rune level')
-
-async def get_rune(md: MasterData, payload: RuneRequest):
+async def get_rune(md: MasterData, payload: requests.RuneRequest):
     try:
         rune_data = next(await md.search_filter(CategoryId=payload.category.value, Lv=payload.level))  # RuneType is _Enum not IntEnum
-        return _Rune(rune_data)
+        return schemas.Rune(rune_data)
     except StopIteration:
         raise APIError('Rune could not be found')
 
-async def get_item(md: MasterData, payload: ItemRequest) -> _ItemBase:
-    if (item_type := payload.item_type) == enums.ItemType.Sphere:  # Rune
-        rune_data = await md.search_id(payload.item_id, 'SphereMB')
-        item = _Rune(**rune_data)
-    elif item_type == enums.ItemType.TreasureChest:
-        treasure_data = await md.search_id(payload.item_id, 'TreasureChestMB')
-        item = _ItemBase(**treasure_data, ItemId=payload.item_id, ItemType=item_type)  # TODO finish treasure class
-    else:
-        try:
+async def get_item(md: MasterData, payload: requests.ItemRequest) -> schemas.ItemBase:
+    try:
+        if (item_type := payload.item_type) == enums.ItemType.EquipmentFragment:
+            equip_frag_data = await md.search_id(payload.item_id, 'EquipmentCompositeMB')
+            equip_data = await md.search_id(equip_frag_data['EquipmentId'], 'EquipmentMB')
+            item = schemas.EquipmentFragment(**equip_frag_data, icon=equip_data['IconId'], equip_name=equip_data['NameKey'])
+        elif item_type == enums.ItemType.Character:  
+            char_data = await md.search_id(payload.item_id, 'CharacterMB')
+            item = schemas.CharacterItem(**char_data)
+        elif item_type == enums.ItemType.CharacterFragment:
+            char_data = await md.search_id(payload.item_id, 'CharacterMB')
+            item = schemas.CharacterFragment(**char_data)
+        elif item_type == enums.ItemType.EquipmentSetMaterial:
+            equip_setm_data = await md.search_id(payload.item_id, 'EquipmentSetMaterialMB')
+            item = schemas.EquipmentSetMaterial(**equip_setm_data)
+        elif item_type == enums.ItemType.Sphere:  # Rune
+            rune_data = await md.search_id(payload.item_id, 'SphereMB')
+            item = schemas.Rune(**rune_data)
+        elif item_type == enums.ItemType.TreasureChest:
+            treasure_data = await md.search_id(payload.item_id, 'TreasureChestMB')
+            item = schemas.ItemBase(**treasure_data, ItemId=payload.item_id, ItemType=item_type)
+        else:
             item_data = next(await md.search_filter('ItemMB', ItemId=payload.item_id, ItemType=payload.item_type))
-            item = _ItemBase(**item_data)
-        except StopIteration:
-            item = None
-    
-    if not item:
-        raise APIError('Item could not be found (WIP: some items are missing).')
+            item = schemas.ItemBase(**item_data)
+    except TypeError:  # None result from search_id
+        raise APIError('Item could not be found.')
+    except StopIteration:  # Not found
+        raise APIError('Item could not be found or given item type is not supported.')
     
     return item
 

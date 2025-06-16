@@ -1,64 +1,77 @@
+from collections import defaultdict, namedtuple
+from enum import Enum
 from io import StringIO
-from collections import namedtuple, defaultdict
-from discord import Color, Interaction, Embed
 from re import finditer
-from typing import Tuple, List, Union
+from typing import List, Tuple, Union
 
-from aabot.api import api
-from aabot.api import response as resp
-from aabot.db.database import SessionAABot
+from discord import Color, Interaction
+
+from aabot.utils import api
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.skills import uw_skill_description
-from aabot.pagination.views import DropdownView, MixedView
-from aabot.utils import enums, emoji
+from aabot.pagination.views import MixedView
+from aabot.utils import emoji
 from aabot.utils.alias import alias_lookup
 from aabot.utils.assets import EQUIPMENT_THUMBNAIL
 from aabot.utils.error import BotError
 from aabot.utils.utils import param_string
-
-from aabot.utils.logger import get_logger
-logger = get_logger(__name__)
+from common import enums, schemas
+from common.database import AsyncSession as SessionAABot
 
 rarity_color = {
-    'D': Color.default(),
-    'C': Color.default(),
-    'B': Color.default(),
-    'A': Color.default(),
-    'S': Color.default(),
-    'R': Color.from_str('#aeb5bf'),
-    'SR': Color.from_str('#d9af5b'),
-    'SSR': Color.from_str('#8d54ab'),
-    'UR': Color.from_str('#c0474e'),
-    'LR': Color.from_str('#272c26'),
+    1: Color.default(),
+    2: Color.default(),
+    4: Color.default(),
+    8: Color.default(),
+    16: Color.default(),
+    32: Color.from_str('#aeb5bf'),
+    64: Color.from_str('#d9af5b'),
+    128: Color.from_str('#8d54ab'),
+    256: Color.from_str('#c0474e'),
+    512: Color.from_str('#272c26'),
 }
 
+# To request api
+EquipTypeTuple = namedtuple('EquipTypeTuple', ['slot', 'job'])
+
+class EquipType(Enum):
+    '''Job 7 is None for api'''
+    Sword = EquipTypeTuple(1, 1)
+    Gun = EquipTypeTuple(1, 2)
+    Tome = EquipTypeTuple(1, 4)
+    Accessory = EquipTypeTuple(2, None)
+    Gauntlet = EquipTypeTuple(3, None)
+    Helmet = EquipTypeTuple(4, None)
+    Chest = EquipTypeTuple(5, None)
+    Boots = EquipTypeTuple(6, None)
+
 equip_type_string = {
-    'sword': enums.EquipType.Sword,
-    'gun': enums.EquipType.Gun,
-    'pistol': enums.EquipType.Gun,
-    'tome': enums.EquipType.Tome,
-    'sub': enums.EquipType.Accessory,
-    'accessory': enums.EquipType.Accessory,
-    'necklace': enums.EquipType.Accessory,
-    'ring': enums.EquipType.Accessory,
-    'glove': enums.EquipType.Gauntlet,
-    'gloves': enums.EquipType.Gauntlet,
-    'hand': enums.EquipType.Gauntlet,
-    'hands': enums.EquipType.Gauntlet,
-    'gauntlet': enums.EquipType.Gauntlet,
-    'helmet': enums.EquipType.Helmet,
-    'head': enums.EquipType.Helmet,
-    'chest': enums.EquipType.Chest,
-    'chestplate': enums.EquipType.Chest,
-    'armor': enums.EquipType.Chest,
-    'armour': enums.EquipType.Chest,
-    'body': enums.EquipType.Chest,
-    'dress': enums.EquipType.Chest,
-    'boot': enums.EquipType.Boots,
-    'boots': enums.EquipType.Boots,
-    'feet': enums.EquipType.Boots,
-    'shoe': enums.EquipType.Boots,
-    'shoes': enums.EquipType.Boots,
+    'sword': EquipType.Sword,
+    'gun': EquipType.Gun,
+    'pistol': EquipType.Gun,
+    'tome': EquipType.Tome,
+    'sub': EquipType.Accessory,
+    'accessory': EquipType.Accessory,
+    'necklace': EquipType.Accessory,
+    'ring': EquipType.Accessory,
+    'glove': EquipType.Gauntlet,
+    'gloves': EquipType.Gauntlet,
+    'hand': EquipType.Gauntlet,
+    'hands': EquipType.Gauntlet,
+    'gauntlet': EquipType.Gauntlet,
+    'helmet': EquipType.Helmet,
+    'head': EquipType.Helmet,
+    'chest': EquipType.Chest,
+    'chestplate': EquipType.Chest,
+    'armor': EquipType.Chest,
+    'armour': EquipType.Chest,
+    'body': EquipType.Chest,
+    'dress': EquipType.Chest,
+    'boot': EquipType.Boots,
+    'boots': EquipType.Boots,
+    'feet': EquipType.Boots,
+    'shoe': EquipType.Boots,
+    'shoes': EquipType.Boots,
 }
 
 EquipArgs = namedtuple("EquipArgs", ["rarity", "level", "upgrade"])
@@ -68,12 +81,12 @@ class ItemCounter:
         self.items = defaultdict(int)  # Stores (item_id, item_type) -> count
         self.blacklist = blacklist  # type blacklist
 
-    def add_items(self, items: Union[resp.ItemCount, List[resp.ItemCount], "ItemCounter"]):
-        if isinstance(items, resp.ItemCount):  # Single item
+    def add_items(self, items: Union[schemas.ItemCount, List[schemas.ItemCount], "ItemCounter"]):
+        if isinstance(items, schemas.ItemCount):  # Single item
             self.items[(items.item_id, items.item_type)] += items.count
         elif isinstance(items, list):  # List of items
             for item in items:
-                if not isinstance(item, resp.ItemCount):
+                if not isinstance(item, schemas.ItemCount):
                     raise TypeError("List must contain only ItemCount instances")
                 self.items[(item.item_id, item.item_type)] += item.count
         elif isinstance(items, ItemCounter):  # Another ItemCounter
@@ -82,8 +95,8 @@ class ItemCounter:
         else:
             raise TypeError("Expected ItemCount, List[ItemCount], or ItemCounter")
 
-    def get_total(self) -> List[resp.ItemCount]:
-        return [resp.ItemCount(item_id, item_type, count) for (item_id, item_type), count in self.items.items() if item_type not in self.blacklist]
+    def get_total(self) -> List[schemas.ItemCount]:
+        return [schemas.ItemCount(item_id=item_id, item_type=item_type, count=count) for (item_id, item_type), count in self.items.items() if item_type not in self.blacklist]
     
     async def get_total_strings(self) -> List[str]:
         return [await item_count_string(item) for item in self.get_total()]
@@ -92,7 +105,7 @@ class ItemCounter:
         return bool(self.items)
 
 
-def item_embed(item_data: resp.APIResponse[resp.Item]):
+def item_embed(item_data: schemas.APIResponse[schemas.Item], cs: schemas.CommonStrings):
     item = item_data.data
     title = item.name
     description = (
@@ -103,13 +116,13 @@ def item_embed(item_data: resp.APIResponse[resp.Item]):
         f'**Description**\n{item.description}\n\n'
     )
     
-    if isinstance(item, resp.Rune):
+    if isinstance(item, schemas.Rune):
         title = f'{title} Lv.{item.level}'
         description += (
             '**Details**\n'
-            f'Type: {item.category}\n'
+            f'Type: {cs.rune_type[item.category]}\n'
             f'Level: {item.level}\n'
-            f'Parameter: {item.parameter}'
+            f'Parameter: {param_string(item.parameter, cs)}'
         )
     
     return BaseEmbed(
@@ -119,7 +132,7 @@ def item_embed(item_data: resp.APIResponse[resp.Item]):
         color=rarity_color.get(item.rarity)
     )
 
-async def item_count_string(itemcount: resp.ItemCount) -> str:
+async def item_count_string(itemcount: schemas.ItemCount) -> str:
     # TODO emojis
     if itemcount.item_type == 5:
         return f'{itemcount.count:,}x Fragments'  # Temp solution
@@ -129,7 +142,7 @@ async def item_count_string(itemcount: resp.ItemCount) -> str:
     item = item_data.data
     return f'{itemcount.count:,}x {item.name}'
 
-def parse_equip_string(string: str) -> Tuple[str|enums.EquipType, List[EquipArgs]]:
+def parse_equip_string(string: str) -> Tuple[str|EquipType, List[EquipArgs]]:
     tokens = string.split(maxsplit=1)
     if len(tokens) < 2:
         raise BotError(f'Equipment string `{string}` was incorrect. Use `/help equipment` for more info.')
@@ -145,11 +158,11 @@ def parse_equip_string(string: str) -> Tuple[str|enums.EquipType, List[EquipArgs
 
     results = []
     for match in matches:
-        rarity = match.group('rarity').upper()
+        rarity = match.group('rarity').upper()  # string rarity
         level=match.group("level")
         upgrade=match.group("upgrade")
         
-        if rarity != 'SP' and (rarity not in enums.EquipRarity.__members__):  # SP is for S+
+        if rarity != 'SP' and (rarity not in enums.ItemRarity.__members__):  # SP is for S+
             raise BotError(f'Got undefined rarity `{rarity}`. Only D-A, S, SP(S+), SR, SSR, UR, LR allowed.')
         
         if upgrade:
@@ -177,7 +190,7 @@ def parse_equip_string(string: str) -> Tuple[str|enums.EquipType, List[EquipArgs
 
     return equip_type, results
 
-async def get_equipment(equip_type: enums.EquipType|str, equipment_args: EquipArgs, language: enums.Language):
+async def get_equipment(equip_type: EquipType|str, equipment_args: EquipArgs, language: enums.Language):
     rarity = equipment_args.rarity
     level = equipment_args.level
     upgrade = equipment_args.upgrade
@@ -188,27 +201,27 @@ async def get_equipment(equip_type: enums.EquipType|str, equipment_args: EquipAr
     else:
         quality = None
     
-    if isinstance(equip_type, enums.EquipType):
+    if isinstance(equip_type, EquipType):
         equipment_data = await api.fetch_api(
             api.EQUIPMENT_NORMAL_PATH,
             query_params={
                 'slot': equip_type.value.slot,
                 'job': equip_type.value.job,
-                'rarity': enums.EquipRarity[rarity].value,
+                'rarity': enums.ItemRarity[rarity].value,  # string -> rarity flag
                 'level': level,
                 'quality': quality,
                 'language': language
             },
-            response_model=resp.Equipment
+            response_model=schemas.Equipment
         )
     else:  # character string
-        with SessionAABot() as session:
-            char_id = alias_lookup(session, equip_type)
+        async with SessionAABot() as session:
+            char_id = await alias_lookup(session, equip_type)
         equipment_data = await api.fetch_api(
             api.EQUIPMENT_UNIQUE_PATH,
-            response_model=resp.UniqueWeapon,
+            response_model=schemas.UniqueWeapon,
             query_params= {
-                'rarity': enums.EquipRarity[rarity].value,
+                'rarity': enums.ItemRarity[rarity].value,  # string -> rarity flag
                 'level': level,   
                 'character': char_id,
                 'language': language
@@ -219,7 +232,7 @@ async def get_equipment(equip_type: enums.EquipType|str, equipment_args: EquipAr
 
     upgrade_data = await api.fetch_api(
         api.EQUIPMENT_UPGRADE_PATH,
-        response_model=resp.EquipmentCosts,
+        response_model=schemas.EquipmentCosts,
         query_params={
             'equip_id': equip_id,
             'upgrade': upgrade,
@@ -229,13 +242,19 @@ async def get_equipment(equip_type: enums.EquipType|str, equipment_args: EquipAr
 
     return equipment_data, upgrade_data
 
-def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], upgrade=0, upgrade_coeff=1):
+def equip_embed(equip_data: schemas.APIResponse[schemas.Equipment|schemas.UniqueWeapon], cs: schemas.CommonStrings, upgrade=0, upgrade_coeff=1):
     equipment = equip_data.data
     description = StringIO()
 
+    equip_type = cs.equip_type[equipment.slot]
+    if equipment.slot == 1:  # weapon
+        equip_type = f'{equip_type} ({cs.weapon_type[equipment.job]})'
+    
+    rarity_str = enums.ItemRarity(equipment.rarity).name
+
     # Base Description
     description.write(
-        f'Type: {equipment.slot}\n'
+        f'Type: {equip_type}\n'
         f'Level: {equipment.level}\n'
         f'Upgrade: {upgrade}\n\n'
     )
@@ -246,7 +265,7 @@ def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], 
     mainstat = int(equipment.basestat.value * upgrade_coeff)
     description.write(
         f'**Stats**\n'
-        f"```\n{equipment.basestat.type}: {mainstat:,} (Base: {equipment.basestat.value:,})\n"
+        f"```\n{cs.battle_param[equipment.basestat.type]}: {mainstat:,} (Base: {equipment.basestat.value:,})\n"
         f"Bonus Parameters: {equipment.bonus_parameters:,}\n"
         f"Max: {max_value:,}\n"
         f"Sub: {sub_value:,}```\n"
@@ -257,26 +276,26 @@ def equip_embed(equip_data: resp.APIResponse[resp.Equipment|resp.UniqueWeapon], 
         description.write(f'**{equip_set.name}**\n```\n')
         description.write(
             "\n".join(
-                f"{effect.equipment_count} Pieces: {param_string(effect.parameter)}" 
+                f"{effect.equipment_count} Pieces: {param_string(effect.parameter, cs)}" 
                 for effect in equip_set.set_effects
             )
         )
         description.write('```')
 
     # UW
-    if isinstance(equipment, resp.UniqueWeapon):
+    if isinstance(equipment, schemas.UniqueWeapon):
         description.write('**Unique Passive Effect**\n```\n')
-        description.write('\n'.join(param_string(param) for param in equipment.uw_bonus))
+        description.write('\n'.join(param_string(param, cs) for param in equipment.uw_bonus))
         description.write('```')
 
     return BaseEmbed(
         version=equip_data.version,
-        title=f'{emoji.rarity_emoji.get(equipment.rarity)} {equipment.rarity} {equipment.name}',
+        title=f'{emoji.rarity_emoji.get(rarity_str)} {rarity_str} {equipment.name}',
         description=description.getvalue(),
         color=Color.blurple()
     ).set_thumbnail(url=EQUIPMENT_THUMBNAIL.format(equip_id=equipment.icon_id))
 
-def uw_embed(equipment_data: resp.APIResponse[resp.UniqueWeapon]):
+def uw_embed(equipment_data: schemas.APIResponse[schemas.UniqueWeapon]):
     '''UW Descriptions Embed'''
     return BaseEmbed(
         equipment_data.version,
@@ -285,20 +304,23 @@ def uw_embed(equipment_data: resp.APIResponse[resp.UniqueWeapon]):
         color=Color.blurple()
     )
 
-async def cost_description(costs: resp.EquipmentCosts, start_level: int=0, start_upgrade: int=0, start_rarity: str=None):
+async def cost_description(costs: schemas.EquipmentCosts, start_level: int=0, start_upgrade: int=0, start_rarity: int=0):
     description = StringIO()
     total_items = ItemCounter(blacklist=[9])
     synth_items = ItemCounter()
     enhance_items = ItemCounter(blacklist=[9])
     upgrade_items = ItemCounter()
+
+    start_rarity_str = enums.ItemRarity(start_rarity).name
+    target_rarity_str = enums.ItemRarity(costs.equipment.rarity).name
     
     description.write(
-        f'**Base Equipment:** {f'{start_rarity} {start_level}+{start_upgrade}' if start_rarity else 'None'}\n'
-        f'**Target Equipment:** {costs.equipment.rarity} {costs.equipment.level}+{costs.upgrade_costs.upgrades[-1].upgrade_level if costs.upgrade_costs.upgrades else 0}\n\n'
+        f'**Base Equipment:** {f'{start_rarity_str} {start_level}+{start_upgrade}' if start_rarity else 'None'}\n'
+        f'**Target Equipment:** {target_rarity_str} {costs.equipment.level}+{costs.upgrade_costs.upgrades[-1].upgrade_level if costs.upgrade_costs.upgrades else 0}\n\n'
     )
     
     # Costs
-    if costs.synthesis_costs and start_rarity is None:
+    if costs.synthesis_costs and start_rarity == 0:
         synth_items.add_items(costs.synthesis_costs.cost)
         current_rarity = costs.synthesis_costs.rarity
     else:
@@ -311,7 +333,7 @@ async def cost_description(costs: resp.EquipmentCosts, start_level: int=0, start
                 enhance_items.add_items(cost.cost)
                 
     if costs.equipment.rarity != current_rarity:  # should always end up as final upgrade
-        raise BotError(f'Starting {start_rarity} {costs.equipment.slot} cannot be upgraded to {costs.equipment.rarity} {costs.equipment.slot}')
+        raise BotError(f'Starting {start_rarity_str} rarity item cannot be upgraded to {target_rarity_str}')
 
     for cost in costs.enhance_costs:
         if cost.before_level < start_level:
@@ -347,18 +369,19 @@ async def cost_description(costs: resp.EquipmentCosts, start_level: int=0, start
         
     return description.getvalue()
 
-async def upgrade_embed(upgrade_data: resp.APIResponse[resp.EquipmentCosts], start_level=0, start_upgrade=0, start_rarity=None):
+async def upgrade_embed(upgrade_data: schemas.APIResponse[schemas.EquipmentCosts], start_level=0, start_upgrade=0, start_rarity=0):
     costs = upgrade_data.data
     equipment = costs.equipment
+    rarity_str = enums.ItemRarity(equipment.rarity).name
 
     return BaseEmbed(
         upgrade_data.version,
-        title = f'{emoji.rarity_emoji.get(equipment.rarity)} {equipment.rarity} {equipment.name}',
+        title = f'{emoji.rarity_emoji.get(rarity_str)} {rarity_str} {equipment.name}',
         description=await cost_description(costs, start_level, start_upgrade, start_rarity),
         color=Color.blurple()
     )
     
-async def equipment_view(interaction: Interaction, equip_string: str, language: enums.Language):
+async def equipment_view(interaction: Interaction, equip_string: str, cs: schemas.CommonStrings, language: enums.Language):
     embed_dict = {}
     embed_dict['Equipment Details'] = []
     embed_dict['Costs'] = []
@@ -367,8 +390,8 @@ async def equipment_view(interaction: Interaction, equip_string: str, language: 
     if len(results) > 5:
         raise BotError('Too many equipment strings. Maximum of 5 allowed.')
 
-    equipments: List[resp.APIResponse[resp.Equipment]]|List[resp.APIResponse[resp.UniqueWeapon]] = []
-    upgrades: List[resp.APIResponse[resp.EquipmentCosts]] = []
+    equipments: List[schemas.APIResponse[schemas.Equipment]]|List[schemas.APIResponse[schemas.UniqueWeapon]] = []
+    upgrades: List[schemas.APIResponse[schemas.EquipmentCosts]] = []
     # Main embeds
 
     for eqp_args in results:
@@ -382,7 +405,7 @@ async def equipment_view(interaction: Interaction, equip_string: str, language: 
                 'Equipment level cannot be lower than the first equipment. Was given:\n'
                 f'{'\n'.join(f'{i}. `{equip.rarity} {equip.level}+{equip.upgrade}`' for i, equip in enumerate(results))}'
             )
-        if enums.EquipRarity[eqp_args.rarity].value < enums.EquipRarity[results[0].rarity].value:
+        if enums.ItemRarity[eqp_args.rarity].value < enums.ItemRarity[results[0].rarity].value:
             raise BotError(
                 'Equipment rarity cannot be lower than the first equipment. Was given:\n'
                 f'{'\n'.join(f'{i}. `{equip.rarity} {equip.level}+{equip.upgrade}`' for i, equip in enumerate(results))}'
@@ -395,18 +418,18 @@ async def equipment_view(interaction: Interaction, equip_string: str, language: 
         if upgrade_costs := upgrade_data.data.upgrade_costs.upgrades:  # upgrade > 0
             upgrade_level = upgrade_costs[-1].upgrade_level
             coefficient = upgrade_costs[-1].coefficient
-            embed_dict['Equipment Details'].append(equip_embed(equipment_data, upgrade_level, coefficient))
+            embed_dict['Equipment Details'].append(equip_embed(equipment_data, cs, upgrade_level, coefficient))
         else:
-            embed_dict['Equipment Details'].append(equip_embed(equipment_data))
+            embed_dict['Equipment Details'].append(equip_embed(equipment_data, cs))
 
     if len(equipments) == 1:
         embed_dict['Costs'].append(await upgrade_embed(upgrade_data))
     else:
         for upgrade_data in upgrades[1:]:
-            embed_dict['Costs'].append(await upgrade_embed(upgrade_data, results[0].level, results[0].upgrade, results[0].rarity))
+            embed_dict['Costs'].append(await upgrade_embed(upgrade_data, results[0].level, results[0].upgrade, enums.ItemRarity[results[0].rarity].value))
     
     # UW descriptions
-    if isinstance(equipments[0].data, resp.UniqueWeapon):
+    if isinstance(equipments[0].data, schemas.UniqueWeapon):
         embed_dict['UW Skills'] = [uw_embed(equipments[0])]
 
     return MixedView(interaction.user, embed_dict, 'Equipment Details')

@@ -1,19 +1,20 @@
+from typing import List, Optional
+
 from discord import app_commands, Interaction
 from discord.ext import commands
-from typing import  Optional, List
 
 from aabot.main import AABot
-from aabot.api import api, response
 from aabot.pagination import events as event_page
+from aabot.utils import api, assets
 from aabot.utils.alias import IdTransformer
-from aabot.utils import assets, enums
+from aabot.utils.command_utils import LanguageOptions
+from common import schemas
 
 class EventCommands(commands.Cog, name='Event Commands'):
     '''Commands for game events'''
 
     def __init__(self, bot):
         self.bot: AABot = bot
-
     
     @app_commands.command()
     @app_commands.describe(
@@ -22,11 +23,11 @@ class EventCommands(commands.Cog, name='Event Commands'):
     async def gachabanner(
         self,
         interaction: Interaction,
-        language: Optional[enums.Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows gacha banners'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=List[response.GachaPickup]
+            response_model=List[schemas.GachaPickup]
         )
         embed = await event_page.gacha_banner_embed(gacha_data, language)
         
@@ -41,11 +42,11 @@ class EventCommands(commands.Cog, name='Event Commands'):
         self, 
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[enums.Language]=None):
+        language: Optional[LanguageOptions]=None):
         '''Shows gacha history of a character'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=List[response.GachaPickup],
+            response_model=List[schemas.GachaPickup],
             query_params={
                 'char_id': character,
                 'is_active': False
@@ -55,6 +56,5 @@ class EventCommands(commands.Cog, name='Event Commands'):
         embed.set_thumbnail(url=assets.CHARACTER_THUMBNAIL.format(char_id=character, qlipha=False))
         await interaction.response.send_message(embed=embed)
 
-
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(EventCommands(bot))

@@ -1,15 +1,15 @@
 from collections import Counter
-from discord import Embed, Color, Interaction
 from io import StringIO
 from typing import List
 
-from aabot.api import response as resp, api
+from discord import Color, Embed, Interaction
+
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.views import MixedView
-from aabot.utils import emoji
+from aabot.utils import api, emoji
 from aabot.utils.assets import RAW_ASSET_BASE, SOUL_BONUS
-from aabot.utils.utils import human_format as hf, from_quest_id, decimal_format
-
+from aabot.utils.utils import decimal_format, from_quest_id, human_format as hf
+from common import enums, schemas
 
 def get_bonus_url(soul_list):
     c = Counter(soul_list)
@@ -35,12 +35,12 @@ def get_bonus_url(soul_list):
     bonus_url = SOUL_BONUS.format(bonus=bonus)
     return bonus_url
 
-def basic_enemy_field(enemy: resp.Enemy)->dict:
+def basic_enemy_field(enemy: schemas.Enemy)->dict:
     '''
     returns a basic embed field for an enemy
     '''
-    soul_emj = emoji.soul_emoji.get(enemy.element)  # TODO I made a big mistake
-    name = f"[{enemy.rarity}] Lv.{enemy.level} {enemy.name} {soul_emj}"
+    soul_emj = emoji.soul_emoji.get(enemy.element)
+    name = f"[{enums.ItemRarity(enemy.rarity).name}] Lv.{enemy.level} {enemy.name} {soul_emj}"
     value = (
                 f":crossed_swords: {hf(enemy.battle_params.attack)} :heart: {hf(enemy.battle_params.hp)} "
                 f":shield: {hf(enemy.battle_params.defense)}\n"
@@ -53,39 +53,39 @@ def basic_enemy_field(enemy: resp.Enemy)->dict:
     
     return {'name': name, 'value': value, 'inline': False}
 
-def base_param_text(params: resp.BaseParameters)->str:
+def base_param_text(params: schemas.BaseParameters, cs: schemas.CommonStrings)->str:
     text = (
         f'```json\n'
-        f'STR: {params.str:,}\n'
-        f'DEX: {params.dex:,}\n'
-        f'MAG: {params.mag:,}\n'
-        f'STA: {params.sta:,}```'
+        f'{cs.base_param[enums.BaseParameter.STR]}: {params.str:,}\n'
+        f'{cs.base_param[enums.BaseParameter.DEX]}: {params.dex:,}\n'
+        f'{cs.base_param[enums.BaseParameter.MAG]}: {params.mag:,}\n'
+        f'{cs.base_param[enums.BaseParameter.STA]}: {params.sta:,}```'
     )
     return text
 
-def battle_param_text(params: resp.BattleParameters)->str:
+def battle_param_text(params: schemas.BattleParameters, cs: schemas.CommonStrings)->str:
     text = (
         f'```json\n'
-        f'HP: {params.hp:,}\n'
-        f'ATK: {params.attack:,}\n'
-        f'DEF: {params.defense:,}\n'
-        f'DEF Break: {params.def_break:,}\n'
-        f'SPD: {params.speed:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.HP]}: {params.hp:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.ATK]}: {params.attack:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.DEF]}: {params.defense:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.DEF_BREAK]}: {params.def_break:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.SPD]}: {params.speed:,}\n'
         f'```'
         f'```json\n'
-        f'{f"PM.DEF Break: {params.def_break:,}":<24}{f"P.DEF: {params.pdef:,}":<22}\n'
-        f'{"":<24}{f"M.DEF: {params.mdef:,}":<22}\n'
-        f'{f"ACC: {params.acc:,}":<24}{f"EVD: {params.evade:,}":<22}\n'
-        f'{f"CRIT: {params.crit:,}":<24}{f"CRIT RES: {params.crit_res:,}":<22}\n'
-        f'{f"CRIT DMG Boost: {decimal_format(params.crit_dmg)}%":<24}{f"P.CRIT DMG Cut: {decimal_format(params.pcut)}%":<22}\n'
-        f'{"":<24}{f"M.CRIT DMG Cut: {decimal_format(params.mcut)}%":<22}\n'
-        f'{f"Debuff ACC: {params.debuff_acc:,}":<24}{f"Debuff RES: {params.debuff_res:,}":<22}\n'
-        f'{f"Counter: {decimal_format(params.counter)}%":<24}{f"HP Drain: {decimal_format(params.hp_drain)}%":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.PM_DEF_BREAK]}: {params.pmdb:,}":<24}{f"{cs.battle_param[enums.BattleParameter.P_DEF]}: {params.pdef:,}":<22}\n'
+        f'{"":<24}{f"{cs.battle_param[enums.BattleParameter.M_DEF]}: {params.mdef:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.ACC]}: {params.acc:,}":<24}{f"{cs.battle_param[enums.BattleParameter.EVD]}: {params.evade:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.CRIT]}: {params.crit:,}":<24}{f"{cs.battle_param[enums.BattleParameter.CRIT_RES]}: {params.crit_res:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.CRIT_DMG_BOOST]}: {decimal_format(params.crit_dmg)}%":<24}{f"{cs.battle_param[enums.BattleParameter.P_CRIT_DMG_CUT]}: {decimal_format(params.pcut)}%":<22}\n'
+        f'{"":<24}{f"{cs.battle_param[enums.BattleParameter.M_CRIT_DMG_CUT]}: {decimal_format(params.mcut)}%":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.DEBUFF_ACC]}: {params.debuff_acc:,}":<24}{f"{cs.battle_param[enums.BattleParameter.DEBUFF_RES]}: {params.debuff_res:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.COUNTER]}: {decimal_format(params.counter)}%":<24}{f"{cs.battle_param[enums.BattleParameter.HP_DRAIN]}: {decimal_format(params.hp_drain)}%":<22}\n'
         f'```'
     )
     return text
 
-def detailed_enemy_embed(enemy: resp.Enemy, version: str)->Embed:
+def detailed_enemy_embed(enemy: schemas.Enemy, cs: schemas.CommonStrings, version: str)->Embed:
     soul_emj = emoji.soul_emoji.get(enemy.element)  # TODO I made a big mistake
     name = f"[{enemy.rarity}] Lv.{enemy.level} {enemy.name} {soul_emj}"
 
@@ -97,11 +97,11 @@ def detailed_enemy_embed(enemy: resp.Enemy, version: str)->Embed:
 
     embed.add_field(
         name='Base Parameters',
-        value=base_param_text(enemy.base_params),
+        value=base_param_text(enemy.base_params, cs),
         inline=False)
     embed.add_field(
         name='Battle Parameters',
-        value=battle_param_text(enemy.battle_params),
+        value=battle_param_text(enemy.battle_params, cs),
         inline=False)
     embed.add_field(
         name='Skills',
@@ -109,7 +109,7 @@ def detailed_enemy_embed(enemy: resp.Enemy, version: str)->Embed:
             f'```json\n'
             f"Actives: {enemy.actives}\n"
             f"Passives: {enemy.passives}\n"
-            f"UW Rarity: {enemy.uw_rarity}\n"
+            f"UW Rarity: {enums.ItemRarity(enemy.uw_rarity).name}\n"
             f'```'
         )
     )
@@ -140,7 +140,7 @@ def add_resonance(embed:Embed, def_list: List):
             max_ind, name=max_field.name+resonance+' (High)', 
             value=max_field.value, inline=max_field.inline)
 
-def quest_view(interaction: Interaction, quest_data: resp.APIResponse[resp.Quest])->MixedView:
+def quest_view(interaction: Interaction, quest_data: schemas.APIResponse[schemas.Quest], cs: schemas.CommonStrings)->MixedView:
     embed_dict = {}
     quest = quest_data.data
 
@@ -162,14 +162,14 @@ def quest_view(interaction: Interaction, quest_data: resp.APIResponse[resp.Quest
     # Enemy Data
     enemy_embeds = []
     for enemy in quest.enemy_list:
-        enemy_embeds.append(detailed_enemy_embed(enemy, quest_data.version))
+        enemy_embeds.append(detailed_enemy_embed(enemy, cs, quest_data.version))
 
     embed_dict['Quest Data'] = [main_embed]
     embed_dict['Enemy Data'] = enemy_embeds
     
     return MixedView(interaction.user, embed_dict, 'Quest Data')
 
-async def tower_view(interaction: Interaction, tower_data: resp.APIResponse[resp.Tower])->MixedView:
+async def tower_view(interaction: Interaction, tower_data: schemas.APIResponse[schemas.Tower], cs: schemas.CommonStrings)->MixedView:
     embed_dict = {}
     tower = tower_data.data
     fixed_rewards = tower.fixed_rewards
@@ -208,7 +208,7 @@ async def tower_view(interaction: Interaction, tower_data: resp.APIResponse[resp
 
     enemy_embeds = []
     for enemy in tower.enemy_list:
-        enemy_embeds.append(detailed_enemy_embed(enemy, tower_data.version))
+        enemy_embeds.append(detailed_enemy_embed(enemy, cs, tower_data.version))
 
     embed_dict['Tower Data'] = [main_embed]
     embed_dict['Enemy Data'] = enemy_embeds

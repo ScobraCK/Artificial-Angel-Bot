@@ -1,6 +1,7 @@
-import discord
+from typing import Literal, Optional
+
+from discord import Object, HTTPException
 from discord.ext import commands
-from typing import Optional, Literal
 
 from aabot.main import AABot
 
@@ -98,7 +99,7 @@ class CogCommands(commands.Cog, name='Cog Commands'):
 	async def sync(
 		self,
 		ctx: commands.Context, 
-		guilds: commands.Greedy[discord.Object], 
+		guilds: commands.Greedy[Object], 
 		spec: Optional[Literal["~", "*", "^"]] = None) -> None:
 
 		if not guilds:
@@ -123,7 +124,7 @@ class CogCommands(commands.Cog, name='Cog Commands'):
 		for guild in guilds:
 			try:
 				await ctx.bot.tree.sync(guild=guild)
-			except discord.HTTPException:
+			except HTTPException:
 				pass
 			else:
 				ret += 1

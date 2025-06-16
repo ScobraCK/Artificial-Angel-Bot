@@ -1,13 +1,15 @@
+from typing import Optional
+
 from discord import app_commands, Interaction, Embed
 from discord.ext import commands
-from typing import Optional
-from aabot.main import AABot
 
-from aabot.db.crud import update_user, get_user, delete_user
-from aabot.db.database import SessionAABot
-from aabot.db.models import UserPreference
-from aabot.utils.enums import Server, Language
+from aabot.db.user import update_user, get_user, delete_user
+from aabot.main import AABot
 from aabot.utils.utils import possessive_form
+from aabot.utils.command_utils import LanguageOptions
+from common.database import AsyncSession as SessionAABot
+from common.enums import Server
+from common.models import UserPreference
 
 def user_embed(user: UserPreference, name: str):
     embed = Embed(
@@ -36,13 +38,13 @@ class UserCommands(commands.Cog, name='User Commands'):
     async def setpreference(
         self,
         interaction: Interaction,
-        language: Optional[Language],
+        language: Optional[LanguageOptions],
         server: Optional[Server],
         world: Optional[int]
     ):
         '''Sets a default input for language, server, and world settings when applicable. Ranking commands do not use preference data.'''
-        with SessionAABot() as session:
-            user = update_user(session, interaction.user.id, language, server, world)
+        async with SessionAABot() as session:
+            user = await update_user(session, interaction.user.id, language, server, world)
             embed = user_embed(user, interaction.user.display_name)
 
             await interaction.response.send_message(embed=embed)
@@ -53,8 +55,8 @@ class UserCommands(commands.Cog, name='User Commands'):
         interaction: Interaction
     ):
         '''View current preference setting. Ranking commands do not use preference data.'''
-        with SessionAABot() as session:
-            user = get_user(session, interaction.user.id)
+        async with SessionAABot() as session:
+            user = await get_user(session, interaction.user.id)
             name = interaction.user.display_name
             embed = user_embed(user, name)
             await interaction.response.send_message(embed=embed)
@@ -65,8 +67,8 @@ class UserCommands(commands.Cog, name='User Commands'):
         interaction: Interaction
     ):
         '''Deletes preference data.'''
-        with SessionAABot() as session:
-            result = delete_user(session, interaction.user.id)
+        async with SessionAABot() as session:
+            result = await delete_user(session, interaction.user.id)
             if result:
                 await interaction.response.send_message('Successfully deleted preference data.')
             else:

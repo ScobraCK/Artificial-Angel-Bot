@@ -1,17 +1,18 @@
-from typing import List
 from io import StringIO
 from itertools import chain
+from typing import List
+
 from discord import Color, Interaction
 
-import aabot.api.response as resp
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.views import DropdownView, MixedView
 from aabot.utils.assets import RAW_ASSET_BASE
-from aabot.utils.utils import remove_linebreaks, possessive_form, character_title
-
 from aabot.utils.emoji import level_emoji, rarity_emoji
+from aabot.utils.utils import character_title, possessive_form, remove_linebreaks
+from common import enums, schemas
 
-def skill_description(skills: List[resp.ActiveSkill|resp.PassiveSkill], uw_desc: resp.UWDescriptions, uw_name: str, include_name=True) -> str:
+
+def skill_description(skills: List[schemas.ActiveSkill|schemas.PassiveSkill], uw_desc: schemas.UWDescriptions, uw_name: str, include_name=True) -> str:
     if not skills:
         return None
 
@@ -20,18 +21,18 @@ def skill_description(skills: List[resp.ActiveSkill|resp.PassiveSkill], uw_desc:
     for skill in skills:
         if include_name:
             if skill.name == '*':
-                if skill.skill_infos[0].uw_rarity is None:  # Special skills such as Rosalie(SR), Paladea
+                if skill.skill_infos[0].uw_rarity == 0:  # Special skills such as Rosalie(SR), Paladea
                     continue
                 else:
                     name = f'### {uw_name}'  # UW passive
             else:
                 name = f'### {skill.name}'
-            if isinstance(skill, resp.ActiveSkill):
+            if isinstance(skill, schemas.ActiveSkill):
                 name += f' | CD: {skill.max_cooltime}'
             description.write(f'{name}\n')
 
         for info in skill.skill_infos:
-            if (rarity := info.uw_rarity):
+            if (rarity := enums.ItemRarity(info.uw_rarity).name):  # Convert to rarity str [SSR, UR, LR]
                 uw_description = getattr(uw_desc, rarity) if uw_desc else 'Description unavaliable.'
                 description.write(f"**{rarity} Weapon**{rarity_emoji.get(rarity)}\n{remove_linebreaks(uw_description)}\n")
             else:
@@ -43,7 +44,7 @@ def skill_description(skills: List[resp.ActiveSkill|resp.PassiveSkill], uw_desc:
 
     return description.getvalue()
 
-def uw_skill_description(uw: resp.UWDescriptions, uw_name: str = None) -> str: 
+def uw_skill_description(uw: schemas.UWDescriptions, uw_name: str = None) -> str: 
     if not uw:
         return None
     description = StringIO()
@@ -56,8 +57,8 @@ def uw_skill_description(uw: resp.UWDescriptions, uw_name: str = None) -> str:
 
 def skill_view(
     interaction: Interaction,
-    skill_data: resp.APIResponse[resp.Skills],
-    char_data: resp.APIResponse[resp.Character]):
+    skill_data: schemas.APIResponse[schemas.Skills],
+    char_data: schemas.APIResponse[schemas.Character]):
     skills = skill_data.data
     char = char_data.data
     embed_dict = {}
@@ -99,8 +100,8 @@ def skill_view(
 
 def skill_detail_view(
     interaction: Interaction,
-    skill_data: resp.APIResponse[resp.Skills],
-    char_data: resp.APIResponse[resp.Character]):
+    skill_data: schemas.APIResponse[schemas.Skills],
+    char_data: schemas.APIResponse[schemas.Character]):
     skills = skill_data.data
     char = char_data.data
     embed_dict = {}
@@ -110,12 +111,12 @@ def skill_detail_view(
         icon_url = RAW_ASSET_BASE + f"Characters/Skills/CSK_00{skill.id:07}.png"
         description = skill_description([skill], skills.uw_descriptions, char.uw, False)
         
-        if skill.name == '*' and skill.skill_infos[0].uw_rarity is None:  # Special skills such as Rosalie(SR), Paladea
+        if skill.name == '*' and skill.skill_infos[0].uw_rarity == 0:  # Special skills such as Rosalie(SR), Paladea
             title = 'Special Skill'
         else:
             title = skill.name
         
-        if isinstance(skill, resp.ActiveSkill):
+        if isinstance(skill, schemas.ActiveSkill):
             main_description = f'**CD:** {skill.max_cooltime}\n\n{description}'
         else:
             main_description = description
@@ -132,23 +133,25 @@ def skill_detail_view(
 
         # Skill level details
         for info in skill.skill_infos:
+            uw_rarity_str = enums.ItemRarity(info.uw_rarity).name
             # Common
-            if info.uw_rarity:
+            if uw_rarity_str:
                 if skills.uw_descriptions:
-                    info_description = f'{getattr(skills.uw_descriptions, info.uw_rarity)}\n\n'
+                    info_description = f'{getattr(skills.uw_descriptions, uw_rarity_str)}\n\n'
                 else:  # Unreleased char
                     info_description = 'Description unavaliable.\n\n'
             else:
                 info_description = f'{info.description}\n\n'
+
             info_description += (
                 '**Details**\n' 
                 f'```json\n'
                 f"Order Number: {info.order_number}\n"
                 f"Character Level: {info.level}\n"
-                f"Equipment Rarity: {info.uw_rarity}```"
+                f"Equipment Rarity: {uw_rarity_str}```"
             )
             # Active
-            if isinstance(skill, resp.ActiveSkill):
+            if isinstance(skill, schemas.ActiveSkill):
                 info_description += (
                     '**Cooldown Info**\n'
                     f'```json\n'
@@ -160,7 +163,7 @@ def skill_detail_view(
             # Passive
             else:
                 info_description += '**Subskills**\n'
-                subskills: List[resp.PassiveSubSkill] = info.subskill
+                subskills: List[schemas.PassiveSubSkill] = info.subskill
                 for sub in subskills:
                     info_description += (
                         '```json\n'

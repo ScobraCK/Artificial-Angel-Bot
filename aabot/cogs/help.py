@@ -1,8 +1,10 @@
-import discord
-from discord import app_commands
+from typing import Optional
+
+from discord import app_commands, Color, Embed, Interaction
 from discord.ext import commands
 from discord.utils import MISSING
-from typing import Any, List, Optional
+
+from aabot.main import AABot
 from aabot.utils.assets import RAW_ASSET_BASE
 
 EXCLUDE_COGS = ['Admin Commands', 'Cog Commands', 'Timer Cog']
@@ -30,7 +32,7 @@ def get_param_text(param: app_commands.Parameter)->str:
             param_text += f"Default: {default}\n"
     return param_text
 
-def command_help_embed(cmd_name: str, cmd: app_commands.Command)->discord.Embed:
+def command_help_embed(cmd_name: str, cmd: app_commands.Command)->Embed:
     if cmd:
         cmd_name = cmd.name
         params = cmd.parameters
@@ -50,13 +52,13 @@ def command_help_embed(cmd_name: str, cmd: app_commands.Command)->discord.Embed:
         if cmd.extras.get('help'):
             description += f"\n{cmd.extras['help']()}"
 
-        embed = discord.Embed(
+        embed = Embed(
             title=f"{cmd_name.title()} Command",
             description=description
         )
 
     else:
-        embed = discord.Embed(
+        embed = Embed(
             title='Command Not found',
             description=f'Could not find the command `{cmd_name}`. '
                 + f'Check if you spelled it correctly, or if think this is a bug, report in on the suport server. https://discord.gg/DyATxE7saX'
@@ -67,16 +69,16 @@ class HelpCommands(commands.Cog, name='Help Commands'):
     '''Contains the help command'''
 
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: AABot = bot
     
     @app_commands.command()
     @app_commands.describe(
         command='The command you want more info about'
     )
-    async def help(self, interaction: discord.Interaction, command: Optional[str]=None):
+    async def help(self, interaction: Interaction, command: Optional[str]=None):
         '''See the list of commands and how to use them'''
         if command is None:
-            embed = discord.Embed(
+            embed = Embed(
                 title= "Mertillier's guide to A.A.",
                 description="For detailed help for a command, use `/help [command]`\n"\
                     + "If you find any problems with the bot, join the support server: https://discord.gg/DyATxE7saX"
@@ -90,7 +92,7 @@ class HelpCommands(commands.Cog, name='Help Commands'):
             cmd = self.bot.tree.get_command(command)
             embed=command_help_embed(command, cmd)
              
-        embed.color = discord.Colour.green()
+        embed.color = Color.green()
         (
             embed.set_footer(text='Help command format inspired by Eresh Bot')
                 .set_thumbnail(url=RAW_ASSET_BASE + 'Characters/CHR_000029_00_s.png')
@@ -99,7 +101,7 @@ class HelpCommands(commands.Cog, name='Help Commands'):
         await interaction.response.send_message(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(HelpCommands(bot))
 
 

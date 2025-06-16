@@ -1,21 +1,21 @@
-from discord import app_commands, Interaction, Embed, Color
-from discord.ext import commands
 from itertools import dropwhile
 from typing import Optional, List
 
-from aabot.main import AABot
-from aabot.api import api
-from aabot.db.crud import get_alias
-from aabot.db.database import SessionAABot
+from discord import app_commands, Color, Embed, Interaction
+from discord.ext import commands
 
+from aabot.db.alias import get_alias
+from aabot.main import AABot
 from aabot.pagination import misc as misc_page
 from aabot.pagination.views import show_view
+from aabot.utils import api
 from aabot.utils.alias import IdTransformer
 from aabot.utils.assets import RAW_ASSET_BASE
 from aabot.utils.command_utils import apply_user_preferences
 from aabot.utils.error import BotError
-from aabot.utils.enums import Server
 from aabot.utils.utils import character_title
+from common.database import AsyncSession as SessionAABot
+from common.enums import Server
 
 class MiscCommands(commands.Cog, name='Misc Commands'):
     '''These are helpful miscellaneous commands'''
@@ -110,7 +110,7 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
 
         else:
             link_data = await api.fetch_api(
-                api.RAW_MASTER.format(mb='LevelLinkMB'),
+                api.MASTER_PATH.format(mb='LevelLinkMB'),
                 response_model=List[dict]
             )               
             link_data_list = link_data.data
@@ -159,8 +159,8 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer]
     ):
-        with SessionAABot() as session:
-            aliases = get_alias(session, character)
+        async with SessionAABot() as session:
+            aliases = await get_alias(session, character)
             if not aliases:
                 await interaction.response.send_message(f'No alias found for character `{character}`.')
             
@@ -170,5 +170,5 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
             await interaction.response.send_message(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: AABot):
 	await bot.add_cog(MiscCommands(bot))
