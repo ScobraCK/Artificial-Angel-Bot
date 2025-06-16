@@ -25,5 +25,5 @@ jobs:
         script: |
           cd ./Artificial-Angel-Bot
           git pull
-          docker compose down
-          docker compose up --build -d
+          # docker compose --profile prd down
+          # docker compose --profile prd up --build -d

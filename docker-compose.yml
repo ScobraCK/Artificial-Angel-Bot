@@ -7,10 +7,8 @@ services:
     env_file:
       - .env
     volumes:
-      - type: volume
-        source: mementodb
-        target: /usr/src/app/data
       - ./aabot:/app/aabot
+      - ./common:/app/common
     logging:
       options:
         max-file: "2"
@@ -30,6 +28,7 @@ services:
       - .env
     volumes:
       - ./api:/app/api
+      - ./common:/app/common
     restart: unless-stopped
     networks:
       - aa-network
@@ -90,9 +89,6 @@ services:
       - aa-network
 
 volumes:
-  mementodb:
-    name: mementodb
-    driver: local
   postgres-data:
     name: postgres-data
     driver: local
