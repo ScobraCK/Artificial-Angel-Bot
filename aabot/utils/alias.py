@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 
 from aabot.db.alias import get_all_alias, insert_alias
 from aabot.utils import api
+from aabot.utils.command_utils import LanguageOptions  # Only supported languages
 from aabot.utils.error import BotError
 from common.database import AsyncSession as SessionAABot
-from common.enums import Language
 from common.models import Alias
 
 def normalize_alias(string: str):
@@ -38,7 +38,7 @@ async def add_alias(session: AsyncSession, char_id: int, alias: str, is_custom=F
 async def auto_alias(session: Session, char_id: int, serial: int=None) -> List[Alias]:
     '''Automatically adds default alias. Add serial for quick adding alt character numbers.'''
     aliases = []
-    for language in Language:
+    for language in LanguageOptions:
         name_data = await api.fetch_name(char_id, language)
         name = name_data.data.name
         if serial is not None:

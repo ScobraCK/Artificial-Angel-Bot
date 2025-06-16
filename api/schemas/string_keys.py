@@ -12,7 +12,7 @@ CHARACTER_TITLE_KEY = '[CharacterSubName{}]'
 async def get_char_name(session: AsyncSession, char_id: int, language: enums.Language) -> schemas.Name:
     name_string = await read_string_key_language(session, CHARACTER_NAME_KEY.format(char_id), language)
     if not name_string:
-        raise APIError(f'[CharacterName{char_id}] does not exist.')
+        raise APIError(f'[CharacterName{char_id}] for language {language} does not exist.')
     name = schemas.Name(
         char_id = char_id,
         name = name_string,
