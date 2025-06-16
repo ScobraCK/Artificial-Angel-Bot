@@ -1,29 +1,25 @@
-name: Restart Containers
+name: Manual Deploy
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-    - aabot/**
-    - api/**
-  
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout
+    - name: Checkout repo (for context, not required for SSH)
       uses: actions/checkout@v4
 
-    - name: Execute SSH Commands
+    - name: SSH into server and deploy
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-          cd ./Artificial-Angel-Bot
+          cd ~/Artificial-Angel-Bot
           git pull
           docker compose --profile prd down
-          docker compose --profile prd up -d
+          docker compose --profile prd up --build -d
