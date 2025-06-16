@@ -44,7 +44,7 @@ async def update_master(key: str, session: SessionDep, request: Request):
         characters_added = inserted_ids if inserted_ids else 'None'
         embed = {
             "title": "🔄 Master Update",
-            "description": f"**Master version**: {md.version}\n**Files Updated**\n```\n{files_updated}\n**Characters Added\n**```{characters_added}```",
+            "description": f"**Master version**: {md.version}\n**Files Updated**\n```\n{files_updated}```\n**Characters Added\n**```\n{characters_added}```",
             "color": 0x2ecc71
         }
         async with AsyncClient() as client:
