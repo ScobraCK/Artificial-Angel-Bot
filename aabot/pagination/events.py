@@ -8,7 +8,7 @@ from aabot.utils import api, emoji
 from aabot.utils.utils import character_title
 from common import schemas
 from common.enums import Language, Server
-from common.timezones import check_active
+from common.timezones import check_active, convert_from_jst
 
 async def generate_banner_text(gacha_list: List[schemas.GachaPickup], language: Language):
     banner_text = StringIO()
@@ -20,7 +20,7 @@ async def generate_banner_text(gacha_list: List[schemas.GachaPickup], language: 
 
         # Format the text for each banner using StringIO
         banner_text.write(f"**{name}**\n")
-        banner_text.write(f"**Date:** <t:{gacha.start}> ~ <t:{gacha.end}>\n")
+        banner_text.write(f"**Date:** <t:{convert_from_jst(gacha.start)}> ~ <t:{convert_from_jst(gacha.end)}>\n")
         banner_text.write(f"**Ongoing:** {ongoing} | **Run {rerun_count}**\n\n")
 
     return banner_text.getvalue()
