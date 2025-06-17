@@ -9,6 +9,7 @@ services:
     volumes:
       - ./aabot:/app/aabot
       - ./common:/app/common
+      - ./log/aabot:/app/log/aabot
     logging:
       options:
         max-file: "2"
@@ -29,6 +30,7 @@ services:
     volumes:
       - ./api:/app/api
       - ./common:/app/common
+      - ./log/api:/app/log/api
     restart: unless-stopped
     networks:
       - aa-network
@@ -57,6 +59,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
+      - ./log/nginx:/var/log/nginx
     networks:
       - aa-network
 
@@ -85,6 +88,7 @@ services:
     volumes:
       - ./nginx-local.conf:/etc/nginx/nginx.conf:ro
       - ./certs:/etc/nginx/certs
+      - ./log/nginx:/var/log/nginx
     networks:
       - aa-network
 

@@ -139,3 +139,4 @@ nginx-local.conf
 aabot/logs/*
 api/logs/*
 .vscode/
+log/*

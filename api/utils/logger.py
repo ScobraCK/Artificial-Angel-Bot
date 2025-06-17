@@ -4,13 +4,13 @@ import logging.handlers
 import sys
 from pathlib import Path
 
-log_dir = Path("api/logs")
+log_dir = Path("log/api")
 log_dir.mkdir(exist_ok=True)
 
 text_dir = log_dir / "text"
 text_dir.mkdir(exist_ok=True)
 
-log_file = log_dir / "app.log"
+log_file = log_dir / "api.log"
 
 rotating_handler = logging.handlers.RotatingFileHandler(
     log_file,

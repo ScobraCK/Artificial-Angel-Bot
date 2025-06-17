@@ -2,7 +2,7 @@ import logging
 import logging.handlers
 from pathlib import Path
 
-log_dir = Path("aabot/logs")
+log_dir = Path("log/aabot")
 log_dir.mkdir(exist_ok=True)
 log_file = log_dir / "bot.log"
 
