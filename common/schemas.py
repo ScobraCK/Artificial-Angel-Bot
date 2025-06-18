@@ -240,23 +240,20 @@ class Rune(ItemBase):
     parameter: Union[BaseParameterModel, BattleParameterModel] = Field(...)
     category: enums.RuneType = Field(..., validation_alias='CategoryId')
     level: int = Field(..., validation_alias='Lv')
-    sphere_type_: int = Field(
-        ..., ge=0, le=3,
-        exclude=True,
-        validation_alias='SphereType'
-    )
+    sphere_type: int = Field(..., ge=0, le=3, validation_alias='SphereType', description='Size of rune icon')
     icon: Union[int, SkipJsonSchema[None]] = Field(None)  # added in validation, icon = {Category:02}{SphereType:02}
 
     @model_validator(mode='wrap')
     @classmethod
     def set_param_and_icon(cls, data: Any, handler: ModelWrapValidatorHandler[Self]) -> Any:
-        if data.get('BaseParameterChangeInfo') is not None:
-            data['parameter'] = data.get('BaseParameterChangeInfo')
-        else:
-            data['parameter'] = data.get('BattleParameterChangeInfo')  # Either one should always be present
+        if data.get('parameter') is None:  # parameter may be already set during transformer
+            if data.get('BaseParameterChangeInfo') is not None:
+                data['parameter'] = data.get('BaseParameterChangeInfo')
+            else:
+                data['parameter'] = data.get('BattleParameterChangeInfo')  # Either one should always be present
 
         rune = handler(data)
-        rune.icon = int(f'{rune.category.value:02}{rune.sphere_type_:02}')
+        rune.icon = int(f'{rune.category.value:02}{rune.sphere_type:02}')
 
         return rune
 
@@ -328,7 +325,7 @@ class EquipmentFragment(ItemBase):
     def format_description(self, description: str) -> str:
         return description.format(self.equip_name, self.required_count)
 
-type Item = Union[ItemBase, EquipmentFragment, CharacterItem, CharacterFragment, EquipmentSetMaterial, Rune, TreasureChest]
+type Item = Union[EquipmentFragment, CharacterItem, CharacterFragment, EquipmentSetMaterial, Rune, TreasureChest, ItemBase]
 
 # PvE
 class BaseParameters(APIBaseModel):

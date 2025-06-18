@@ -49,17 +49,16 @@ async def get_item(md: MasterData, payload: requests.ItemRequest) -> schemas.Ite
             item = schemas.Rune(**rune_data)
         elif item_type == enums.ItemType.TreasureChest:
             treasure_data = await md.search_id(payload.item_id, 'TreasureChestMB')
-            item = schemas.ItemBase(**treasure_data, ItemId=payload.item_id, ItemType=item_type)
+            item = schemas.TreasureChest(**treasure_data, ItemId=payload.item_id, ItemType=item_type)
         else:
             item_data = next(await md.search_filter('ItemMB', ItemId=payload.item_id, ItemType=payload.item_type))
             item = schemas.ItemBase(**item_data)
+        return item
     except TypeError:  # None result from search_id
         raise APIError('Item could not be found.')
     except StopIteration:  # Not found
         raise APIError('Item could not be found or given item type is not supported.')
     
-    return item
-
 '''
 using MementoMori.Ortega.Common.Utils;
 using MementoMori.Ortega.Share;
