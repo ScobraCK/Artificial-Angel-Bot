@@ -40,7 +40,7 @@ def basic_enemy_field(enemy: schemas.Enemy)->dict:
     returns a basic embed field for an enemy
     '''
     soul_emj = emoji.soul_emoji.get(enemy.element)
-    name = f"[{enums.ItemRarity(enemy.rarity).name}] Lv.{enemy.level} {enemy.name} {soul_emj}"
+    name = f"[{enums.CharacterRarity(enemy.rarity).name.replace('Plus', '+')}] Lv.{enemy.level} {enemy.name} {soul_emj}"
     value = (
                 f":crossed_swords: {hf(enemy.battle_params.attack)} :heart: {hf(enemy.battle_params.hp)} "
                 f":shield: {hf(enemy.battle_params.defense)}\n"
@@ -179,7 +179,7 @@ async def tower_view(interaction: Interaction, tower_data: schemas.APIResponse[s
 
     main_embed = BaseEmbed(
         tower_data.version,
-        title=f"Tower of {tower.tower_type} - Floor {tower.floor}",
+        title=f"Tower of {enums.TowerType(tower.tower_type).name} - Floor {tower.floor}",
         color=Color.red()
     )
 
