@@ -77,15 +77,15 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
 
     return gacha_list
 
-async def get_gacha(md: MasterData, char_id: int=None, is_active=True) -> list[schemas.GachaPickup]:
+async def get_gacha(md: MasterData, char_id: int=None, is_active=True, include_future=False) -> list[schemas.GachaPickup]:
     gacha_list = await parse_gacha(md)
     filtered = []
     for gacha in gacha_list:
         if char_id:
             if gacha.char_id != char_id:
-                continue    
+                continue
         if is_active:
-            if not check_active(gacha.start, gacha.end, Server.Japan):
+            if not check_active(gacha.start, gacha.end, Server.Japan, include_future=include_future):
                 continue
         filtered.append(gacha)
     return filtered

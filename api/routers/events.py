@@ -23,5 +23,5 @@ async def filtered_req(
     payload: GachaRequest = Depends()
     ):
     md: MasterData = request.app.state.md
-    gacha = await get_gacha(md, payload.char_id, payload.is_active)
+    gacha = await get_gacha(md, payload.char_id, payload.is_active, payload.include_future)
     return APIResponse[List[schemas.GachaPickup]].create(request, gacha)

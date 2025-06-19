@@ -49,6 +49,7 @@ class EquipmentCostRequest(BaseModel):
 class GachaRequest(BaseModel):
     char_id: Optional[int] = Field(None, description='Character ID to filter by')
     is_active: bool = Field(True, description='Filter by currently active banners')
+    include_future: bool = Field(False, description='Includes future banners even when is_active is True. Ignored if is_active is False.')
 
 # Item
 class ItemRequest(BaseModel):

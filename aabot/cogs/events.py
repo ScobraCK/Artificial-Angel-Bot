@@ -27,7 +27,10 @@ class EventCommands(commands.Cog, name='Event Commands'):
         '''Shows gacha banners'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=List[schemas.GachaPickup]
+            response_model=List[schemas.GachaPickup],
+            query_params={
+                'include_future': True
+            }
         )
         embed = await event_page.gacha_banner_embed(gacha_data, language)
         
