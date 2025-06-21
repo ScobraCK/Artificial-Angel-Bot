@@ -29,8 +29,6 @@ async def parse_skill(md: MasterData, id: int) -> Union[schemas.ActiveSkill, sch
     else:  # Check Passive
         skill_data = await md.search_id(id, 'PassiveSkillMB')
         if skill_data: # Not found
-            if skill_data.get('NameKey') is None:
-                skill_data['NameKey'] = '*'  # Skill 57005 and some pve skills have null names
             return schemas.PassiveSkill(**skill_data)
     raise APIError(f'Could not find skill id of {id}')
 

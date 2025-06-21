@@ -1,12 +1,12 @@
 # from fastapi import Request
 from datetime import datetime
 from pydantic import (
-    AliasChoices, AliasPath, BaseModel, ConfigDict, Field,
+    AliasChoices, AliasPath, BeforeValidator, BaseModel, ConfigDict, Field,
     ModelWrapValidatorHandler, TypeAdapter,
     field_serializer, model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
-from typing import Any, Dict, Generic, List, Literal, Optional, Union, Self, Type, TypeVar
+from typing import Annotated, Any, Dict, Generic, List, Literal, Optional, Union, Self, Type, TypeVar
 
 from common import enums
 
@@ -399,7 +399,7 @@ class Skills(APIBaseModel):
 
 class ActiveSkill(APIBaseModel):
     id: int = Field(..., validation_alias='Id')
-    name: str = Field(..., validation_alias='NameKey')
+    name: Annotated[str, BeforeValidator(lambda v: v or '')] = Field(validation_alias='NameKey', description='null converted to empty string')
     skill_infos: List['SkillInfo'] = Field(..., validation_alias='ActiveSkillInfos')
     condition: str = Field(..., validation_alias='ActiveSkillConditions')
     init_cooltime: int = Field(..., validation_alias='SkillInitCoolTime')
@@ -407,7 +407,7 @@ class ActiveSkill(APIBaseModel):
 
 class PassiveSkill(APIBaseModel):
     id: int = Field(..., validation_alias='Id')
-    name: str = Field(validation_alias='NameKey')
+    name: Annotated[str, BeforeValidator(lambda v: v or '')] = Field(validation_alias='NameKey', description='null converted to empty string')
     skill_infos: List['SkillInfo'] = Field(..., validation_alias='PassiveSkillInfos')
 
 class PassiveSubSkill(APIBaseModel):
@@ -419,7 +419,7 @@ class PassiveSubSkill(APIBaseModel):
 
 class SkillInfo(APIBaseModel):
     order_number: int = Field(..., validation_alias='OrderNumber')
-    description: str = Field(..., validation_alias='DescriptionKey')
+    description: Annotated[str, BeforeValidator(lambda v: v or '')] = Field(validation_alias='DescriptionKey', description='null converted to empty string')
     level: int = Field(..., validation_alias='CharacterLevel')
     uw_rarity: enums.ItemRarity = Field(..., validation_alias='EquipmentRarityFlags')
     blessing_item: int = Field(..., validation_alias='BlessingItemId')
