@@ -449,6 +449,7 @@ class Player(BaseModel):
         from_attributes = True
 
 class PlayerRankInfo(BaseModel):
+    id: int
     name: str
     server: int
     world: int
@@ -484,6 +485,7 @@ class Guild(BaseModel):
         from_attributes = True
 
 class GuildRankInfo(BaseModel):
+    id: int
     name: str
     server: int
     world: int

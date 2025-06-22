@@ -115,6 +115,7 @@ async def get_top_players(
     }
 
     stmt = select(
+        PlayerORM.id,
         PlayerORM.name,
         PlayerORM.server,
         PlayerORM.world,
@@ -147,6 +148,7 @@ async def get_top_guilds(
     server: Optional[int] = None,
 ):
     stmt = select(
+        GuildORM.id,
         GuildORM.name,
         GuildORM.server,
         GuildORM.world,
@@ -167,15 +169,15 @@ async def get_top_guilds(
 async def get_player(session: AsyncSession, player_id: int):
     stmt = select(PlayerORM).where(PlayerORM.id == player_id)
     result = await session.execute(stmt)
-    return result.fetchone()
+    return result.scalar_one_or_none()
 
 async def get_guild(session: AsyncSession, guild_id: int):
     stmt = select(GuildORM).where(GuildORM.id == guild_id)
     result = await session.execute(stmt)
-    return result.fetchone()
+    return result.scalar_one_or_none()
 
-async def get_guild_members(session: AsyncSession, guild_id: int):
+async def get_guild_members(session: AsyncSession, guild_id: int) -> List[PlayerORM]:
     '''Only shows members in the DB'''
     stmt = select(PlayerORM).where(PlayerORM.guild_id == guild_id)
     result = await session.execute(stmt)
-    return result.all()
+    return result.scalars().all()
