@@ -61,7 +61,7 @@ async def guild_ranking(
     '/guild/{guild_id}',
     summary='Guild',
     description='Returns guild data',
-    response_model=APIResponse[schemas.Guild]
+    response_model=APIResponse[List[schemas.Player]]
 )
 async def guild(
     session: SessionDep,
@@ -77,9 +77,9 @@ async def guild(
     '/guild/{guild_id}/members',
     summary='Guild Members',
     description='Returns guild member data. Only returns player data existing in the database.',
-    response_model=APIResponse[schemas.Guild]
+    response_model=APIResponse[List[schemas.Player]]
 )
-async def guild_member(
+async def guild_members(
     session: SessionDep,
     request: Request,
     guild_id: int

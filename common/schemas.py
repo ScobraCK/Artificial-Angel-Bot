@@ -434,10 +434,10 @@ class Player(BaseModel):
     rank: int
     quest_id: int
     tower_id: int
-    azure_tower_id: int
-    crimson_tower_id: int
-    emerald_tower_id: int
-    amber_tower_id: int
+    azure_tower_id: Optional[int]
+    crimson_tower_id: Optional[int]
+    emerald_tower_id: Optional[int]
+    amber_tower_id: Optional[int]
     icon_id: int
     guild_id: Optional[int]
     guild_join_time: Optional[int]
