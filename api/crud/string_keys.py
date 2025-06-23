@@ -3,7 +3,6 @@ from itertools import batched
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from typing import List
 
 from api.utils.masterdata import MasterData
 from common.enums import Language
@@ -86,7 +85,7 @@ async def read_string_key_language(session: AsyncSession, key: str, language: La
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
-async def read_string_key_language_bulk(session: AsyncSession, keys: List[str], language: Language) -> dict[str, str]:
+async def read_string_key_language_bulk(session: AsyncSession, keys: list[str], language: Language) -> dict[str, str]:
     if not isinstance(language, Language):
         raise ValueError(f'{language} is not a recognized language')
 

@@ -1,11 +1,9 @@
-from typing import List, Tuple, Union
-
 from api.utils.masterdata import MasterData
 from api.utils.error import APIError
 from api.schemas.equipment import search_uw_info
 from common import schemas
 
-async def find_character_skill_ids(md: MasterData, id: int) -> Tuple[List[int], List[int]]:
+async def find_character_skill_ids(md: MasterData, id: int) -> tuple[list[int], list[int]]:
     char_data = await md.search_id(id, 'CharacterMB')
     if not char_data:
         raise APIError(f'Could not find character id {id}')
@@ -22,7 +20,7 @@ async def find_uw_descriptions(md: MasterData, character: int) -> schemas.UWDesc
     uw_desc = await md.search_id(desc_id, 'EquipmentExclusiveSkillDescriptionMB')
     return schemas.UWDescriptions(**uw_desc)
 
-async def parse_skill(md: MasterData, id: int) -> Union[schemas.ActiveSkill, schemas.PassiveSkill]:
+async def parse_skill(md: MasterData, id: int) -> schemas.ActiveSkill|schemas.PassiveSkill:
     skill_data = await md.search_id(id, 'ActiveSkillMB')
     if skill_data:  # Active
         return schemas.ActiveSkill(**skill_data)
@@ -32,7 +30,7 @@ async def parse_skill(md: MasterData, id: int) -> Union[schemas.ActiveSkill, sch
             return schemas.PassiveSkill(**skill_data)
     raise APIError(f'Could not find skill id of {id}')
 
-async def get_skill_id(md: MasterData, skill_id: int) -> Union[schemas.ActiveSkill, schemas.PassiveSkill]:
+async def get_skill_id(md: MasterData, skill_id: int) -> schemas.ActiveSkill|schemas.PassiveSkill:
     return await parse_skill(md, skill_id)
 
 async def get_skills_char(md: MasterData, char_id: int) -> schemas.Skills:

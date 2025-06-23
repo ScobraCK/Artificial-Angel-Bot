@@ -1,5 +1,3 @@
-from typing import Optional
-
 from discord import app_commands, Interaction
 from discord.ext import commands
 
@@ -126,7 +124,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         self,
         interaction: Interaction,
         character: int,
-        serial: Optional[int]
+        serial: int|None
     ):
         async with SessionAABot() as session:
             results = await auto_alias(session, character, serial=serial)

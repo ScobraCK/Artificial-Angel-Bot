@@ -1,5 +1,3 @@
-from typing import Optional
-
 from discord import app_commands, Color, Embed, Interaction
 from discord.ext import commands
 from discord.utils import MISSING
@@ -75,7 +73,7 @@ class HelpCommands(commands.Cog, name='Help Commands'):
     @app_commands.describe(
         command='The command you want more info about'
     )
-    async def help(self, interaction: Interaction, command: Optional[str]=None):
+    async def help(self, interaction: Interaction, command: str|None=None):
         '''See the list of commands and how to use them'''
         if command is None:
             embed = Embed(

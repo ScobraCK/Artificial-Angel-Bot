@@ -1,11 +1,12 @@
-from typing import List
+from collections.abc import Callable
 import discord
 
 class MyView(discord.ui.View):
     def __init__(self, user: discord.User, **kwargs):  # kwargs to ignore if called from ButtonView
-        super().__init__(timeout=180)
+        super().__init__(timeout=240)
         self.user=user
-        self.embed = None
+        self.message: discord.InteractionMessage = None
+        self.embed: discord.Embed|Callable[discord.Embed] = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         check = (interaction.user.id == self.user.id)
@@ -21,71 +22,24 @@ class MyView(discord.ui.View):
             item.disabled = True
         await self.message.edit(view=self)
 
+    async def update_view(self, interaction: discord.Interaction):
+        '''Updates the actual message'''
+        if self.message:
+            if interaction.response.is_done():  # deffered?
+                await interaction.followup.send(embed=self.embed, view=self)
+            else:
+                await interaction.response.edit_message(embed=self.embed, view=self)
+
     async def update(self):
+        '''Override to update the view state'''
         pass
 
-class ButtonViewOLD(MyView):
-    def __init__(self, user: discord.User, embeds: List[discord.Embed]):
-        super().__init__(user)
-        self.current_page = 1
-        self.max_page=len(embeds)
-        self.embeds = embeds
-        self.embed = embeds[0]
-        self.mid_btn.label = f'1/{self.max_page}'
-
-    async def btn_update(self):
-        if self.current_page == 1:
-            self.left2_btn.disabled = True
-            self.left_btn.disabled = True
-        else:
-            self.left2_btn.disabled = False
-            self.left_btn.disabled = False
-
-        if self.current_page == self.max_page:
-            self.right_btn.disabled = True
-            self.right2_btn.disabled = True
-        else:
-            self.right_btn.disabled = False
-            self.right2_btn.disabled = False
-
-        self.mid_btn.label = f"{self.current_page}/{self.max_page}"
-
-    @discord.ui.button(label="<<", disabled=True)
-    async def left2_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.current_page += -10
-        if self.current_page < 1:
-            self.current_page = 1
-        self.embed =self.embeds[self.current_page-1]
-        await self.btn_update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
-    @discord.ui.button(label="<", disabled=True)
-    async def left_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.current_page += -1
-        self.embed =self.embeds[self.current_page-1]
-        await self.btn_update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
-    @discord.ui.button(label="1/1", disabled=True)
-    async def mid_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass
-
-    @discord.ui.button(label=">", disabled=True)
-    async def right_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.current_page += 1
-        self.embed =self.embeds[self.current_page-1]
-        await self.btn_update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
-    @discord.ui.button(label=">>", disabled=True)
-    async def right2_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.current_page += 10
-        if self.current_page > self.max_page:
-            self.current_page = self.max_page
-        self.embed =self.embeds[self.current_page-1]
-        await self.btn_update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
-
+class PageSelect(discord.ui.Modal, title = "Select Page"):
+    page = discord.ui.TextInput(label="Page", placeholder="Enter a page number", required=True, min_length=1, max_length=3)
+        
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # likely just burying this defer into nowhere
+        
 class ButtonView(MyView):
     def __init__(self, user: discord.User, embed_dict: dict[str, list[discord.Embed]], key='default'):
         super().__init__(user, embed_dict=embed_dict, key=key)  # If MixedView calls DropdownView
@@ -98,12 +52,13 @@ class ButtonView(MyView):
         # Initialize buttons
         self.left2_btn = discord.ui.Button(label="<<", disabled=True)
         self.left_btn = discord.ui.Button(label="<", disabled=True)
-        self.mid_btn = discord.ui.Button(label=f'1/{self.max_page}', disabled=True)
+        self.mid_btn = discord.ui.Button(label=f'1/{self.max_page}')
         self.right_btn = discord.ui.Button(label=">", disabled=True)
         self.right2_btn = discord.ui.Button(label=">>", disabled=True)
 
         self.left2_btn.callback = self.left2_btn_callback
         self.left_btn.callback = self.left_btn_callback
+        self.mid_btn.callback = self.mid_btn_callback
         self.right_btn.callback = self.right_btn_callback
         self.right2_btn.callback = self.right2_btn_callback
         
@@ -128,28 +83,38 @@ class ButtonView(MyView):
         self.current_page = max(1, self.current_page - 10)
         self.embed = self.embeds[self.current_page - 1]
         await self.update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
+        await self.update_view(interaction)
 
     async def left_btn_callback(self, interaction: discord.Interaction):
         self.current_page = max(1, self.current_page - 1)
         self.embed = self.embeds[self.current_page - 1]
         await self.update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
+        await self.update_view(interaction)
 
+    async def mid_btn_callback(self, interaction: discord.Interaction):
+        modal = PageSelect()
+        await interaction.response.send_modal(modal)
+        await modal.wait()
+        
+        self.current_page = int(modal.page.value)
+        self.embed = self.embeds[self.current_page - 1]
+        await self.update()
+        await self.update_view(interaction)
+        
     async def right_btn_callback(self, interaction: discord.Interaction):
         self.current_page = min(self.max_page, self.current_page + 1)
         self.embed = self.embeds[self.current_page - 1]
         await self.update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
+        await self.update_view(interaction)
 
     async def right2_btn_callback(self, interaction: discord.Interaction):
         self.current_page = min(self.max_page, self.current_page + 10)
         self.embed = self.embeds[self.current_page - 1]
         await self.update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
+        await self.update_view(interaction)
 
 class DropdownView(MyView):
-    def __init__(self, user: discord.User, embed_dict: dict[str, List[discord.Embed]], key='default'):
+    def __init__(self, user: discord.User, embed_dict: dict[str, list[discord.Embed]], key='default'):
         super().__init__(user, embed_dict=embed_dict, key=key)  # If MixedView calls ButtonView
         self.key = key
         self.embed_dict = embed_dict
@@ -164,7 +129,7 @@ class DropdownView(MyView):
             options=options
         )
         self.dropdown.callback = self.dropdown_callback
-        self.add_item(self.dropdown)        
+        self.add_item(self.dropdown)    
     
     async def update(self):
         for option in self.dropdown.options:
@@ -175,7 +140,7 @@ class DropdownView(MyView):
         self.embeds = self.embed_dict.get(self.key)
         self.embed = self.embeds[0]
         await self.update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
+        await self.update_view(interaction)
 
 class MixedView(DropdownView, ButtonView):
     def __init__(self, user: discord.User, embed_dict: dict[str, list[discord.Embed]], key='default'):
@@ -198,7 +163,8 @@ class MixedView(DropdownView, ButtonView):
         self.max_page = len(self.embeds)
         self.current_page = 1
         await self.update()
-        await interaction.response.edit_message(embed=self.embed, view=self)
+        await self.update_view(interaction)
+
 
 async def show_view(interaction: discord.Interaction, view: MyView, defered=False):
     await view.update()
@@ -208,4 +174,4 @@ async def show_view(interaction: discord.Interaction, view: MyView, defered=Fals
         await interaction.response.send_message(embed=view.embed, view=view)
     message = await interaction.original_response()
     view.message = message
-           
+

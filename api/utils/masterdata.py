@@ -1,7 +1,7 @@
-import json
 import httpx
 import asyncio
-from typing import Iterator, Optional, List
+from collections.abc import Iterator
+
 from api.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,7 +43,7 @@ class MasterData:
             resp.raise_for_status()
             return resp.json()
 
-    async def _preload(self, exclude: Optional[set] = None) -> List[str]:
+    async def _preload(self, exclude: set|None = None) -> list[str]:
         if exclude is None:
             exclude = {'AutoBattleEnemyMB', 'BossBattleEnemyMB'}  # large file
         async with self.lock:
@@ -58,7 +58,7 @@ class MasterData:
     async def _fetch_and_store_mb(self, mb: str) -> None:
         self.data[mb] = await self._fetch_MB(mb)
 
-    async def load_MB(self, mb_list: str|List[str]):
+    async def load_MB(self, mb_list: str|list[str]):
         if isinstance(mb_list, str):
             mb_list = [mb_list]
         await self.update_version()  # don't lock while locking
@@ -78,7 +78,7 @@ class MasterData:
                 logger.info(f'Added {mb} - {self.version}')
         return self.data[mb]
 
-    async def update_version(self) -> List[str]:
+    async def update_version(self) -> list[str]:
         new_version = await self._fetch_version()
         if new_version == self.version:
             return []
@@ -103,7 +103,7 @@ class MasterData:
             logger.info('Done updating')
         return updates
 
-    async def search_id(self, id: int, mb: str) -> Optional[dict]:
+    async def search_id(self, id: int, mb: str) -> dict|None:
         mb_data = await self.get_MB(mb)
         return next((item for item in mb_data if item["Id"] == id), None)
 

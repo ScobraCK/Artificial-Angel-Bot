@@ -1,4 +1,3 @@
-from typing import List, Optional
 from re import split
 
 from discord import app_commands, Interaction
@@ -29,8 +28,8 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
     async def temple(
         self,
         interaction: Interaction,
-        server: Optional[Server] = None,
-        world: Optional[int] = None
+        server: Server|None = None,
+        world: int|None = None
     ):
         '''View Temple'''
         world_id = to_world_id(server, world)
@@ -67,8 +66,8 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
     async def grouprankings(
         self,
         interaction: Interaction,
-        server: Optional[Server] = None,
-        world: Optional[int] = None
+        server: Server|None = None,
+        world: int|None = None
     ):             
         '''Guild rankings by group'''
         world_id = to_world_id(server, world)
@@ -95,7 +94,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.GUILD_RANKING_PATH,
-            response_model=List[schemas.GuildRankInfo],
+            response_model=list[schemas.GuildRankInfo],
             query_params={'count': 200, 'world_id': worlds}
         )
 
@@ -113,9 +112,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
     async def guildrankings(
         self,
         interaction: Interaction,
-        server: Optional[Server] = None,
-        world: Optional[int] = None,
-        world_ids: Optional[str] = None
+        server: Server|None = None,
+        world: int|None = None,
+        world_ids: str|None = None
     ):
         '''Guild rankings'''
         if world and not server:
@@ -151,7 +150,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.GUILD_RANKING_PATH,
-            response_model=List[schemas.GuildRankInfo],
+            response_model=list[schemas.GuildRankInfo],
             query_params=query_params
         )
                 
@@ -175,9 +174,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         category: mentemori_page.PlayerCategory=mentemori_page.PlayerCategory.BP,
         limit: app_commands.Range[int, 1, 5000]=1000,
         show_all: bool=False,
-        server: Optional[Server] = None,
-        world: Optional[int] = None,
-        world_ids: Optional[str] = None
+        server: Server|None = None,
+        world: int|None = None,
+        world_ids: str|None = None
     ):
         '''Player rankings for server'''
         if world and not server:
@@ -213,7 +212,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.PLAYER_RANKING_PATH,
-            response_model=List[schemas.PlayerRankInfo],
+            response_model=list[schemas.PlayerRankInfo],
             query_params=query_params
         )
                 
@@ -235,9 +234,9 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         interaction: Interaction,
         category: mentemori_page.TowerCategory=mentemori_page.TowerCategory.Infinity,
         limit: app_commands.Range[int, 1, 5000]=1000,
-        server: Optional[Server] = None,
-        world: Optional[int] = None,
-        world_ids: Optional[str] = None
+        server: Server|None = None,
+        world: int|None = None,
+        world_ids: str|None = None
     ):
         '''Tower rankings'''
         if world and not server:
@@ -273,7 +272,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
         ranking_data = await api.fetch_api(
             api.PLAYER_RANKING_PATH,
-            response_model=List[schemas.PlayerRankInfo],
+            response_model=list[schemas.PlayerRankInfo],
             query_params=query_params
         )
                 
@@ -293,7 +292,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         interaction: Interaction, 
         gacha: mentemori_page.GachaLog,
         server: Server,
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows IoC or IoSG logs'''
         await interaction.response.defer()
         view = await mentemori_page.gacha_view(interaction, gacha, server, language)
@@ -302,4 +301,3 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
 
 async def setup(bot: AABot):
 	await bot.add_cog(MentemoriCommands(bot))
-        

@@ -1,5 +1,3 @@
-from typing import List
-
 from api.schemas.requests import TowerRequest
 from api.utils.error import APIError
 from api.utils.masterdata import MasterData
@@ -8,7 +6,7 @@ from common import enums, schemas
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
 
-async def parse_quest_enemies(md: MasterData, quest_id: int) -> List[dict]:
+async def parse_quest_enemies(md: MasterData, quest_id: int) -> list[dict]:
     first_enemy = int(f'{enums.EnemyType.BossBattle}{quest_id:05d}01')
     end = int(f'{enums.EnemyType.BossBattle}{quest_id+1:05d}00') # id must be lower than end
     enemy_it = await md.search_consecutive('BossBattleEnemyMB', 'Id', first_enemy)
@@ -20,7 +18,7 @@ async def parse_quest_enemies(md: MasterData, quest_id: int) -> List[dict]:
     
     return enemies
 
-async def parse_tower_enemies(md: MasterData, enemy_list: List[int]) -> List[dict]:
+async def parse_tower_enemies(md: MasterData, enemy_list: list[int]) -> list[dict]:
     first_enemy = enemy_list[0]
     enemy_it = await md.search_consecutive('TowerBattleEnemyMB', 'Id', first_enemy)
     enemies = []

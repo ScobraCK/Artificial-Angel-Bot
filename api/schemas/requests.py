@@ -1,6 +1,6 @@
 from fastapi import Query
 from pydantic import BaseModel, Field, model_validator
-from typing import List, Literal, Optional
+from typing import Literal
 
 from api.utils.error import APIError
 from common import enums
@@ -9,10 +9,10 @@ from common.models import CharacterColumns, PlayerColumns
 # Equipment
 class EquipmentRequest(BaseModel):
     slot: enums.EquipSlot = Field(Query(..., examples=[1]))
-    job: Optional[enums.Job] = Field(Query(None, examples=[1], description='Leave null for non weapons'))
+    job: enums.Job|None = Field(Query(None, examples=[1], description='Leave null for non weapons'))
     rarity: enums.ItemRarity = Field(Query(..., examples=[enums.ItemRarity.LR]))
     level: int = Field(Query(..., gt=0, examples=[240]))
-    quality: Optional[int] = Field(Query(None, ge=0, le=4, examples=[None], description='S+ equipment have quality of 1. Can omit otherwise.'))
+    quality: int|None = Field(Query(None, ge=0, le=4, examples=[None], description='S+ equipment have quality of 1. Can omit otherwise.'))
 
     @model_validator(mode='after')
     def validate(self):
@@ -32,7 +32,7 @@ class UniqueWeaponRequest(BaseModel):
 class EquipmentUpgradeDataRequest(BaseModel):
     is_weapon: bool
     start: int = Field(Query(1, ge=1))
-    end: Optional[int] = Field(Query(None, ge=1))
+    end: int|None = Field(Query(None, ge=1))
 
     @model_validator(mode='after')
     def validate(self):
@@ -47,7 +47,7 @@ class EquipmentCostRequest(BaseModel):
 
 # Events
 class GachaRequest(BaseModel):
-    char_id: Optional[int] = Field(None, description='Character ID to filter by')
+    char_id: int|None = Field(None, description='Character ID to filter by')
     is_active: bool = Field(True, description='Filter by currently active banners')
     include_future: bool = Field(False, description='Includes future banners even when is_active is True. Ignored if is_active is False.')
 
@@ -77,8 +77,8 @@ class TowerRequest(BaseModel):
 class PlayerRankingRequest(BaseModel):
     count: int = Field(Query(200, gt=0, le=5000), description="Number of players to fetch.")
     order_by: PlayerColumns = Field(Query(...), description="Sorting criteria for ranking.")
-    world_id: Optional[List[int]] = Field(Query(None), description="Filter by a list of world IDs")
-    server: Optional[enums.Server] = Field(Query(None, description="Filter by server"))
+    world_id: list[int]|None = Field(Query(None), description="Filter by a list of world IDs")
+    server: enums.Server|None = Field(Query(None, description="Filter by server"))
 
     @model_validator(mode="before")
     @classmethod
@@ -90,8 +90,8 @@ class PlayerRankingRequest(BaseModel):
 
 class GuildRankingRequest(BaseModel):
     count: int = Field(Query(50, gt=0, le=2000), description="Number of guilds to fetch.")
-    world_id: Optional[List[int]] = Field(Query(None), description="Filter by a list of world IDs")
-    server: Optional[enums.Server] = Field(Query(None, description="Filter by server"))
+    world_id: list[int]|None = Field(Query(None), description="Filter by a list of world IDs")
+    server: enums.Server|None = Field(Query(None, description="Filter by server"))
 
     @model_validator(mode="before")
     @classmethod
@@ -112,15 +112,15 @@ class CharacterDBRequest(BaseModel):
             "- Others: Integer"
         )
     ))
-    value: Optional[int|Literal['N', 'R', 'SR']] = Field(Query(
+    value: int|Literal['N', 'R', 'SR']|None = Field(Query(
         None,
         description='Exact value filter (minvalue and maxvalue should be None when using this)'
     ))
-    minvalue: Optional[int] = Field(Query(
+    minvalue: int|None = Field(Query(
         None,
         description='Minimum value'
     ))
-    maxvalue: Optional[int] = Field(Query(
+    maxvalue: int|None = Field(Query(
         None,
         description='Maximum value'
     ))

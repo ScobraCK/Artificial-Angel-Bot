@@ -1,7 +1,7 @@
 from sqlalchemy import BigInteger, Boolean, Enum, Integer, Text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, validates
-from typing import Literal, Optional
+from typing import Literal
 
 from common.database import Base
 from common.enums import Language, Server
@@ -30,15 +30,15 @@ class PlayerORM(Base):
     rank: Mapped[int] = mapped_column(Integer)
     quest_id: Mapped[int] = mapped_column(Integer)
     tower_id: Mapped[int] = mapped_column(Integer)
-    azure_tower_id: Mapped[Optional[int]] = mapped_column(Integer)
-    crimson_tower_id: Mapped[Optional[int]] = mapped_column(Integer)
-    emerald_tower_id: Mapped[Optional[int]] = mapped_column(Integer)
-    amber_tower_id: Mapped[Optional[int]] = mapped_column(Integer)
+    azure_tower_id: Mapped[int|None] = mapped_column(Integer)
+    crimson_tower_id: Mapped[int|None] = mapped_column(Integer)
+    emerald_tower_id: Mapped[int|None] = mapped_column(Integer)
+    amber_tower_id: Mapped[int|None] = mapped_column(Integer)
     icon_id: Mapped[int] = mapped_column(BigInteger)
-    guild_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    guild_join_time: Mapped[Optional[int]] = mapped_column(BigInteger)
-    guild_position: Mapped[Optional[int]] = mapped_column(Integer)
-    prev_legend_league_class: Mapped[Optional[int]] = mapped_column(Integer)
+    guild_id: Mapped[int|None] = mapped_column(BigInteger)
+    guild_join_time: Mapped[int|None] = mapped_column(BigInteger)
+    guild_position: Mapped[int|None] = mapped_column(Integer)
+    prev_legend_league_class: Mapped[int|None] = mapped_column(Integer)
     timestamp: Mapped[int] = mapped_column(BigInteger)
     
     @validates('guild_id', 'guild_join_time', 'guild_position', 'prev_legend_league_class')
@@ -118,9 +118,9 @@ class UserPreference(Base):
     __tablename__ = "user"
 
     uid: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    language: Mapped[Optional[Language]] = mapped_column(Enum(Language))
-    server: Mapped[Optional[Server]] = mapped_column(Enum(Server))
-    world: Mapped[Optional[int]] = mapped_column(Integer)
+    language: Mapped[Language|None] = mapped_column(Enum(Language))
+    server: Mapped[Server|None] = mapped_column(Enum(Server))
+    world: Mapped[int|None] = mapped_column(Integer)
 
 class Alias(Base):
     __tablename__ = 'alias'

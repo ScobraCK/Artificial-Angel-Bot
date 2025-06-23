@@ -1,5 +1,4 @@
 from io import StringIO
-from typing import List
 
 from discord import Color
 
@@ -10,7 +9,7 @@ from common import schemas
 from common.enums import Language, Server
 from common.timezones import check_active, convert_from_jst
 
-async def generate_banner_text(gacha_list: List[schemas.GachaPickup], language: Language, name_dict: dict = {}) -> str:
+async def generate_banner_text(gacha_list: list[schemas.GachaPickup], language: Language, name_dict: dict = {}) -> str:
     banner_text = StringIO()
     for gacha in gacha_list:
         if gacha.char_id in name_dict:
@@ -30,7 +29,7 @@ async def generate_banner_text(gacha_list: List[schemas.GachaPickup], language: 
     return banner_text.getvalue()
 
 
-async def gacha_banner_embed(gacha_data: schemas.APIResponse[List[schemas.GachaPickup]], language: Language):
+async def gacha_banner_embed(gacha_data: schemas.APIResponse[list[schemas.GachaPickup]], language: Language):
     fleeting = []
     ioc = []
     iosg = []

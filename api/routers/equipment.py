@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
-from typing import Union
 
 from api.schemas import requests
 from common.schemas import APIResponse
@@ -70,7 +69,7 @@ async def upgrade_cost_req(
     '/equipment/{eqp_id}',
     summary='Equipment',
     description='Get equipment info.',
-    response_model=Union[APIResponse[schemas.Equipment],APIResponse[schemas.UniqueWeapon]]
+    response_model=APIResponse[schemas.Equipment]|APIResponse[schemas.UniqueWeapon]
 )
 async def equipment_req(
     session: SessionDep,

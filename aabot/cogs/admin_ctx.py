@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from discord import Object, HTTPException
 from discord.ext import commands
@@ -100,7 +100,7 @@ class CogCommands(commands.Cog, name='Cog Commands'):
 		self,
 		ctx: commands.Context, 
 		guilds: commands.Greedy[Object], 
-		spec: Optional[Literal["~", "*", "^"]] = None) -> None:
+		spec: Literal["~", "*", "^"]|None = None) -> None:
 
 		if not guilds:
 			if spec == "~":

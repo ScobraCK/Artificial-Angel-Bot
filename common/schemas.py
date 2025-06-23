@@ -6,7 +6,7 @@ from pydantic import (
     field_serializer, model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
-from typing import Annotated, Any, Dict, Generic, List, Literal, Optional, Union, Self, Type, TypeVar
+from typing import Annotated, Any, Generic, Literal, Self, TypeVar, Union
 
 from common import enums
 
@@ -28,7 +28,7 @@ class APIResponse(APIBaseModel, Generic[T]):
         )
 
     @classmethod
-    def parse(cls, data: dict, data_type: Type[T]) -> "APIResponse[T]":  # AAbot
+    def parse(cls, data: dict, data_type: type[T]) -> "APIResponse[T]":  # AAbot
         parsed_data = TypeAdapter(data_type).validate_python(data["data"])
         return cls(timestamp=data["timestamp"], version=data["version"], data=parsed_data)
 
@@ -52,15 +52,15 @@ class ItemCount(APIBaseModel):
 class Character(APIBaseModel):
     char_id: int = Field(..., validation_alias='Id')
     name: str = Field(..., validation_alias='NameKey')
-    title: Optional[str] = Field(..., validation_alias='Name2Key')
+    title: str|None = Field(..., validation_alias='Name2Key')
     element: enums.Element = Field(..., validation_alias='ElementType')
     rarity: enums.CharacterRarity = Field(..., validation_alias='RarityFlags')
     job: enums.Job = Field(..., validation_alias='JobFlags')
     speed: int = Field(..., validation_alias=AliasPath('InitialBattleParameter', 'Speed'))
-    uw: Optional[str] = Field(...)
+    uw: str|None = Field(...)
     attack_type: enums.NormalSkill = Field(..., validation_alias='NormalSkillId')
-    actives: List[int] = Field(..., validation_alias='ActiveSkillIds')
-    passives: List[int] = Field(..., validation_alias='PassiveSkillIds')
+    actives: list[int] = Field(..., validation_alias='ActiveSkillIds')
+    passives: list[int] = Field(..., validation_alias='PassiveSkillIds')
 
 class Profile(APIBaseModel):
     char_id: int = Field(..., validation_alias='Id')
@@ -68,11 +68,11 @@ class Profile(APIBaseModel):
     height: int = Field(..., validation_alias='Height')
     weight: int = Field(..., validation_alias='Weight')
     blood_type: enums.BloodType = Field(..., validation_alias='BloodType')
-    gacha_message: Optional[str] = Field(..., validation_alias='GachaResultMessage2Key')
+    gacha_message: str|None = Field(..., validation_alias='GachaResultMessage2Key')
     voiceJP: str = Field(..., validation_alias='CharacterVoiceJPKey')
-    voiceUS: Optional[str] = Field(..., validation_alias='CharacterVoiceUSKey')
+    voiceUS: str|None = Field(..., validation_alias='CharacterVoiceUSKey')
     vocalJP: str = Field(..., validation_alias='VocalJPKey')
-    vocalUS: Optional[str] = Field(..., validation_alias='VocalUSKey')
+    vocalUS: str|None = Field(..., validation_alias='VocalUSKey')
     
     @model_validator(mode='after')
     def fill_US_va(self)->Any:
@@ -88,7 +88,7 @@ class Name(BaseModel):
     '''Simple model for only character name'''
     char_id: int
     name: str
-    title: Optional[str]
+    title: str|None
 
 class Lament(APIBaseModel):
     char_id: int = Field(validation_alias='Id')
@@ -104,24 +104,24 @@ class Voiceline(APIBaseModel):
     unlock: enums.VoiceUnlock = Field(..., validation_alias='UnlockCondition')
     unlock_quest: int = Field(..., validation_alias='UnlockQuestId')
     sort_order: int = Field(..., validation_alias='SortOrder')
-    subtitle: Optional[str] = Field(..., validation_alias='SubtitleKey')
+    subtitle: str|None = Field(..., validation_alias='SubtitleKey')
     button_text: str = Field(..., validation_alias='UnlockedVoiceButtonTextKey')
 
 class CharacterVoicelines(APIBaseModel):
     char_id: int = Field(...,)
-    voicelines: List[Voiceline] = Field(...,)
+    voicelines: list[Voiceline] = Field(...,)
 
 class Memory(APIBaseModel):
     episode_id: int = Field(..., validation_alias='EpisodeId') 
     level: int = Field(..., validation_alias='Level')
     rarity: enums.CharacterRarity = Field(..., validation_alias='RarityFlags')
-    reward: List[ItemCount] = Field(..., validation_alias='RewardItemList')
+    reward: list[ItemCount] = Field(..., validation_alias='RewardItemList')
     title: str = Field(..., validation_alias='TitleKey')
     text: str = Field(..., validation_alias='TextKey')
 
 class CharacterMemories(APIBaseModel):
     char_id: int
-    memories: List[Memory]
+    memories: list[Memory]
 
 # Equipment
 class Equipment(APIBaseModel):
@@ -137,16 +137,16 @@ class Equipment(APIBaseModel):
     basestat: BattleParameterModel = Field(..., validation_alias='BattleParameterChangeInfo')
     evolution_id: int = Field(..., validation_alias='EquipmentEvolutionId')
     composite_id: int = Field(..., validation_alias='CompositeId')
-    equipment_set: Optional['EquipmentSet'] = None
+    equipment_set: Union["EquipmentSet", None] = None
 
 class UniqueWeapon(Equipment):
     character_id: int
-    uw_bonus: List[Union[BaseParameterModel, BattleParameterModel]]
+    uw_bonus: list[BaseParameterModel|BattleParameterModel]
     uw_descriptions: 'UWDescriptions'
 
 class SetEffect(APIBaseModel):
     equipment_count: int = Field(..., validation_alias='RequiredEquipmentCount')
-    parameter: Union[BaseParameterModel, BattleParameterModel] = Field(...)
+    parameter: BaseParameterModel|BattleParameterModel = Field(...)
     
     @model_validator(mode='before')
     @classmethod
@@ -161,7 +161,7 @@ class SetEffect(APIBaseModel):
 class EquipmentSet(APIBaseModel):
     id: int = Field(..., validation_alias='Id')
     name: str = Field(..., validation_alias='NameKey')
-    set_effects: List[SetEffect] = Field(..., validation_alias='EffectList')
+    set_effects: list[SetEffect] = Field(..., validation_alias='EffectList')
 
 class UWDescriptions(APIBaseModel):
     SSR: str = Field(..., validation_alias='Description1Key')
@@ -171,32 +171,32 @@ class UWDescriptions(APIBaseModel):
 class EquipmentUpgradeLevel(APIBaseModel):
     upgrade_level: int
     coefficient: float
-    cost: List[ItemCount]
+    cost: list[ItemCount]
 
 class EquipmentUpgradeData(APIBaseModel):
     is_weapon: bool
-    upgrades: List[EquipmentUpgradeLevel]  
+    upgrades: list[EquipmentUpgradeLevel]  
 
 class EquipmentEnhanceLevel(APIBaseModel):
     before_level: int = Field(..., validation_alias='BeforeEquipmentLv')
     after_level: int = Field(..., validation_alias='AfterEquipmentLv')
-    cost: List[ItemCount] = Field(..., validation_alias='RequiredItemList')
+    cost: list[ItemCount] = Field(..., validation_alias='RequiredItemList')
 
 class EquipmentSynthesis(APIBaseModel):
     rarity: enums.ItemRarity
-    cost: List[ItemCount]
+    cost: list[ItemCount]
 
 class EquipmentEnhanceRarity(APIBaseModel):
     before_rarity: enums.ItemRarity
     after_rarity: enums.ItemRarity
-    cost: List[ItemCount]
+    cost: list[ItemCount]
 
 class EquipmentCosts(APIBaseModel): 
-    equipment: Union[Equipment, UniqueWeapon]
+    equipment: Equipment|UniqueWeapon
     upgrade_costs: EquipmentUpgradeData = Field(..., description='Cost to upgrade equipment')
-    synthesis_costs: Optional[EquipmentSynthesis] = Field(None, description='Cost to create equipment')
-    enhance_costs: List[EquipmentEnhanceLevel] = Field(..., description='Cost to increase equipment level')
-    rarity_enhance_costs: List[EquipmentEnhanceRarity] = Field(..., description='Cost to upgrade equipment rarity')
+    synthesis_costs: EquipmentSynthesis|None = Field(None, description='Cost to create equipment')
+    enhance_costs: list[EquipmentEnhanceLevel] = Field(..., description='Cost to increase equipment level')
+    rarity_enhance_costs: list[EquipmentEnhanceRarity] = Field(..., description='Cost to upgrade equipment rarity')
 
 # Events
 class GachaPickup(APIBaseModel):
@@ -216,12 +216,12 @@ class Group(APIBaseModel):
     server: enums.Server = Field(..., validation_alias='TimeServerId')
     start: str = Field(..., validation_alias='StartTime', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='Local date. Group start date.')
     end: str = Field(..., validation_alias='EndTime', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='Local date. Group end date.')
-    worlds: List[int] = Field(..., validation_alias='WorldIdList')
-    grand_battle: List[GrandBattleDate] = Field(..., validation_alias='GrandBattleDateTimeList')
+    worlds: list[int] = Field(..., validation_alias='WorldIdList')
+    grand_battle: list[GrandBattleDate] = Field(..., validation_alias='GrandBattleDateTimeList')
     league_start: str = Field(..., validation_alias='StartLegendLeagueDateTime', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='Local date')
     league_end: str = Field(..., validation_alias='EndLegendLeagueDateTime', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='Local date')
 
-Groups = TypeAdapter(List[Group])
+Groups = TypeAdapter(list[Group])
 
 # Items
 class ItemBase(APIBaseModel):
@@ -237,11 +237,11 @@ class ItemBase(APIBaseModel):
 class Rune(ItemBase):
     item_id: int = Field(..., validation_alias='Id')
     item_type: enums.ItemType = enums.ItemType.Sphere
-    parameter: Union[BaseParameterModel, BattleParameterModel] = Field(...)
+    parameter: BaseParameterModel|BattleParameterModel = Field(...)
     category: enums.RuneType = Field(..., validation_alias='CategoryId')
     level: int = Field(..., validation_alias='Lv')
     sphere_type: int = Field(..., ge=0, le=3, validation_alias='SphereType', description='Size of rune icon')
-    icon: Union[int, SkipJsonSchema[None]] = Field(None)  # added in validation, icon = {Category:02}{SphereType:02}
+    icon: int|SkipJsonSchema[None] = Field(None)  # added in validation, icon = {Category:02}{SphereType:02}
 
     @model_validator(mode='wrap')
     @classmethod
@@ -264,7 +264,7 @@ class TreasureChest(ItemBase):
     secondary_frame_num: int = Field(..., validation_alias='SecondaryFrameNum')
     secondary_fram_type: int = Field(..., validation_alias='SecondaryFrameType')  # skipped enum 0-4
     lottery_type: int = Field(..., validation_alias='TreasureChestLotteryType')
-    item_id_list: List[int] = Field(..., validation_alias='TreasureChestItemIdList')
+    item_id_list: list[int] = Field(..., validation_alias='TreasureChestItemIdList')
     # start, end exists but is null for most
 
 class CharacterItem(ItemBase):
@@ -273,7 +273,7 @@ class CharacterItem(ItemBase):
     item_type: enums.ItemType = enums.ItemType.Character
     icon: int = Field(..., validation_alias='Id')
     name: str = Field(..., validation_alias='NameKey')
-    title: Optional[str] = Field(..., validation_alias='Name2Key')
+    title: str|None = Field(..., validation_alias='Name2Key')
     description: str = 'Character'
 
 # Insert CharacterMB to schema directly
@@ -281,7 +281,7 @@ class CharacterFragment(ItemBase):
     item_id: int = Field(..., validation_alias='Id', description='Charater Id')
     item_type: enums.ItemType = enums.ItemType.CharacterFragment
     char_name: str = Field(..., validation_alias='NameKey')
-    char_title: Optional[str] = Field(..., validation_alias='Name2Key')
+    char_title: str|None = Field(..., validation_alias='Name2Key')
     name: str = '[CommonItemCharacterFragment]'
     description: str = '[ItemTypeCharacterFragmentDescription]'
     icon: int = Field(..., validation_alias='Id')
@@ -303,7 +303,7 @@ class EquipmentSetMaterial(ItemBase):
     item_type: enums.ItemType = enums.ItemType.EquipmentSetMaterial
     lv: int = Field(..., validation_alias='Lv')
     treasure_chest_id: int = Field(..., validation_alias='TreasureChestId', description='Weapon adamantite Id')
-    quest_id_list: List[int] = Field(..., validation_alias='QuestIdList')
+    quest_id_list: list[int] = Field(..., validation_alias='QuestIdList')
 
 class EquipmentFragment(ItemBase):
     # EquipmentCompositeMB
@@ -315,7 +315,7 @@ class EquipmentFragment(ItemBase):
     name: str = '[CommonItemEquipmentFragmentFormat]'
     equip_name: str = Field(...)  # From EquipmentMB
     description: str = '[ItemTypeEquipmentFragmentDescription]'
-    cost: List[ItemCount] = Field(..., validation_alias='RequiredItemList', description='Cost to enhance equipment')
+    cost: list[ItemCount] = Field(..., validation_alias='RequiredItemList', description='Cost to enhance equipment')
     
     @field_serializer('name')
     def format_name(self, name: str) -> str:
@@ -325,7 +325,7 @@ class EquipmentFragment(ItemBase):
     def format_description(self, description: str) -> str:
         return description.format(self.equip_name, self.required_count)
 
-type Item = Union[EquipmentFragment, CharacterItem, CharacterFragment, EquipmentSetMaterial, Rune, TreasureChest, ItemBase]
+type Item = EquipmentFragment|CharacterItem|CharacterFragment|EquipmentSetMaterial|Rune|TreasureChest|ItemBase
 
 # PvE
 class BaseParameters(APIBaseModel):
@@ -368,14 +368,14 @@ class Enemy(APIBaseModel):
     base_params: BaseParameters = Field(..., validation_alias='BaseParameter')
     battle_params: BattleParameters = Field(..., validation_alias='BattleParameter')
     attack_type: enums.NormalSkill = Field(..., validation_alias='NormalSkillId')
-    actives: List[int] = Field(..., validation_alias='ActiveSkillIds')
-    passives: List[int] = Field(..., validation_alias='PassiveSkillIds')
+    actives: list[int] = Field(..., validation_alias='ActiveSkillIds')
+    passives: list[int] = Field(..., validation_alias='PassiveSkillIds')
     uw_rarity: enums.ItemRarity = Field(..., validation_alias='ExclusiveEquipmentRarityFlags')
 
 class Quest(APIBaseModel):
     quest_id: int = Field(..., validation_alias='Id')
     chapter: int = Field(..., validation_alias='ChapterId')
-    enemy_list: List[Enemy]
+    enemy_list: list[Enemy]
     gold: int = Field(..., validation_alias='GoldPerMinute')
     red_orb: int = Field(..., validation_alias='PotentialJewelPerDay')
     population: int = Field(..., validation_alias='Population')
@@ -386,21 +386,21 @@ class Tower(APIBaseModel):
     tower_id: int = Field(..., validation_alias='Id')
     tower_type: enums.TowerType = Field(..., validation_alias='TowerType')
     floor: int = Field(..., validation_alias='Floor')
-    fixed_rewards: Optional[List[ItemCount]] = Field(..., validation_alias='BattleRewardsConfirmed')
-    first_rewards: Optional[List[ItemCount]] = Field(..., validation_alias='BattleRewardsFirst')
-    enemy_list: List[Enemy]
+    fixed_rewards: list[ItemCount]|None = Field(..., validation_alias='BattleRewardsConfirmed')
+    first_rewards: list[ItemCount]|None = Field(..., validation_alias='BattleRewardsFirst')
+    enemy_list: list[Enemy]
 
 # Skills
 class Skills(APIBaseModel):
     character: int
-    actives: List['ActiveSkill']
-    passives: List['PassiveSkill']
-    uw_descriptions: Optional['UWDescriptions']
+    actives: list['ActiveSkill']
+    passives: list['PassiveSkill']
+    uw_descriptions: Union['UWDescriptions', None]
 
 class ActiveSkill(APIBaseModel):
     id: int = Field(..., validation_alias='Id')
     name: Annotated[str, BeforeValidator(lambda v: v or '')] = Field(validation_alias='NameKey', description='null converted to empty string')
-    skill_infos: List['SkillInfo'] = Field(..., validation_alias='ActiveSkillInfos')
+    skill_infos: list['SkillInfo'] = Field(..., validation_alias='ActiveSkillInfos')
     condition: str = Field(..., validation_alias='ActiveSkillConditions')
     init_cooltime: int = Field(..., validation_alias='SkillInitCoolTime')
     max_cooltime: int = Field(..., validation_alias='SkillMaxCoolTime')
@@ -408,7 +408,7 @@ class ActiveSkill(APIBaseModel):
 class PassiveSkill(APIBaseModel):
     id: int = Field(..., validation_alias='Id')
     name: Annotated[str, BeforeValidator(lambda v: v or '')] = Field(validation_alias='NameKey', description='null converted to empty string')
-    skill_infos: List['SkillInfo'] = Field(..., validation_alias='PassiveSkillInfos')
+    skill_infos: list['SkillInfo'] = Field(..., validation_alias='PassiveSkillInfos')
 
 class PassiveSubSkill(APIBaseModel):
     trigger: enums.PassiveTrigger = Field(..., validation_alias='PassiveTrigger')
@@ -423,7 +423,7 @@ class SkillInfo(APIBaseModel):
     level: int = Field(..., validation_alias='CharacterLevel')
     uw_rarity: enums.ItemRarity = Field(..., validation_alias='EquipmentRarityFlags')
     blessing_item: int = Field(..., validation_alias='BlessingItemId')
-    subskill: Union[List[int], List[PassiveSubSkill]] = Field(..., validation_alias=AliasChoices('SubSetSkillIds', 'PassiveSubSetSkillInfos'))
+    subskill: list[int]|list[PassiveSubSkill] = Field(..., validation_alias=AliasChoices('SubSetSkillIds', 'PassiveSubSetSkillInfos'))
 
 # DB Models
 class Player(BaseModel):
@@ -434,15 +434,15 @@ class Player(BaseModel):
     rank: int
     quest_id: int
     tower_id: int
-    azure_tower_id: Optional[int]
-    crimson_tower_id: Optional[int]
-    emerald_tower_id: Optional[int]
-    amber_tower_id: Optional[int]
+    azure_tower_id: int|None
+    crimson_tower_id: int|None
+    emerald_tower_id: int|None
+    amber_tower_id: int|None
     icon_id: int
-    guild_id: Optional[int]
-    guild_join_time: Optional[int]
-    guild_position: Optional[int]
-    prev_legend_league_class: Optional[int]
+    guild_id: int|None
+    guild_join_time: int|None
+    guild_position: int|None
+    prev_legend_league_class: int|None
     timestamp: int
 
     class Config:
@@ -453,14 +453,14 @@ class PlayerRankInfo(BaseModel):
     name: str
     server: int
     world: int
-    bp: Optional[int]
-    rank: Optional[int]
-    quest_id: Optional[int]
-    tower_id: Optional[int]
-    azure_tower_id: Optional[int]
-    crimson_tower_id: Optional[int]
-    emerald_tower_id: Optional[int]
-    amber_tower_id: Optional[int]
+    bp: int|None
+    rank: int|None
+    quest_id: int|None
+    tower_id: int|None
+    azure_tower_id: int|None
+    crimson_tower_id: int|None
+    emerald_tower_id: int|None
+    amber_tower_id: int|None
     timestamp: int
 
     class Config:
@@ -476,7 +476,7 @@ class Guild(BaseModel):
     exp: int
     num_members: int
     leader_id: int
-    description: Optional[str]
+    description: str|None
     free_join: bool
     bp_requirement: int
     timestamp: int
@@ -497,19 +497,19 @@ class GuildRankInfo(BaseModel):
 
 class StringKey(BaseModel):
     key: str = Field(examples=['[CharacterName1]'])
-    jajp: Optional[str] = Field(None, example="モニカ")
-    kokr: Optional[str] = Field(None, example="모니카")
-    enus: Optional[str] = Field(None, example="Monica")
-    zhtw: Optional[str] = Field(None, example="莫妮卡")
-    dede: Optional[str] = Field(None, example="Monica")
-    esmx: Optional[str] = Field(None, example="Mónica")
-    frfr: Optional[str] = Field(None, example="Monica")
-    idid: Optional[str] = Field(None, example="Monica")
-    ptbr: Optional[str] = Field(None, example="Mônica")
-    ruru: Optional[str] = Field(None, example="Моника")
-    thth: Optional[str] = Field(None, example="โมนิก้า")
-    vivn: Optional[str] = Field(None, example="Monica")
-    zhcn: Optional[str] = Field(None, example="莫妮卡")
+    jajp: str|None = Field(None, example="モニカ")
+    kokr: str|None = Field(None, example="모니카")
+    enus: str|None = Field(None, example="Monica")
+    zhtw: str|None = Field(None, example="莫妮卡")
+    dede: str|None = Field(None, example="Monica")
+    esmx: str|None = Field(None, example="Mónica")
+    frfr: str|None = Field(None, example="Monica")
+    idid: str|None = Field(None, example="Monica")
+    ptbr: str|None = Field(None, example="Mônica")
+    ruru: str|None = Field(None, example="Моника")
+    thth: str|None = Field(None, example="โมนิก้า")
+    vivn: str|None = Field(None, example="Monica")
+    zhcn: str|None = Field(None, example="莫妮卡")
 
     class Config:
         from_attributes = True
@@ -527,13 +527,13 @@ class CharacterDBModel(BaseModel):
 
 # Common Enum Strings
 class CommonStrings(BaseModel):
-    base_param: Dict[enums.BaseParameter, str] = Field({
+    base_param: dict[enums.BaseParameter, str] = Field({
         1: '[BaseParameterTypeMuscle]',
         2: '[BaseParameterTypeEnergy]',
         3: '[BaseParameterTypeIntelligence]',
         4: '[BaseParameterTypeHealth]',
     })
-    battle_param: Dict[enums.BattleParameter, str] = Field({
+    battle_param: dict[enums.BattleParameter, str] = Field({
         1: '[BattleParameterTypeHp]',
         2: '[BattleParameterTypeAttackPower]',
         3: '[BattleParameterTypePhysicalDamageRelax]',
@@ -554,13 +554,13 @@ class CommonStrings(BaseModel):
         18: '[BattleParameterTypeHpDrain]',
         19: '[BattleParameterTypeSpeed]',
     })
-    job: Dict[int, str] = Field({   # enums.Job
+    job: dict[int, str] = Field({   # enums.Job
         1: '[JobFlagsWarrior]',
         2: '[JobFlagsSniper]',
         4: '[JobFlagsSorcerer]',
         7: 'All'  # All job flags
     })
-    element: Dict[enums.Element, str] = Field({
+    element: dict[enums.Element, str] = Field({
         1: '[ElementTypeBlue]',
         2: '[ElementTypeRed]',
         3: '[ElementTypeGreen]',
@@ -568,7 +568,7 @@ class CommonStrings(BaseModel):
         5: '[ElementTypeLight]',
         6: '[ElementTypeDark]',
     })
-    equip_type: Dict[enums.EquipSlot, str] = Field({
+    equip_type: dict[enums.EquipSlot, str] = Field({
         1: '[EquipmentSlotTypeWeapon]',
         2: '[EquipmentSlotTypeSub]',
         3: '[EquipmentSlotTypeHelmet]',
@@ -576,12 +576,12 @@ class CommonStrings(BaseModel):
         5: '[EquipmentSlotTypeGauntlet]',
         6: '[EquipmentSlotTypeShoes]',
     })
-    weapon_type: Dict[enums.Job, str] = Field({
+    weapon_type: dict[enums.Job, str] = Field({
         1: '[EquipmentSlotTypeSword]',
         2: '[EquipmentSlotTypePistol]',
         4: '[EquipmentSlotTypeTome]',
     })
-    rune_type: Dict[enums.RuneType, str] = Field({
+    rune_type: dict[enums.RuneType, str] = Field({
         1: '[SphereCategoryTypeMuscle]',
         2: '[SphereCategoryTypeEnergy]',
         3: '[SphereCategoryTypeIntelligence]',

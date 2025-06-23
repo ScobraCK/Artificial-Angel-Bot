@@ -1,7 +1,6 @@
 from enum import Enum
 from io import StringIO
 from itertools import batched
-from typing import List
 
 from discord import Color, Embed, Interaction
 from table2ascii import table2ascii as t2a, Alignment, PresetStyle
@@ -12,7 +11,7 @@ from aabot.utils.utils import from_world_id, from_quest_id, character_title
 from common import schemas
 from common.enums import Server, Language
 
-def make_table(data, header: List[str]):
+def make_table(data, header: list[str]):
     return t2a(
         header=header,
         body=data,
@@ -84,7 +83,7 @@ def group_embed(group_data):
     
     return Embed(title="Groups", description=description.getvalue(), color=Color.blue())
 
-def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIResponse[List[schemas.GuildRankInfo]], server: Server, group: int):
+def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIResponse[list[schemas.GuildRankInfo]], server: Server, group: int):
     embed_dict = {'default': []}
     rank = 1
     for batch in batched(ranking_data.data, 50):
@@ -106,7 +105,7 @@ def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIRespon
 
 def guild_ranking_view(
     interaction: Interaction,
-    ranking_data: schemas.APIResponse[List[schemas.GuildRankInfo]],
+    ranking_data: schemas.APIResponse[list[schemas.GuildRankInfo]],
     filter_text: str
     ) -> ButtonView:
     embed_dict = {'default': []}
@@ -135,7 +134,7 @@ class PlayerCategory(Enum):
 
 def player_ranking_view(
     interaction: Interaction,
-    ranking_data: schemas.APIResponse[List[schemas.PlayerRankInfo]],
+    ranking_data: schemas.APIResponse[list[schemas.PlayerRankInfo]],
     category: PlayerCategory,
     filter_text: str,
     show_all: bool
@@ -182,7 +181,7 @@ class TowerCategory(Enum):
 
 def tower_ranking_view(
     interaction: Interaction,
-    ranking_data: schemas.APIResponse[List[schemas.PlayerRankInfo]],
+    ranking_data: schemas.APIResponse[list[schemas.PlayerRankInfo]],
     category: PlayerCategory,
     filter_text: str
 ):

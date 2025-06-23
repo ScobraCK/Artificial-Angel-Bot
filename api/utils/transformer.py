@@ -1,6 +1,7 @@
 
+from typing import Any
+
 from pydantic import BaseModel
-from typing import Dict, Any
 
 from api.crud.string_keys import read_string_key_language
 from common import enums
@@ -14,7 +15,7 @@ class Transformer:
         self.db = db
         self.language = language
 
-    async def transform(self, data: Any) -> Dict[str, Any]:
+    async def transform(self, data: Any) -> dict[str, Any]:
         if isinstance(data, list):
             return [(await self.transform(item)) for item in data]
         elif isinstance(data, dict):

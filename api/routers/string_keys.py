@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
-from typing import Dict
 
 from api.crud.string_keys import read_string_key
 from common.schemas import APIResponse, CommonStrings
@@ -31,11 +30,11 @@ async def string_lookup(key: str, session: SessionDep, request: Request):
     '/strings/character',
     summary='Character Name List',
     description='Returns a dict[char_id, Name] of charcter names and titles . Direct key([ChracterName<ID>]) text search.',
-    response_model=APIResponse[Dict[int, Name]]
+    response_model=APIResponse[dict[int, Name]]
 )
 async def string_names(session: SessionDep, request: Request, language=Depends(language_parameter)):
     names = await get_char_names(session, language)
-    return APIResponse[Dict[int, Name]].create(request, names)
+    return APIResponse[dict[int, Name]].create(request, names)
 
 @router.get(
     '/strings/character/{char_id}',

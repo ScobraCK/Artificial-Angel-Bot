@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
-from typing import List
 
 from api.crud.mentemori import get_top_players, get_top_guilds, get_player, get_guild, get_guild_members
 from common.schemas import APIResponse
@@ -17,7 +16,7 @@ router = APIRouter()
     '/player/ranking',
     summary='Player Rankings',
     description='Returns player ranking data',
-    response_model=APIResponse[List[schemas.PlayerRankInfo]]
+    response_model=APIResponse[list[schemas.PlayerRankInfo]]
 )
 async def player_ranking(
     session: SessionDep,
@@ -25,7 +24,7 @@ async def player_ranking(
     payload: PlayerRankingRequest = Depends()
     ):
     players = await get_top_players(session, **payload.model_dump())
-    return APIResponse[List[schemas.PlayerRankInfo]].create(request, players)
+    return APIResponse[list[schemas.PlayerRankInfo]].create(request, players)
 
 @router.get(
     '/player/{player_id}',
@@ -47,7 +46,7 @@ async def player(
     '/guild/ranking',
     summary='Guild Rankings',
     description='Returns guild ranking data',
-    response_model=APIResponse[List[schemas.GuildRankInfo]]
+    response_model=APIResponse[list[schemas.GuildRankInfo]]
 )
 async def guild_ranking(
     session: SessionDep,
@@ -55,13 +54,13 @@ async def guild_ranking(
     payload: GuildRankingRequest = Depends()
     ):
     guilds = await get_top_guilds(session, **payload.model_dump())
-    return APIResponse[List[schemas.GuildRankInfo]].create(request, guilds)
+    return APIResponse[list[schemas.GuildRankInfo]].create(request, guilds)
 
 @router.get(
     '/guild/{guild_id}',
     summary='Guild',
     description='Returns guild data',
-    response_model=APIResponse[List[schemas.Player]]
+    response_model=APIResponse[list[schemas.Player]]
 )
 async def guild(
     session: SessionDep,
@@ -77,7 +76,7 @@ async def guild(
     '/guild/{guild_id}/members',
     summary='Guild Members',
     description='Returns guild member data. Only returns player data existing in the database.',
-    response_model=APIResponse[List[schemas.Player]]
+    response_model=APIResponse[list[schemas.Player]]
 )
 async def guild_members(
     session: SessionDep,
@@ -87,4 +86,4 @@ async def guild_members(
     members = await get_guild_members(session, guild_id)
     if not members:
         raise APIError(f'Guild {guild_id} is not in the database or no members are in the database.')
-    return APIResponse[List[schemas.Player]].create(request, members)
+    return APIResponse[list[schemas.Player]].create(request, members)

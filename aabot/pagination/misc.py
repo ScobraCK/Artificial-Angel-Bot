@@ -1,5 +1,4 @@
 from io import StringIO
-from typing import List, Tuple
 
 from discord import Color, Embed, Interaction
 
@@ -8,7 +7,7 @@ from common.enums import Server
 from common.models import Alias
 from common.timezones import DailyEvents, time_to_local
 
-def alias_embed(name: str, aliases: List[Alias]):
+def alias_embed(name: str, aliases: list[Alias]):
     description = StringIO()
     default = []
     custom = []
@@ -63,7 +62,7 @@ def daily_view(interaction: Interaction, server: Server):
     return DropdownView(interaction.user, {s.name: [daily_embed(s)] for s in Server}, server.name) 
 
 ########## levellink #################
-def get_sublevel(level: float)->Tuple[int, int]:
+def get_sublevel(level: float)->tuple[int, int]:
     level = str(level)
     try:
         base, sub = level.split('.')

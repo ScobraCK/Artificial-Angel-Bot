@@ -1,6 +1,5 @@
 from io import StringIO
 from itertools import chain
-from typing import List
 
 from discord import Color, Interaction
 
@@ -12,7 +11,7 @@ from aabot.utils.utils import character_title, possessive_form, remove_linebreak
 from common import enums, schemas
 
 
-def skill_description(skills: List[schemas.ActiveSkill|schemas.PassiveSkill], uw_desc: schemas.UWDescriptions, uw_name: str, include_name=True) -> str:
+def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkill], uw_desc: schemas.UWDescriptions, uw_name: str, include_name=True) -> str:
     if not skills:
         return None
 
@@ -163,7 +162,7 @@ def skill_detail_view(
             # Passive
             else:
                 info_description += '**Subskills**\n'
-                subskills: List[schemas.PassiveSubSkill] = info.subskill
+                subskills: list[schemas.PassiveSubSkill] = info.subskill
                 for sub in subskills:
                     info_description += (
                         '```json\n'

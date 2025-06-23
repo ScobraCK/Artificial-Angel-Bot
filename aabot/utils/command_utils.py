@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from enum import StrEnum
 from functools import wraps
-from typing import Callable
 
 from discord import Interaction
 
@@ -88,7 +88,7 @@ def apply_user_preferences():
 
 # async def group_autocomplete(
 #         interaction: discord.Interaction, 
-#         current: str) -> List[app_commands.Choice[str]]:
+#         current: str) -> list[app_commands.Choice[str]]:
 #     group_list = fetch_group_list(interaction.namespace.server)  # [(id, start, end), ...]
 
 #     return [

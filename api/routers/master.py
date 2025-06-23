@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Request
-from typing import List
 
 from common.schemas import APIResponse
 from api.utils.masterdata import MasterData
@@ -13,11 +12,11 @@ router = APIRouter()
     '/master/{mb}',
     summary='MasterData',
     description='Returns masterdata json',
-    response_model=APIResponse[List[dict]]
+    response_model=APIResponse[list[dict]]
 )
 async def master_req(
     request: Request,
     mb: str):
     md: MasterData = request.app.state.md
     data = await md.get_MB(mb)
-    return APIResponse[List[dict]].create(request, data)
+    return APIResponse[list[dict]].create(request, data)

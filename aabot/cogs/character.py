@@ -1,4 +1,3 @@
-from typing import Optional, Dict, List
 from re import split
 
 from discord import app_commands, Interaction
@@ -28,14 +27,14 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
     async def idlist(
         self, 
         interaction: Interaction,
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''
         Shows character ids
         '''
         name_data = await api.fetch_api(
             api.STRING_CHARACTER_PATH_ALL,
             query_params={'language': language},
-            response_model=Dict[int, schemas.Name]
+            response_model=dict[int, schemas.Name]
         )
         view = char_page.id_list_view(interaction, name_data)
         await show_view(interaction, view)
@@ -49,19 +48,19 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
     async def speed(
         self, 
         interaction: Interaction, 
-        add: Optional[int]=0, 
-        buffs: Optional[str]=None,
-        language: Optional[LanguageOptions]=None):
+        add: int|None=0, 
+        buffs: str|None=None,
+        language: LanguageOptions|None=None):
         '''List character speeds in decreasing order'''
         name_data = await api.fetch_api(
             api.STRING_CHARACTER_PATH_ALL,
-            response_model=Dict[int, schemas.Name],
+            response_model=dict[int, schemas.Name],
             query_params={'language': language}
         )
         
         speed_data = await api.fetch_api(
             api.CHARACTER_LIST_PATH,
-            response_model=List[schemas.CharacterDBModel],
+            response_model=list[schemas.CharacterDBModel],
             query_params={'option': 'speed'}
         )
         
@@ -91,7 +90,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):  
+        language: LanguageOptions|None=None):  
         '''Shows a character's basic info'''
 
         char_data = await api.fetch_api(
@@ -124,7 +123,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):  
+        language: LanguageOptions|None=None):  
         '''Shows a character's profile info'''
 
         profile_data = await api.fetch_api(
@@ -149,7 +148,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows character skills including unique weapon upgrade effects'''
 
         skill_data = await api.fetch_api(
@@ -179,7 +178,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows character skills and details'''
 
         skill_data = await api.fetch_api(
@@ -209,7 +208,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows character voicelines'''
 
         # f'{moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{}'
@@ -241,7 +240,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         self,
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows character memories'''
         memory_data = await api.fetch_api(
             api.CHARACTER_MEMORY_PATH,
@@ -255,4 +254,3 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         
 async def setup(bot: AABot):
 	await bot.add_cog(CharacterCommands(bot))
- 

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
-from typing import List
 
 from api.crud.character import get_filtered_chars
 from api.schemas.requests import CharacterDBRequest
@@ -23,7 +22,7 @@ router = APIRouter()
     '/character/list',
     summary='Simple character info filter',
     description='Returns a list of simple character data. See "option" query for provided data and filter options',
-    response_model=APIResponse[List[schemas.CharacterDBModel]]
+    response_model=APIResponse[list[schemas.CharacterDBModel]]
 )
 async def filtered_req(
     session: SessionDep,
@@ -31,7 +30,7 @@ async def filtered_req(
     payload: CharacterDBRequest = Depends()
     ):
     filtered = await get_filtered_chars(session, payload.option, value=payload.value, minvalue=payload.minvalue, maxvalue=payload.maxvalue)
-    return APIResponse[List[schemas.CharacterDBModel]].create(request, filtered)
+    return APIResponse[list[schemas.CharacterDBModel]].create(request, filtered)
 
 @router.get(
     '/character/{char_id}',

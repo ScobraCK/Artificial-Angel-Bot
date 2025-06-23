@@ -1,5 +1,4 @@
 from itertools import dropwhile
-from typing import Optional, List
 
 from discord import app_commands, Color, Embed, Interaction
 from discord.ext import commands
@@ -67,8 +66,8 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
     @apply_user_preferences()
     async def dailyinfo(self,
                         interaction: Interaction, 
-                        server: Optional[Server] = None):
-        '''List of notable daily events shown in local time'''
+                        server: Server|None = None):
+        '''list of notable daily events shown in local time'''
         
         view = misc_page.daily_view(interaction, server)
         await show_view(interaction, view)
@@ -84,7 +83,7 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
         self,
         interaction: Interaction,
         startlevel: float,
-        endlevel: Optional[float]):
+        endlevel: float|None):
         '''
         Calculate level link costs.
         '''
@@ -111,7 +110,7 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
         else:
             link_data = await api.fetch_api(
                 api.MASTER_PATH.format(mb='LevelLinkMB'),
-                response_model=List[dict]
+                response_model=list[dict]
             )               
             link_data_list = link_data.data
             

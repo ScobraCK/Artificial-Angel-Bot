@@ -150,18 +150,6 @@ class EquipSlot(IntEnum):
     Helmet = 4
     Armor = 5
     Shoes = 6
-
-class EquipRarity(IntFlag):
-    D = 1
-    C = 2
-    B = 4
-    A = 8
-    S = 16
-    R = 32
-    SR = 64
-    SSR = 128
-    UR = 256
-    LR = 512
     
 # Items
 class ItemRarity(IntFlag):

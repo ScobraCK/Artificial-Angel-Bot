@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from discord import app_commands, Interaction
 from discord.ext import commands
 
@@ -23,11 +21,11 @@ class EventCommands(commands.Cog, name='Event Commands'):
     async def gachabanner(
         self,
         interaction: Interaction,
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows gacha banners'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=List[schemas.GachaPickup],
+            response_model=list[schemas.GachaPickup],
             query_params={
                 'include_future': True
             }
@@ -45,11 +43,11 @@ class EventCommands(commands.Cog, name='Event Commands'):
         self, 
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer],
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''Shows gacha history of a character'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=List[schemas.GachaPickup],
+            response_model=list[schemas.GachaPickup],
             query_params={
                 'char_id': character,
                 'is_active': False

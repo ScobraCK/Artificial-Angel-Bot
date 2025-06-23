@@ -1,6 +1,5 @@
 from collections import Counter
 from io import StringIO
-from typing import List
 
 from discord import Color, Embed, Interaction
 
@@ -124,7 +123,7 @@ def detailed_enemy_embed(enemy: schemas.Enemy, cs: schemas.CommonStrings, versio
             url=RAW_ASSET_BASE+f"Characters/Sprites/CHR_{enemy.icon_id:06}_01_s.png")
     return embed
 
-def add_resonance(embed:Embed, def_list: List):
+def add_resonance(embed:Embed, def_list: list):
     '''adds resonance indication to the enemy embed'''
     resonance = ' | <:resonance:1067010707561926696>'
     if len(def_list) > 1:

@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 from api.schemas import requests
 from api.utils.error import APIError
 from api.utils.masterdata import MasterData
@@ -9,7 +7,7 @@ from api.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-async def search_equipment(md: MasterData, *, rarity, level, slot=None, job=None, character=None, quality=None)->Tuple[dict, dict]:
+async def search_equipment(md: MasterData, *, rarity, level, slot=None, job=None, character=None, quality=None)->tuple[dict, dict]:
     '''
     returns equipment master data. 
     To be used with EquipmentRequest.
@@ -43,7 +41,7 @@ async def search_uw_info(md: MasterData, character: int):
     uw_info, _ = await search_equipment(md, rarity=128, level=180, character=character)  # rarity and level simply set to SSR UW
     return uw_info
 
-async def parse_equipment_upgrades(md: MasterData, is_weapon: bool, start: int=0, target: Optional[int]=None) -> schemas.EquipmentUpgradeData:
+async def parse_equipment_upgrades(md: MasterData, is_weapon: bool, start: int=0, target: int|None=None) -> schemas.EquipmentUpgradeData:
     if target and target < start:
         raise APIError(f'Equipment upgrade target level({target}) cannot be lower than start level({start})')
     param_data = await md.get_MB('EquipmentReinforcementParameterMB')
@@ -68,7 +66,7 @@ async def parse_equipment_upgrades(md: MasterData, is_weapon: bool, start: int=0
     upgrade_data = schemas.EquipmentUpgradeData(is_weapon=is_weapon, upgrades=upgrades)
     return upgrade_data
 
-async def parse_equipment_enhancement(md: MasterData, equipment: schemas.Equipment) -> Tuple[schemas.EquipmentEnhanceLevel, schemas.EquipmentEnhanceRarity]:
+async def parse_equipment_enhancement(md: MasterData, equipment: schemas.Equipment) -> tuple[schemas.EquipmentEnhanceLevel, schemas.EquipmentEnhanceRarity]:
     '''
     Gets enhancement data for current equipment
     '''

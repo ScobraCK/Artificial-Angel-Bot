@@ -1,5 +1,3 @@
-from typing import Optional
-
 from discord import app_commands, Interaction, Embed
 from discord.ext import commands
 
@@ -38,9 +36,9 @@ class UserCommands(commands.Cog, name='User Commands'):
     async def setpreference(
         self,
         interaction: Interaction,
-        language: Optional[LanguageOptions],
-        server: Optional[Server],
-        world: Optional[int]
+        language: LanguageOptions|None,
+        server: Server|None,
+        world: int|None
     ):
         '''Sets a default input for language, server, and world settings when applicable. Ranking commands do not use preference data.'''
         async with SessionAABot() as session:

@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from api.utils.masterdata import MasterData
 from common import schemas
 from common.enums import GachaType, Server
@@ -11,7 +9,7 @@ logger = get_logger(__name__)
 
 class RunCounter:
     def __init__(self):
-        self.run_counts: Dict[int, List] = {}
+        self.run_counts: dict[int, list] = {}
 
     def get_run_count(self, char_id: int, run: tuple) -> int:
         if char_id not in self.run_counts:
@@ -24,7 +22,7 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     gachacase_data = await md.get_MB('GachaCaseMB')
     gachacaseui_data = await md.get_MB('GachaCaseUiMB')
     gachadestiny_data = await md.get_MB('GachaDestinyAddCharacterMB')
-    gachaselect_data = await md.get_MB('GachaSelectListMB')
+    gachaselect_data = await md.get_MB('GachaSelectlistMB')
 
     gacha_list = []
     run_counter = RunCounter()
@@ -32,7 +30,7 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     # Parse fleeting
     gachacaseui_lookup = {item['Id']: item for item in gachacaseui_data}
     for banner in gachacase_data:
-        if banner['GachaSelectListType'] == 1 and banner['GachaCaseFlags'] == 1:
+        if banner['GachaSelectlistType'] == 1 and banner['GachaCaseFlags'] == 1:
             ui_data = gachacaseui_lookup[banner['GachaCaseUiId']]
             char = int(ui_data['PickUpCharacterId'])
             run = (banner['StartTimeFixJST'], banner['EndTimeFixJST'])
@@ -47,8 +45,8 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     # Parse ioc
     gachaselect_lookup = {item['Id']: item for item in gachaselect_data}
     for banner in gachadestiny_data:
-        start_data = gachaselect_lookup[banner['StartGachaSelectListId']]
-        end_data = gachaselect_lookup[banner['EndGachaSelectListId']]
+        start_data = gachaselect_lookup[banner['StartGachaSelectlistId']]
+        end_data = gachaselect_lookup[banner['EndGachaSelectlistId']]
         char = banner['CharacterId']
         run = (start_data['StartTimeFixJST'], end_data['EndTimeFixJST'])
         run_count = run_counter.get_run_count(char, run)
@@ -62,9 +60,9 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
         gacha_list.append(gacha)
 
     # Parse iosg
-    iosg_data = filter(lambda item: item['GachaSelectListType'] == 3, gachaselect_data)
+    iosg_data = filter(lambda item: item['GachaSelectlistType'] == 3, gachaselect_data)
     for banner in iosg_data:
-        for character in banner['NewCharacterIdList']:
+        for character in banner['NewCharacterIdlist']:
             char = int(character)
             run = (banner['StartTimeFixJST'], banner['EndTimeFixJST'])
             run_count = run_counter.get_run_count(char, run)

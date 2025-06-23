@@ -1,4 +1,3 @@
-from typing import List
 from re import sub
 
 from discord import Interaction, app_commands
@@ -35,7 +34,7 @@ async def add_alias(session: AsyncSession, char_id: int, alias: str, is_custom=F
             return None
         raise BotError(f'Alias {alias} already exists.')
 
-async def auto_alias(session: Session, char_id: int, serial: int=None) -> List[Alias]:
+async def auto_alias(session: Session, char_id: int, serial: int=None) -> list[Alias]:
     '''Automatically adds default alias. Add serial for quick adding alt character numbers.'''
     aliases = []
     for language in LanguageOptions:

@@ -1,5 +1,4 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict
 
 from api.crud.character import get_char_ids
 from api.crud.string_keys import read_string_key_language_bulk, read_string_key_language
@@ -20,7 +19,7 @@ async def get_char_name(session: AsyncSession, char_id: int, language: enums.Lan
     )
     return name
 
-async def get_char_names(session: AsyncSession, language: enums.Language) -> Dict[int, schemas.Name]:
+async def get_char_names(session: AsyncSession, language: enums.Language) -> dict[int, schemas.Name]:
     ids = await get_char_ids(session)
     name_keys = [CHARACTER_NAME_KEY.format(id) for id in ids]
     title_keys = [CHARACTER_TITLE_KEY.format(id) for id in ids]

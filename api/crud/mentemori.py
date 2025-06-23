@@ -2,7 +2,6 @@ from sqlalchemy import select, desc
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Optional, List
 
 from common.models import PlayerORM, GuildORM, PlayerColumns
 
@@ -100,10 +99,10 @@ async def get_top_players(
     session: AsyncSession,
     count: int,
     order_by: PlayerColumns,
-    world_id: Optional[List[int]] = None,
-    server: Optional[int] = None,
+    world_id: list[int]|None = None,
+    server: int|None = None,
 ):
-    valid_columns: Dict[str, InstrumentedAttribute] = {
+    valid_columns: dict[str, InstrumentedAttribute] = {
         "bp": PlayerORM.bp,
         "rank": PlayerORM.rank,
         "quest": PlayerORM.quest_id,
@@ -144,8 +143,8 @@ async def get_top_players(
 async def get_top_guilds(
     session: AsyncSession,
     count: int,
-    world_id: Optional[List[int]] = None,
-    server: Optional[int] = None,
+    world_id: list[int]|None = None,
+    server: int|None = None,
 ):
     stmt = select(
         GuildORM.id,
@@ -176,7 +175,7 @@ async def get_guild(session: AsyncSession, guild_id: int):
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
-async def get_guild_members(session: AsyncSession, guild_id: int) -> List[PlayerORM]:
+async def get_guild_members(session: AsyncSession, guild_id: int) -> list[PlayerORM]:
     '''Only shows members in the DB'''
     stmt = select(PlayerORM).where(PlayerORM.guild_id == guild_id)
     result = await session.execute(stmt)

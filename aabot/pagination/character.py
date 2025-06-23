@@ -1,6 +1,5 @@
 from io import StringIO
 from itertools import batched
-from typing import Dict, List
 
 from discord import Color, Interaction
 from html2text import HTML2Text
@@ -13,7 +12,7 @@ from aabot.utils.command_utils import LanguageOptions
 from aabot.utils.utils import character_title, calc_buff, possessive_form
 from common import enums, schemas
 
-def id_list_view(interaction: Interaction, name_data: schemas.APIResponse[Dict[int, schemas.Name]]):
+def id_list_view(interaction: Interaction, name_data: schemas.APIResponse[dict[int, schemas.Name]]):
     names = name_data.data.values()
     
     embeds = []
@@ -104,9 +103,9 @@ def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name_data:
 
 def speed_view(
     interaction: Interaction,
-    char_data: schemas.APIResponse[List[schemas.CharacterDBModel]],
-    name_data: schemas.APIResponse[Dict[int, schemas.Name]],
-    add: int, buffs: List[int]=None):
+    char_data: schemas.APIResponse[list[schemas.CharacterDBModel]],
+    name_data: schemas.APIResponse[dict[int, schemas.Name]],
+    add: int, buffs: list[int]=None):
     speed_list = reversed(char_data.data)
     
     if add or buffs:

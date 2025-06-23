@@ -1,6 +1,6 @@
 import httpx
 import html2text
-from typing import Dict, Type, TypeVar
+from typing import TypeVar
 
 from aabot.utils.error import BotError
 from common.enums import Language
@@ -23,6 +23,8 @@ CHARACTER_SKILL_PATH = 'character/{char_id}/skill'
 CHARACTER_VOICE_PATH = 'character/{char_id}/voiceline'
 CHARACTER_MEMORY_PATH = 'character/{char_id}/memory'
 ITEM_PATH = 'item'
+ITEM_RUNE_PATH = 'item/rune'
+ITEM_RUNE_CATEGORY_PATH = 'item/rune/{category}'
 SKILL_PATH = 'skill/{skill_id}'
 QUEST_PATH = 'quest/{quest_id}'
 TOWER_PATH = 'tower'
@@ -45,12 +47,12 @@ MENTEMORI_GACHA_PATH = '{server_id}/{gacha}/latest'
 
 T = TypeVar('T')
 
-def parse_response(data: dict, data_type: Type[T]) -> APIResponse[T]:
+def parse_response(data: dict, data_type: type[T]) -> APIResponse[T]:
     return APIResponse.parse(data, data_type)
 
 async def fetch_api(
     path: str,
-    response_model: Type[T],
+    response_model: type[T],
     path_params: dict = None,
     query_params: dict = None,
     headers: dict = None):
@@ -114,7 +116,7 @@ async def fetch_item(item_id: int, item_type: int, language: Language = Language
     )
     return item_data
 
-async def fetch_common_strings() -> Dict[Language, CommonStrings]:
+async def fetch_common_strings() -> dict[Language, CommonStrings]:
     data = {}
     for lang in Language:
         lang_data = await fetch_api(
