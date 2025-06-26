@@ -22,7 +22,7 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     gachacase_data = await md.get_MB('GachaCaseMB')
     gachacaseui_data = await md.get_MB('GachaCaseUiMB')
     gachadestiny_data = await md.get_MB('GachaDestinyAddCharacterMB')
-    gachaselect_data = await md.get_MB('GachaSelectlistMB')
+    gachaselect_data = await md.get_MB('GachaSelectListMB')
 
     gacha_list = []
     run_counter = RunCounter()
@@ -30,7 +30,7 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     # Parse fleeting
     gachacaseui_lookup = {item['Id']: item for item in gachacaseui_data}
     for banner in gachacase_data:
-        if banner['GachaSelectlistType'] == 1 and banner['GachaCaseFlags'] == 1:
+        if banner['GachaSelectListType'] == 1 and banner['GachaCaseFlags'] == 1:
             ui_data = gachacaseui_lookup[banner['GachaCaseUiId']]
             char = int(ui_data['PickUpCharacterId'])
             run = (banner['StartTimeFixJST'], banner['EndTimeFixJST'])
@@ -45,8 +45,8 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     # Parse ioc
     gachaselect_lookup = {item['Id']: item for item in gachaselect_data}
     for banner in gachadestiny_data:
-        start_data = gachaselect_lookup[banner['StartGachaSelectlistId']]
-        end_data = gachaselect_lookup[banner['EndGachaSelectlistId']]
+        start_data = gachaselect_lookup[banner['StartGachaSelectListId']]
+        end_data = gachaselect_lookup[banner['EndGachaSelectListId']]
         char = banner['CharacterId']
         run = (start_data['StartTimeFixJST'], end_data['EndTimeFixJST'])
         run_count = run_counter.get_run_count(char, run)
@@ -60,7 +60,7 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
         gacha_list.append(gacha)
 
     # Parse iosg
-    iosg_data = filter(lambda item: item['GachaSelectlistType'] == 3, gachaselect_data)
+    iosg_data = filter(lambda item: item['GachaSelectListType'] == 3, gachaselect_data)
     for banner in iosg_data:
         for character in banner['NewCharacterIdlist']:
             char = int(character)
