@@ -3,7 +3,6 @@ from common import schemas
 from common.enums import GachaType, Server
 from common.timezones import check_active
 
-
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
 
@@ -62,7 +61,7 @@ async def parse_gacha(md: MasterData) -> list[schemas.GachaPickup]:
     # Parse iosg
     iosg_data = filter(lambda item: item['GachaSelectListType'] == 3, gachaselect_data)
     for banner in iosg_data:
-        for character in banner['NewCharacterIdlist']:
+        for character in banner['NewCharacterIdList']:
             char = int(character)
             run = (banner['StartTimeFixJST'], banner['EndTimeFixJST'])
             run_count = run_counter.get_run_count(char, run)
