@@ -32,11 +32,10 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         try:
             await api.fetch(api.UPDATE_API_GUILD_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=30)
             await api.fetch(api.UPDATE_API_PLAYERS_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=30)
-            msg += 'Updated player and guild rankings'
+            
         except BotError as e:
-            msg += f'Update failed <@{self.bot.owner_id}>\n{e.message}'
- 
-        await ch.send(msg)
+            msg += f'Failed to update player and guild rankings\n<@{self.bot.owner_id}>\n{e.message}'
+            await ch.send(msg)
              
     @update_ranking.before_loop
     async def before_update_ranking(self):

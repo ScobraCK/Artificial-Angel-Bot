@@ -296,7 +296,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         '''Shows IoC or IoSG logs'''
         await interaction.response.defer()
         view = await mentemori_page.gacha_view(interaction, gacha, server, language)
-        await show_view(interaction, view, defered=True)
+        await show_view(interaction, view)
 
 
 async def setup(bot: AABot):

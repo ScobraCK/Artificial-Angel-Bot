@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from api.crud.mentemori import get_top_players, get_top_guilds, get_player, get_guild, get_guild_members
 from common.schemas import APIResponse
 from api.schemas.requests import PlayerRankingRequest, GuildRankingRequest
-from api.utils.deps import SessionDep, language_parameter
+from api.utils.deps import SessionDep
 from api.utils.error import APIError
 from common import schemas
 
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get(
     '/player/ranking',
     summary='Player Rankings',
-    description='Returns player ranking data',
+    description='Returns player ranking data. Data is collected from mentemori.icu rankings.',
     response_model=APIResponse[list[schemas.PlayerRankInfo]]
 )
 async def player_ranking(
@@ -29,7 +29,7 @@ async def player_ranking(
 @router.get(
     '/player/{player_id}',
     summary='Player',
-    description='Returns player data',
+    description='Returns player data. Data is collected from mentemori.icu rankings and may have missing or outdated data for players not in the rankings.',
     response_model=APIResponse[schemas.Player]
 )
 async def player(
@@ -45,7 +45,7 @@ async def player(
 @router.get(
     '/guild/ranking',
     summary='Guild Rankings',
-    description='Returns guild ranking data',
+    description='Returns guild ranking data. Data is collected from mentemori.icu rankings.',
     response_model=APIResponse[list[schemas.GuildRankInfo]]
 )
 async def guild_ranking(
@@ -59,7 +59,7 @@ async def guild_ranking(
 @router.get(
     '/guild/{guild_id}',
     summary='Guild',
-    description='Returns guild data',
+    description='Returns guild data. Data is collected from mentemori.icu rankings and may have missing or outdated data for players not in the rankings.',
     response_model=APIResponse[list[schemas.Player]]
 )
 async def guild(
@@ -75,7 +75,7 @@ async def guild(
 @router.get(
     '/guild/{guild_id}/members',
     summary='Guild Members',
-    description='Returns guild member data. Only returns player data existing in the database.',
+    description='Returns guild member data. Only returns player data existing in the database. Data is collected from mentemori.icu rankings and may have missing or outdated data for players not in the rankings.',
     response_model=APIResponse[list[schemas.Player]]
 )
 async def guild_members(
