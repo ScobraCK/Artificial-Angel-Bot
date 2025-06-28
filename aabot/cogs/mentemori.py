@@ -1,4 +1,4 @@
-9from re import split
+from re import split
 
 from discord import app_commands, Interaction
 from discord.ext import commands
