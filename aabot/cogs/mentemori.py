@@ -1,4 +1,4 @@
-from re import split
+9from re import split
 
 from discord import app_commands, Interaction
 from discord.ext import commands
@@ -296,7 +296,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         '''Shows IoC or IoSG logs'''
         await interaction.response.defer()
         view = await mentemori_page.gacha_view(interaction, gacha, server, language)
-        await show_view(interaction, view)
+        await show_view(interaction, view, defered=True)
 
 
 async def setup(bot: AABot):
