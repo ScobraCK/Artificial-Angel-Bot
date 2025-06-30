@@ -1,12 +1,13 @@
-from collections.abc import Callable
 import discord
+from collections.abc import Callable
+from typing import Union
 
 class MyView(discord.ui.View):
     def __init__(self, user: discord.User, **kwargs):  # kwargs to ignore if called from ButtonView
         super().__init__(timeout=240)
         self.user=user
         self.message: discord.InteractionMessage = None
-        self.embed: discord.Embed|Callable[discord.Embed] = None
+        self.embed: discord.Embed|Callable[[], discord.Embed] = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         check = (interaction.user.id == self.user.id)
@@ -24,20 +25,49 @@ class MyView(discord.ui.View):
 
     async def update_view(self, interaction: discord.Interaction):
         '''Updates the actual message'''
-        if self.message:
-            if interaction.response.is_done():  # deffered?
-                await interaction.followup.send(embed=self.embed, view=self)
+        await self.update()
+        
+        if callable(self.embed):
+            embed = self.embed()
+        else:
+            embed = self.embed
+        
+        if interaction.response.is_done():
+            if self.message is None:  # Only if defered outside of view
+                self.message = await interaction.original_response()
+                await interaction.followup.send(embed=embed, view=self)
             else:
-                await interaction.response.edit_message(embed=self.embed, view=self)
+                await interaction.edit_original_response(embed=embed, view=self)
+        elif interaction.message is None:
+            callback = await interaction.response.send_message(embed=embed, view=self)
+            self.message = callback.resource
+        else:
+            await interaction.response.edit_message(embed=embed, view=self)
 
     async def update(self):
         '''Override to update the view state'''
         pass
 
-class PageSelect(discord.ui.Modal, title = "Select Page"):
-    page = discord.ui.TextInput(label="Page", placeholder="Enter a page number", required=True, min_length=1, max_length=3)
+class PageSelect(discord.ui.Modal):
+    def __init__(self, max_page: int):
+        super().__init__(title="Select Page")
+        self.page = discord.ui.TextInput(label="Page", placeholder="Enter a page number", required=True, min_length=1, max_length=3)
+        self.max_page = max_page
+        self.add_item(self.page)
         
     async def on_submit(self, interaction: discord.Interaction):
+        if not self.page.value.isdigit():
+            await interaction.response.send_message(
+                "Input must be a valid page number.",
+                ephemeral=True
+            )
+            return
+        if int(self.page.value) < 1 or int(self.page.value) > self.max_page:
+            await interaction.response.send_message(
+                f"Page number must be between 1 and {self.max_page}.",
+                ephemeral=True
+            )
+            return
         await interaction.response.defer()  # likely just burying this defer into nowhere
         
 class ButtonView(MyView):
@@ -82,35 +112,35 @@ class ButtonView(MyView):
     async def left2_btn_callback(self, interaction: discord.Interaction):
         self.current_page = max(1, self.current_page - 10)
         self.embed = self.embeds[self.current_page - 1]
-        await self.update()
         await self.update_view(interaction)
 
     async def left_btn_callback(self, interaction: discord.Interaction):
         self.current_page = max(1, self.current_page - 1)
         self.embed = self.embeds[self.current_page - 1]
-        await self.update()
         await self.update_view(interaction)
 
     async def mid_btn_callback(self, interaction: discord.Interaction):
-        modal = PageSelect()
+        modal = PageSelect(self.max_page)
         await interaction.response.send_modal(modal)
         await modal.wait()
         
+        page = modal.page.value  # check for view (separate from modal)
+        if not page.isdigit() or int(page) < 1 or int(page) > self.max_page:
+            return
+        
         self.current_page = int(modal.page.value)
         self.embed = self.embeds[self.current_page - 1]
-        await self.update()
         await self.update_view(interaction)
+    
         
     async def right_btn_callback(self, interaction: discord.Interaction):
         self.current_page = min(self.max_page, self.current_page + 1)
         self.embed = self.embeds[self.current_page - 1]
-        await self.update()
         await self.update_view(interaction)
 
     async def right2_btn_callback(self, interaction: discord.Interaction):
         self.current_page = min(self.max_page, self.current_page + 10)
         self.embed = self.embeds[self.current_page - 1]
-        await self.update()
         await self.update_view(interaction)
 
 class DropdownView(MyView):
@@ -139,7 +169,6 @@ class DropdownView(MyView):
         self.key = self.dropdown.values[0]
         self.embeds = self.embed_dict.get(self.key)
         self.embed = self.embeds[0]
-        await self.update()
         await self.update_view(interaction)
 
 class MixedView(DropdownView, ButtonView):
@@ -162,15 +191,8 @@ class MixedView(DropdownView, ButtonView):
         self.embed = self.embeds[0]
         self.max_page = len(self.embeds)
         self.current_page = 1
-        await self.update()
         await self.update_view(interaction)
 
-
-async def show_view(interaction: discord.Interaction, view: MyView, defered=False):
-    await view.update()
-    if defered:
-        await interaction.followup.send(embed=view.embed, view=view)
-    else:
-        await interaction.response.send_message(embed=view.embed, view=view)
-    message = await interaction.original_response()
-    view.message = message
+# Now redundent, but kept in case it is needed
+async def show_view(interaction: discord.Interaction, view: MyView):
+    await view.update_view(interaction)
