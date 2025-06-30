@@ -32,15 +32,31 @@ class APIResponse(APIBaseModel, Generic[T]):
         parsed_data = TypeAdapter(data_type).validate_python(data["data"])
         return cls(timestamp=data["timestamp"], version=data["version"], data=parsed_data)
 
-class BaseParameterModel(APIBaseModel):
-    type: enums.BaseParameter = Field(..., validation_alias='BaseParameterType')
+class Parameter(APIBaseModel):
+    parameter_type: Literal['Base', 'Battle']
+    type: int = Field(..., validation_alias=AliasChoices('BaseParameterType', 'BattleParameterType'))
     change_type: int = Field(..., alias='ChangeParameterType') 
     value: int = Field(..., alias='Value')
+    
+    @model_validator(mode='before')
+    @classmethod
+    def set_param_type(cls, data: Any) -> Any:
+        if data and data.get('parameter_type') is None:  # only set once. Check data for validation checks in case of union (NoneType may be passed)
+            if data.get('BaseParameterType') is not None:
+                data['parameter_type'] = 'Base'
+            else:
+                data['parameter_type'] = 'Battle'
+        return data
 
-class BattleParameterModel(APIBaseModel):
-    type: enums.BattleParameter = Field(..., validation_alias='BattleParameterType')
-    change_type: int = Field(..., alias='ChangeParameterType') 
-    value: int = Field(..., alias='Value')
+# class BaseParameterModel(APIBaseModel):   
+#     type: enums.BaseParameter = Field(..., validation_alias='BaseParameterType')
+#     change_type: int = Field(..., alias='ChangeParameterType') 
+#     value: int = Field(..., alias='Value')
+
+# class BattleParameterModel(APIBaseModel):
+#     type: enums.BattleParameter = Field(..., validation_alias='BattleParameterType')
+#     change_type: int = Field(..., alias='ChangeParameterType') 
+#     value: int = Field(..., alias='Value')
 
 # Used to show an amount of item. Cost, reward etc
 class ItemCount(APIBaseModel):
@@ -134,20 +150,21 @@ class Equipment(APIBaseModel):
     quality: int = Field(..., validation_alias='QualityLv')
     level: int = Field(..., validation_alias='EquipmentLv')
     bonus_parameters: int = Field(..., validation_alias='AdditionalParameterTotal')
-    basestat: BattleParameterModel = Field(..., validation_alias='BattleParameterChangeInfo')
+    basestat: Parameter = Field(..., validation_alias='BattleParameterChangeInfo')
     evolution_id: int = Field(..., validation_alias='EquipmentEvolutionId')
     composite_id: int = Field(..., validation_alias='CompositeId')
     equipment_set: Union["EquipmentSet", None] = None
 
 class UniqueWeapon(Equipment):
     character_id: int
-    uw_bonus: list[BaseParameterModel|BattleParameterModel]
+    uw_bonus: list[Parameter]
     uw_descriptions: 'UWDescriptions'
 
 class SetEffect(APIBaseModel):
     equipment_count: int = Field(..., validation_alias='RequiredEquipmentCount')
-    parameter: BaseParameterModel|BattleParameterModel = Field(...)
+    parameter: Parameter = Field(...)
     
+    # Data has both BaseParameterChangeInfo or BattleParameterChangeInfo but one is empty and need to use non empty one
     @model_validator(mode='before')
     @classmethod
     def set_param(cls, data: Any) -> Any:
@@ -155,7 +172,7 @@ class SetEffect(APIBaseModel):
             if data.get('BaseParameterChangeInfo') is not None:
                 data['parameter'] = data.get('BaseParameterChangeInfo')
             else:
-                data['parameter'] = data.get('BattleParameterChangeInfo')  # Either one should always be present
+                data['parameter'] = data.get('BattleParameterChangeInfo')
         return data
 
 class EquipmentSet(APIBaseModel):
@@ -237,7 +254,7 @@ class ItemBase(APIBaseModel):
 class Rune(ItemBase):
     item_id: int = Field(..., validation_alias='Id')
     item_type: enums.ItemType = enums.ItemType.Sphere
-    parameter: BaseParameterModel|BattleParameterModel = Field(...)
+    parameter: Parameter = Field(...)
     category: enums.RuneType = Field(..., validation_alias='CategoryId')
     level: int = Field(..., validation_alias='Lv')
     sphere_type: int = Field(..., ge=0, le=3, validation_alias='SphereType', description='Size of rune icon')
@@ -246,7 +263,7 @@ class Rune(ItemBase):
     @model_validator(mode='wrap')
     @classmethod
     def set_param_and_icon(cls, data: Any, handler: ModelWrapValidatorHandler[Self]) -> Any:
-        if data.get('parameter') is None:  # parameter may be already set during transformer
+        if data.get('parameter') is None:  # only set once
             if data.get('BaseParameterChangeInfo') is not None:
                 data['parameter'] = data.get('BaseParameterChangeInfo')
             else:

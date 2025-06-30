@@ -1,6 +1,6 @@
 import re
 from common.enums import BattleParameter, Server
-from common.schemas import BaseParameterModel, BattleParameterModel, CommonStrings
+from common.schemas import Parameter, CommonStrings
 
 PERCENTAGE_PARAMS = [
     BattleParameter.CRIT_DMG_BOOST,
@@ -38,13 +38,14 @@ def decimal_format(num: int)->str:
     decimal = 1 if num % 10 == 0 else 2
     return f'{num/100:.{decimal}f}'
 
-def param_string(param: BaseParameterModel|BattleParameterModel, cs: CommonStrings):
-    if isinstance(param, BaseParameterModel):
+def param_string(param: Parameter, cs: CommonStrings):
+    param_type = param.parameter_type
+    if param_type == 'Base':
         param_type_dict = cs.base_param
     else:
         param_type_dict = cs.battle_param
     if param.change_type == 1:
-        if isinstance(param, BattleParameterModel) and param in PERCENTAGE_PARAMS:
+        if param_type == 'Battle' and param.type in PERCENTAGE_PARAMS:
             return f'{param_type_dict[param.type]} {decimal_format(param.value)}%'
         else:
             return f'{param_type_dict[param.type]} {param.value:,}'

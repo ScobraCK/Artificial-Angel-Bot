@@ -1,8 +1,9 @@
+from asyncio import gather
 from collections import defaultdict, namedtuple
 from enum import Enum
 from io import StringIO
 from re import finditer
-from typing import List, Tuple, Union
+from typing import Union
 
 from discord import Color, Interaction
 
@@ -81,7 +82,7 @@ class ItemCounter:
         self.items = defaultdict(int)  # Stores (item_id, item_type) -> count
         self.blacklist = blacklist  # type blacklist
 
-    def add_items(self, items: Union[schemas.ItemCount, List[schemas.ItemCount], "ItemCounter"]):
+    def add_items(self, items: Union[schemas.ItemCount, list[schemas.ItemCount], 'ItemCounter']):
         if isinstance(items, schemas.ItemCount):  # Single item
             self.items[(items.item_id, items.item_type)] += items.count
         elif isinstance(items, list):  # List of items
@@ -93,13 +94,13 @@ class ItemCounter:
             for (item_id, item_type), count in items.items.items():
                 self.items[(item_id, item_type)] += count
         else:
-            raise TypeError("Expected ItemCount, List[ItemCount], or ItemCounter")
+            raise TypeError("Expected ItemCount, list[ItemCount], or ItemCounter")
 
-    def get_total(self) -> List[schemas.ItemCount]:
+    def get_total(self) -> list[schemas.ItemCount]:
         return [schemas.ItemCount(item_id=item_id, item_type=item_type, count=count) for (item_id, item_type), count in self.items.items() if item_type not in self.blacklist]
     
-    async def get_total_strings(self) -> List[str]:
-        return [await item_count_string(item) for item in self.get_total()]
+    async def get_total_strings(self) -> list[str]:
+        return await gather(*(item_count_string(item) for item in self.get_total()))
 
     def __bool__(self) -> bool:
         return bool(self.items)
@@ -142,7 +143,7 @@ async def item_count_string(itemcount: schemas.ItemCount) -> str:
     item = item_data.data
     return f'{itemcount.count:,}x {item.name}'
 
-def parse_equip_string(string: str) -> Tuple[str|EquipType, List[EquipArgs]]:
+def parse_equip_string(string: str) -> tuple[str|EquipType, list[EquipArgs]]:
     tokens = string.split(maxsplit=1)
     if len(tokens) < 2:
         raise BotError(f'Equipment string `{string}` was incorrect. Use `/help equipment` for more info.')
@@ -390,8 +391,8 @@ async def equipment_view(interaction: Interaction, equip_string: str, cs: schema
     if len(results) > 5:
         raise BotError('Too many equipment strings. Maximum of 5 allowed.')
 
-    equipments: List[schemas.APIResponse[schemas.Equipment]]|List[schemas.APIResponse[schemas.UniqueWeapon]] = []
-    upgrades: List[schemas.APIResponse[schemas.EquipmentCosts]] = []
+    equipments: list[schemas.APIResponse[schemas.Equipment]]|list[schemas.APIResponse[schemas.UniqueWeapon]] = []
+    upgrades: list[schemas.APIResponse[schemas.EquipmentCosts]] = []
     # Main embeds
 
     for eqp_args in results:
@@ -459,16 +460,15 @@ def equipment_help_description():
 
     return text.getvalue()
 
+# async def rune_embed(rune: enums.RuneType, language: enums.Language):
+#     rune_data = await api.fetch_item(
+#         item_id=rune,
+#         item_type=enums.ItemType.Sphere,
+#         language=language
+#     )
+    
+#     return item_embed(rune_data, schemas.CommonStrings(language))
     
         
-    
-
-
-
-
-
-
-
-        
-    
-    
+# async def rune_view(interaction: Interaction, rune: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language):
+#     pass

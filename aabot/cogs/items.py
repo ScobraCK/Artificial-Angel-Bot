@@ -1,5 +1,3 @@
-from typing import Optional
-
 from discord import app_commands, Interaction
 from discord.ext import commands
 
@@ -9,6 +7,7 @@ from aabot.pagination import items as item_response
 from aabot.pagination.views import show_view
 from aabot.utils import api
 from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
+from common import enums
 
 class ItemCommands(commands.Cog, name='Item Commands'):
     '''Commands related to items'''
@@ -27,7 +26,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         self, interaction: Interaction, 
         item_id: int, 
         item_type: int,
-        language: Optional[LanguageOptions]=None):
+        language: LanguageOptions|None=None):
         '''
         Command for quick searching from ItemId and ItemType
         '''
@@ -48,11 +47,24 @@ class ItemCommands(commands.Cog, name='Item Commands'):
     async def equipment(
         self, interaction: Interaction, 
         string: str,
-        language: Optional[LanguageOptions]=None
-    ):
+        language: LanguageOptions|None=None):
         '''Shows equipment information'''
+        await interaction.response.defer()
         view = await item_response.equipment_view(interaction, string, self.bot.common_strings[language], language)
         await show_view(interaction, view)
+
+    # @app_commands.describe(
+    #     rune='Rune',
+    #     language="Text language. Defaults to English."
+    # )
+    # @apply_user_preferences()
+    # async def rune(
+    #     self, interaction: Interaction,
+    #     rune: enums.RuneType,
+    #     language: LanguageOptions|None=None):
+    #     '''Shows rune information'''
+    #     view = await item_response.rune_view(interaction, rune, self.bot.common_strings[language], language)
+
 
 async def setup(bot: AABot):
 	await bot.add_cog(ItemCommands(bot))
