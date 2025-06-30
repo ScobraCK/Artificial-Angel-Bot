@@ -162,6 +162,7 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
             aliases = await get_alias(session, character)
             if not aliases:
                 await interaction.response.send_message(f'No alias found for character `{character}`.')
+                return
             
             name = await api.fetch_name(character)
 
