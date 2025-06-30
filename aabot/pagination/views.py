@@ -1,13 +1,12 @@
-import discord
 from collections.abc import Callable
-from typing import Union
+import discord
 
 class MyView(discord.ui.View):
     def __init__(self, user: discord.User, **kwargs):  # kwargs to ignore if called from ButtonView
         super().__init__(timeout=240)
         self.user=user
         self.message: discord.InteractionMessage = None
-        self.embed: discord.Embed|Callable[[], discord.Embed] = None
+        self.embed: discord.Embed|Callable[discord.Embed] = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         check = (interaction.user.id == self.user.id)
@@ -25,17 +24,11 @@ class MyView(discord.ui.View):
 
     async def update_view(self, interaction: discord.Interaction):
         '''Updates the actual message'''
-        await self.update()
-        
-        if callable(self.embed):
-            embed = self.embed()
-        else:
-            embed = self.embed
-        
-        if interaction.response.is_done():  # deffered?
-            await interaction.followup.send(embed=embed, view=self)
-        else:
-            await interaction.response.edit_message(embed=embed, view=self)
+        if self.message:
+            if interaction.response.is_done():  # deffered?
+                await interaction.followup.send(embed=self.embed, view=self)
+            else:
+                await interaction.response.edit_message(embed=self.embed, view=self)
 
     async def update(self):
         '''Override to update the view state'''
@@ -89,11 +82,13 @@ class ButtonView(MyView):
     async def left2_btn_callback(self, interaction: discord.Interaction):
         self.current_page = max(1, self.current_page - 10)
         self.embed = self.embeds[self.current_page - 1]
+        await self.update()
         await self.update_view(interaction)
 
     async def left_btn_callback(self, interaction: discord.Interaction):
         self.current_page = max(1, self.current_page - 1)
         self.embed = self.embeds[self.current_page - 1]
+        await self.update()
         await self.update_view(interaction)
 
     async def mid_btn_callback(self, interaction: discord.Interaction):
@@ -103,16 +98,19 @@ class ButtonView(MyView):
         
         self.current_page = int(modal.page.value)
         self.embed = self.embeds[self.current_page - 1]
+        await self.update()
         await self.update_view(interaction)
         
     async def right_btn_callback(self, interaction: discord.Interaction):
         self.current_page = min(self.max_page, self.current_page + 1)
         self.embed = self.embeds[self.current_page - 1]
+        await self.update()
         await self.update_view(interaction)
 
     async def right2_btn_callback(self, interaction: discord.Interaction):
         self.current_page = min(self.max_page, self.current_page + 10)
         self.embed = self.embeds[self.current_page - 1]
+        await self.update()
         await self.update_view(interaction)
 
 class DropdownView(MyView):
@@ -141,6 +139,7 @@ class DropdownView(MyView):
         self.key = self.dropdown.values[0]
         self.embeds = self.embed_dict.get(self.key)
         self.embed = self.embeds[0]
+        await self.update()
         await self.update_view(interaction)
 
 class MixedView(DropdownView, ButtonView):
@@ -163,10 +162,15 @@ class MixedView(DropdownView, ButtonView):
         self.embed = self.embeds[0]
         self.max_page = len(self.embeds)
         self.current_page = 1
+        await self.update()
         await self.update_view(interaction)
 
 
-async def show_view(interaction: discord.Interaction, view: MyView):
-    await view.update_view(interaction)
+async def show_view(interaction: discord.Interaction, view: MyView, defered=False):
+    await view.update()
+    if defered:
+        await interaction.followup.send(embed=view.embed, view=view)
+    else:
+        await interaction.response.send_message(embed=view.embed, view=view)
     message = await interaction.original_response()
     view.message = message
