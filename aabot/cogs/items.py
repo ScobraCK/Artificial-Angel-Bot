@@ -51,7 +51,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         '''Shows equipment information'''
         await interaction.response.defer()
         view = await item_response.equipment_view(interaction, string, self.bot.common_strings[language], language)
-        await show_view(interaction, view)
+        await show_view(interaction, view, defered=True)
 
     # @app_commands.describe(
     #     rune='Rune',
