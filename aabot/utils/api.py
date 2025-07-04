@@ -41,9 +41,11 @@ UPDATE_API_GUILD_PATH = 'admin/mentemori/guilds'
 UPDATE_API_PLAYERS_PATH = 'admin/mentemori/players'
 
 MENTEMORI_BASE_PATH = 'https://api.mentemori.icu/'
+MENTEMORI_WORLD_PATH = 'worlds'
 MENTEMORI_TEMPLE_PATH = '{world_id}/temple/latest'
 MENTEMORI_GROUP_PATH = 'wgroups'
 MENTEMORI_GACHA_PATH = '{server_id}/{gacha}/latest'
+MENTEMORI_RAID_EVENT_PATH = '{world_id}/guild_raid/latest'
 
 T = TypeVar('T')
 
