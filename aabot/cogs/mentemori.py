@@ -298,6 +298,21 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         view = await mentemori_page.gacha_view(interaction, gacha, server, language)
         await show_view(interaction, view)
 
+    @app_commands.command()
+    @app_commands.describe(
+        server='Option to filter by server',
+    )
+    async def raidrankings(self, interaction: Interaction, server: Server|None = None):
+        """Show guild raid rankings"""
+        view = await mentemori_page.raid_ranking_view(interaction, server)
+        if not view:
+            await interaction.response.send_message(
+                "No guild raid event is currently active.",
+                ephemeral=True
+            )
+            return
+        await show_view(interaction, view)
+
 
 async def setup(bot: AABot):
 	await bot.add_cog(MentemoriCommands(bot))

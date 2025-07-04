@@ -141,7 +141,6 @@ def player_ranking_view(
     ) -> ButtonView:
     embed_dict = {'default': []}
     rank = 1
-    test = 0
     for batch in batched(ranking_data.data, 50):
         rankings = []
         for player in batch:
@@ -259,3 +258,34 @@ async def gacha_view(interaction: Interaction, gacha: GachaLog, server: Server, 
             )
         )
     return ButtonView(interaction.user, embed_dict)
+
+async def raid_ranking_view(interaction: Interaction, server: Server|None=None) -> ButtonView | None:
+    resp = await api.fetch(
+        api.MENTEMORI_RAID_EVENT_PATH.format(world_id=f'{server}000' if server else 0),
+        base_url=api.MENTEMORI_BASE_PATH
+    )
+    data: list[dict] = resp.json()['data']
+    data.sort(key=lambda x: x['damage'], reverse=True)
+    
+    if data[0]['damage'] == 0:
+        return None
+    
+    embed_dict = {'default': []}
+    
+    for batch in batched(data, 50):
+        rankings = []
+        for world_data in batch:
+            server, world = from_world_id(world_data['world_id'])
+            rankings.append([server, world, f'{world_data['damage']:,}'])
+
+        table = make_table(rankings, ['Server', 'World', 'Damage'])
+        embed_dict['default'].append(
+            Embed(
+                title=f'Guild Raid Rankings',
+                description=f'```{table}```',
+                color=Color.red()
+            )
+        )
+        
+    return ButtonView(interaction.user, embed_dict)
+    
