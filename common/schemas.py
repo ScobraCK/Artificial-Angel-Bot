@@ -223,6 +223,18 @@ class GachaPickup(APIBaseModel):
     run_count: int
     char_id: int
 
+class GachaChosenGroup(APIBaseModel):
+    banner_id: int = Field(..., validation_alias='Id', description='Discriminator for grouping of chosen banners')
+    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    banners: list[GachaPickup]
+
+class GachaBanners(APIBaseModel):
+    fleeting: list[GachaPickup]
+    ioc: list[GachaPickup]
+    iosg: list[GachaPickup]
+    chosen: list[GachaChosenGroup]
+
 # Groups
 class GrandBattleDate(APIBaseModel):
     start: str = Field(..., validation_alias='StartTime', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='Local date')
@@ -263,14 +275,15 @@ class Rune(ItemBase):
     @model_validator(mode='wrap')
     @classmethod
     def set_param_and_icon(cls, data: Any, handler: ModelWrapValidatorHandler[Self]) -> Any:
-        if data.get('parameter') is None:  # only set once
+        if isinstance(data, dict) and data.get('parameter') is None:  # only set once, validated as Rune(BaseModel) during translation
             if data.get('BaseParameterChangeInfo') is not None:
                 data['parameter'] = data.get('BaseParameterChangeInfo')
             else:
                 data['parameter'] = data.get('BattleParameterChangeInfo')  # Either one should always be present
 
         rune = handler(data)
-        rune.icon = int(f'{rune.category.value:02}{rune.sphere_type:02}')
+        if rune.icon is None:
+            rune.icon = int(f'{rune.category.value:02}{rune.sphere_type:02}')
 
         return rune
 

@@ -28,30 +28,41 @@ async def generate_banner_text(gacha_list: list[schemas.GachaPickup], language: 
 
     return banner_text.getvalue()
 
-
-async def gacha_banner_embed(gacha_data: schemas.APIResponse[list[schemas.GachaPickup]], language: Language):
-    fleeting = []
-    ioc = []
-    iosg = []
-    name_dict = {}
-    
-    for gacha in gacha_data.data:
-        if gacha.gacha_type == 1:
-            fleeting.append(gacha)
-        elif gacha.gacha_type == 2:
-            ioc.append(gacha)
-        elif gacha.gacha_type == 3:
-            iosg.append(gacha)
+async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup], language: Language, name_dict: dict = {}) -> str:
+    banner_text = StringIO()
+    for chosen in chosen_list:
+        for gacha in chosen.banners:
+            if gacha.char_id in name_dict:
+                name = name_dict[gacha.char_id]
+            else:
+                name_data = await api.fetch_name(gacha.char_id, language)
+                name = character_title(name_data.data.title, name_data.data.name)
+                name_dict[gacha.char_id] = name
+            banner_text.write(f"- **{name}** | **Run {gacha.run_count}**\n")
+            
+        ongoing = ":white_check_mark:" if check_active(chosen.start, chosen.end, Server.Japan) else ":x:"  # Ongoing status
         
+        banner_text.write(f"**Date:** <t:{convert_from_jst(chosen.start)}> ~ <t:{convert_from_jst(chosen.end)}>\n")
+        banner_text.write(f"**Ongoing:** {ongoing}\n\n")
+
+    return banner_text.getvalue()
+
+
+async def gacha_banner_embed(gacha_data: schemas.APIResponse[schemas.GachaBanners], language: Language):
+    banners = gacha_data.data
+    name_dict = {}
+
     embed = BaseEmbed(gacha_data.version, title="Gacha Banners", color=Color.blue())
 
     # Fleeting field (select_list_type == 1)
-    embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of Fleeting**{emoji.item_emoji[9]}", value=await generate_banner_text(fleeting, language, name_dict), inline=False)
+    embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of The Fleeting**{emoji.item_emoji[9]}", value=await generate_banner_text(banners.fleeting, language, name_dict), inline=False)
+    
+    embed.add_field(name=f'{emoji.item_emoji[9]}**Chosen Prayer of The Fleeting**{emoji.item_emoji[9]}', value=await generate_chosen_banner_text(banners.chosen, language, name_dict), inline=False)
 
     # IoC field (select_list_type == 2)
-    embed.add_field(name=f"{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=await generate_banner_text(ioc, language, name_dict), inline=False)
+    embed.add_field(name=f"{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=await generate_banner_text(banners.ioc, language, name_dict), inline=False)
 
     # IoSG field (select_list_type == 3)
-    embed.add_field(name=f"{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=await generate_banner_text(iosg, language, name_dict), inline=False)
+    embed.add_field(name=f"{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=await generate_banner_text(banners.iosg, language, name_dict), inline=False)
 
     return embed

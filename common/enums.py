@@ -292,4 +292,4 @@ class GachaType(IntEnum):
     Fleeting = 1
     IoC = 2
     IoSG = 3
-
+    Chosen = 4

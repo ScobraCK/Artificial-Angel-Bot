@@ -25,7 +25,7 @@ class EventCommands(commands.Cog, name='Event Commands'):
         '''Shows gacha banners'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=list[schemas.GachaPickup],
+            response_model=schemas.GachaBanners,
             query_params={
                 'include_future': True
             }
@@ -47,7 +47,7 @@ class EventCommands(commands.Cog, name='Event Commands'):
         '''Shows gacha history of a character'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=list[schemas.GachaPickup],
+            response_model=schemas.GachaBanners,
             query_params={
                 'char_id': character,
                 'is_active': False
