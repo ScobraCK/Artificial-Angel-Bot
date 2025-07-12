@@ -110,8 +110,8 @@ class Lament(APIBaseModel):
     char_id: int = Field(validation_alias='Id')
     nameJP: str = Field(..., validation_alias='LamentJPKey')
     nameUS: str = Field(..., validation_alias='LamentUSKey')
-    youtubeJP: str = Field(..., validation_alias=AliasPath('MovieJpUrl', 'jaJP'))
-    youtubeUS: str = Field(..., validation_alias=AliasPath('MovieUsUrl', 'enUS'))
+    youtubeJP: str|None = Field(..., validation_alias=AliasPath('MovieJpUrl', 'jaJP'))
+    youtubeUS: str|None = Field(..., validation_alias=AliasPath('MovieUsUrl', 'enUS'))
     lyricsJP: str = Field(..., validation_alias='LyricsJPKey')  # lyrics shown are translated for selected language
     lyricsUS: str = Field(..., validation_alias='LyricsUSKey')
 

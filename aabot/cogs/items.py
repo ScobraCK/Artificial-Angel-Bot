@@ -32,7 +32,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         '''
         
         item_data = await api.fetch_item(item_id, item_type, language)  # directly use fetch item
-        embed = item_response.item_embed(item_data)
+        embed = item_response.item_embed(item_data, self.bot.common_strings[language])
         
         await interaction.response.send_message(embed=embed)
         
