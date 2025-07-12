@@ -117,7 +117,7 @@ async def parse_equipment_synthesis(md: MasterData, equipment: schemas.Equipment
         return schemas.EquipmentSynthesis(rarity=rarity, cost=costs)
     return None
 
-async def parse_equipment(md: MasterData, equipment: dict) -> schemas.Equipment:
+async def parse_equipment(md: MasterData, equipment: dict) -> schemas.Equipment|schemas.UniqueWeapon:
     '''
     if exclusive effect is not 0, parses into UW
     '''
@@ -154,7 +154,7 @@ async def get_char_id_from_equipment(md: MasterData, equipment: dict)->int:
     uw_effect = await md.search_id(effect_id, 'EquipmentExclusiveEffectMB')
     return uw_effect['CharacterId']
 
-async def get_equipment(md: MasterData, payload: int|requests.EquipmentRequest|requests.UniqueWeaponRequest) -> schemas.Equipment:
+async def get_equipment(md: MasterData, payload: int|requests.EquipmentRequest|requests.UniqueWeaponRequest) -> schemas.Equipment|schemas.UniqueWeapon:
     '''
     exclude_none should be included in context
     '''

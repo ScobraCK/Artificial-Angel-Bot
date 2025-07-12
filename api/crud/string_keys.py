@@ -1,5 +1,8 @@
 from collections import defaultdict
 from itertools import batched
+from typing import Any
+
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -78,17 +81,61 @@ async def read_string_key(session: AsyncSession, key: str) -> StringORM:
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
-async def read_string_key_language(session: AsyncSession, key: str, language: Language) -> str:
+async def read_string_key_language(session: AsyncSession, key: str, language: Language) -> str|None:
     if not isinstance(language, Language):
         raise ValueError(f'{language} is not a recognized language')
     stmt = select(getattr(StringORM, language)).where(StringORM.key==key)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
-async def read_string_key_language_bulk(session: AsyncSession, keys: list[str], language: Language) -> dict[str, str]:
+async def read_string_key_language_bulk(session: AsyncSession, keys: set[str], language: Language) -> dict[str, str]:
     if not isinstance(language, Language):
         raise ValueError(f'{language} is not a recognized language')
 
     stmt = select(StringORM.key, getattr(StringORM, language)).where(StringORM.key.in_(keys))
     results = await session.execute(stmt)
     return {key: value for key, value in results.all()}
+
+async def translate_keys(
+    model: Any,
+    db: AsyncSession,
+    language: str
+) -> None:
+    """
+    Mutates model in place by replacing '[ExampleKey]' values with
+    translations, using a single bulk DB fetch.
+    """
+
+    key_references: list[tuple[Any, Any, str]] = []  # (container, field/key/index, string_key)
+
+    def collect(obj: Any):
+        if isinstance(obj, BaseModel):
+            for field_name in obj.model_fields:
+                value = getattr(obj, field_name)
+                if isinstance(value, str) and value.startswith('[') and value.endswith(']'):
+                    key_references.append((obj, field_name, value))
+                else:
+                    collect(value)
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                if isinstance(item, str) and item.startswith('[') and item.endswith(']'):
+                    key_references.append((obj, i, item))
+                else:
+                    collect(item)
+        elif isinstance(obj, dict):
+            for key, value in obj.items():
+                if isinstance(value, str) and value.startswith('[') and value.endswith(']'):
+                    key_references.append((obj, key, value))
+                else:
+                    collect(value)
+
+    collect(model)
+
+    keys = {string_key for _, _, string_key in key_references}
+    translations = await read_string_key_language_bulk(db, keys, language)
+
+    for container, key_or_attr, string_key in key_references:
+        if isinstance(container, BaseModel):
+            setattr(container, key_or_attr, translations.get(string_key, string_key))
+        else:
+            container[key_or_attr] = translations.get(string_key, string_key)

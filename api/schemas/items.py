@@ -58,7 +58,16 @@ async def get_item(md: MasterData, payload: requests.ItemRequest) -> schemas.Ite
         raise APIError('Item could not be found.')
     except StopIteration:  # Not found
         raise APIError('Item could not be found or given item type is not supported.')
-    
+
+async def get_runes(md: MasterData, category: enums.RuneType|None = None) -> list[schemas.Rune]:
+    if category is None:
+        rune_data = await md.search_filter('SphereMB')
+    else:
+        if not isinstance(category, enums.RuneType):
+            raise APIError(f'Invalid rune category: {category}')
+        rune_data = await md.search_filter('SphereMB', CategoryId=category)
+    return [schemas.Rune(**data) for data in rune_data]
+
 '''
 using MementoMori.Ortega.Common.Utils;
 using MementoMori.Ortega.Share;

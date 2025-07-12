@@ -14,7 +14,7 @@ router = APIRouter()
     description='Returns masterdata json',
     response_model=APIResponse[list[dict]]
 )
-async def master_req(
+async def master(
     request: Request,
     mb: str):
     md: MasterData = request.app.state.md

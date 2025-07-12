@@ -1,12 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 
-from api.crud.string_keys import read_string_key
-from common.schemas import APIResponse, CommonStrings
+from api.crud.string_keys import read_string_key, translate_keys
 from api.schemas.string_keys import get_char_name, get_char_names
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.error import APIError
-from api.utils.transformer import Transformer
-from common.schemas import Name, StringKey
+from common.schemas import APIResponse, CommonStrings, Name, StringKey
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -54,6 +52,6 @@ async def string_name(session: SessionDep, request: Request, char_id: int, langu
     response_model=APIResponse[CommonStrings]
 )
 async def string_common(session: SessionDep, request: Request, language=Depends(language_parameter)):
-    tf = Transformer(session, language)
-    common_strings = await tf.transform(CommonStrings())
+    common_strings = CommonStrings()
+    await translate_keys(common_strings, session, language)
     return APIResponse[CommonStrings].create(request, common_strings)
