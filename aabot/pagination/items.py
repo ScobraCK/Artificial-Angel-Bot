@@ -111,7 +111,7 @@ def item_embed(item_data: schemas.APIResponse[schemas.Item], cs: schemas.CommonS
     title = item.name
     description = (
         f'**Id:** {item.id}\n'
-        f'**Item id:** {item.id}\n'
+        f'**Item id:** {item.item_id}\n'
         f'**Item type:** {enums.ItemType(item.item_type).name}({item.item_type})\n'
         f'Max: {item.max_count if item.max_count else 'No limit'}\n\n'
         f'**Description**\n{item.description}\n\n'
@@ -460,15 +460,32 @@ def equipment_help_description():
 
     return text.getvalue()
 
-# async def rune_embed(rune: enums.RuneType, language: enums.Language):
-#     rune_data = await api.fetch_item(
-#         item_id=rune,
-#         item_type=enums.ItemType.Sphere,
-#         language=language
+# async def rune_callable(rune: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language)->dict[str, list[BaseEmbed]]:
+#     rune_data = await api.fetch_api(
+#         path=api.ITEM_RUNE_CATEGORY_PATH,
+#         path_params={'category': rune},
+#         query_params={'language': language},
+#         response_model=list[schemas.Rune]
 #     )
+#     temp = []
+#     for rune in rune_data.data:
+#         temp.append(
+#             BaseEmbed(
+#                 rune_data.version,
+#                 title=f'{rune.name}',
+#                 description='test'
+#             )
+#         )
     
-#     return item_embed(rune_data, schemas.CommonStrings(language))
-    
+#     return {'default': temp}
+
         
 # async def rune_view(interaction: Interaction, rune: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language):
-#     pass
+#     view = DynamicView(
+#         interaction.user,
+#         callable_=rune_callable,
+#         callable_options={x.name: {'rune': x, 'cs': cs, 'language': language} for x in enums.RuneType},
+#         embed_dict=await rune_callable(rune, cs, language),
+#         callable_key=rune.name
+#     )
+#     return view
