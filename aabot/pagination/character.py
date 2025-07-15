@@ -85,7 +85,7 @@ def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name_data:
     description = (
         f'**Id:** {profile.char_id}\n'
         f'**Birthday:** {profile.birthday//100}/{profile.birthday%100}\n'
-        f'**Blood Type:** {profile.blood_type}\n'
+        f'**Blood Type:** {profile.blood_type.name}\n'
         f'**Height:** {profile.height}cm\n'
         f'**Weight:** {profile.weight}kg\n\n'
         f'**Song by:** {profile.vocalJP}\n'
