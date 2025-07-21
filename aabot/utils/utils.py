@@ -150,7 +150,7 @@ def from_quest_id(quest_id: int)->str:
 
 def make_table(data, header: list[str], style=Literal['thin_compact', 'simple'], cell_padding=1):
     style_dict = {
-        'compact': PresetStyle.thin_compact,
+        'thin_compact': PresetStyle.thin_compact,
         'simple': PresetStyle.simple
     }
     return t2a(
