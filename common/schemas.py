@@ -269,6 +269,8 @@ class Rune(ItemBase):
     parameter: Parameter = Field(...)
     category: enums.RuneType = Field(..., validation_alias='CategoryId')
     level: int = Field(..., validation_alias='Lv')
+    is_attack_type: bool = Field(..., validation_alias='IsAttackType')
+    combine_cost: list[ItemCount] = Field(..., validation_alias='ItemListRequiredToCombine')
     sphere_type: int = Field(..., ge=0, le=3, validation_alias='SphereType', description='Size of rune icon')
     icon: int|SkipJsonSchema[None] = Field(None)  # added in validation, icon = {Category:02}{SphereType:02}
 
@@ -557,6 +559,11 @@ class CharacterDBModel(BaseModel):
 
 # Common Enum Strings
 class CommonStrings(BaseModel):
+    common: dict[str, str] = Field({
+        'rune': '[CommonSphereLabel]',
+        'parameter': '[CommonPotentialParameterLabel]',
+        'status': '[CommonStatusLabel]',
+    }, description='Only contains partial data. More may be added later.')
     base_param: dict[enums.BaseParameter, str] = Field({
         1: '[BaseParameterTypeMuscle]',
         2: '[BaseParameterTypeEnergy]',

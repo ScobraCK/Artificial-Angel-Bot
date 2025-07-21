@@ -1,4 +1,7 @@
 import re
+from typing import Literal
+
+from table2ascii import Alignment, PresetStyle, table2ascii as t2a
 from common.enums import BattleParameter, Server
 from common.schemas import Parameter, CommonStrings
 
@@ -12,6 +15,11 @@ PERCENTAGE_PARAMS = [
 
 def remove_linebreaks(text: str):
     return text.replace('<br>', ' ')
+
+def remove_html(text: str):
+    clean = re.compile('<.*?>')
+    text = remove_linebreaks(text)
+    return re.sub(clean, '', text)
 
 def possessive_form(word: str) -> str:
     return f"{word}'s" if not word.endswith('s') else f"{word}'"
@@ -138,4 +146,17 @@ def from_quest_id(quest_id: int)->str:
         return f"2-{quest_id-12}"
     else: # chapter 1
         return f"1-{quest_id}"
-    
+
+
+def make_table(data, header: list[str], style=Literal['thin_compact', 'simple'], cell_padding=1):
+    style_dict = {
+        'compact': PresetStyle.thin_compact,
+        'simple': PresetStyle.simple
+    }
+    return t2a(
+        header=header,
+        body=data,
+        style=style_dict[style],
+        alignments=Alignment.LEFT,
+        cell_padding=cell_padding
+    )

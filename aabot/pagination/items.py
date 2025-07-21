@@ -10,12 +10,12 @@ from discord import Color, Interaction
 from aabot.utils import api
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.skills import uw_skill_description
-from aabot.pagination.views import MixedView
+from aabot.pagination.views import MixedView, DynamicMixedView
 from aabot.utils import emoji
 from aabot.utils.alias import alias_lookup
 from aabot.utils.assets import EQUIPMENT_THUMBNAIL
 from aabot.utils.error import BotError
-from aabot.utils.utils import param_string
+from aabot.utils.utils import make_table, param_string, remove_html
 from common import enums, schemas
 from common.database import AsyncSession as SessionAABot
 
@@ -102,6 +102,9 @@ class ItemCounter:
     async def get_total_strings(self) -> list[str]:
         return await gather(*(item_count_string(item) for item in self.get_total()))
 
+    def clear(self) -> None:
+        self.items.clear()
+
     def __bool__(self) -> bool:
         return bool(self.items)
 
@@ -114,7 +117,7 @@ def item_embed(item_data: schemas.APIResponse[schemas.Item], cs: schemas.CommonS
         f'**Item id:** {item.item_id}\n'
         f'**Item type:** {enums.ItemType(item.item_type).name}({item.item_type})\n'
         f'Max: {item.max_count if item.max_count else 'No limit'}\n\n'
-        f'**Description**\n{item.description}\n\n'
+        f'**Description**\n{remove_html(item.description)}\n\n'
     )
     
     if isinstance(item, schemas.Rune):
@@ -435,7 +438,6 @@ async def equipment_view(interaction: Interaction, equip_string: str, cs: schema
 
     return MixedView(interaction.user, embed_dict, 'Equipment Details')
 
-
 def equipment_help_description():
     text = StringIO()
     text.write(
@@ -460,32 +462,54 @@ def equipment_help_description():
 
     return text.getvalue()
 
-# async def rune_callable(rune: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language)->dict[str, list[BaseEmbed]]:
-#     rune_data = await api.fetch_api(
-#         path=api.ITEM_RUNE_CATEGORY_PATH,
-#         path_params={'category': rune},
-#         query_params={'language': language},
-#         response_model=list[schemas.Rune]
-#     )
-#     temp = []
-#     for rune in rune_data.data:
-#         temp.append(
-#             BaseEmbed(
-#                 rune_data.version,
-#                 title=f'{rune.name}',
-#                 description='test'
-#             )
-#         )
+async def rune_callable(rune_type: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language)->dict[str, list[BaseEmbed]]:
+    ic = ItemCounter()
+    rune_data = await api.fetch_api(
+        path=api.ITEM_RUNE_CATEGORY_PATH,
+        path_params={'category': rune_type},
+        query_params={'language': language},
+        response_model=list[schemas.Rune]
+    )
     
-#     return {'default': temp}
+    detail_embeds = []
+    level_data = []
+    for rune in rune_data.data:
+        # Basic info
+        level_data.append([rune.level, f'{rune.parameter.value:,}', f'{2**rune.level:,}'])
+        # Detailed info
+        ic.add_items(rune.combine_cost)
+        detail_embeds.append(
+            BaseEmbed(
+                rune_data.version,
+                title=f'{rune.name} Lv.{rune.level}',
+                description=(
+                    f'**Id:** {rune.id}\n'
+                    f'**Type:** {cs.rune_type[rune.category]}\n'
+                    f'**Level:** {rune.level}\n'
+                    f'**Value:** {rune.parameter.value}\n'
+                    f'**Description:**\n```\n{remove_html(rune.description)}```'
+                    f'**Combine Costs:**\n```\n{'\n'.join(await ic.get_total_strings())}```\n'
+                ),
+                color=Color.blurple()
+            )
+        )
+        ic.clear()
+
+    basic_embed = BaseEmbed(
+        rune_data.version,
+        title=f'{rune.name}',
+        description=f'```yaml\n{make_table(level_data, header=['Level', 'Value', 'Cost(Tickets)'], style='simple')}```'
+    )
+    return {'Basic Info': [basic_embed], f'Details': detail_embeds}
 
         
-# async def rune_view(interaction: Interaction, rune: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language):
-#     view = DynamicView(
-#         interaction.user,
-#         callable_=rune_callable,
-#         callable_options={x.name: {'rune': x, 'cs': cs, 'language': language} for x in enums.RuneType},
-#         embed_dict=await rune_callable(rune, cs, language),
-#         callable_key=rune.name
-#     )
-#     return view
+async def rune_view(interaction: Interaction, rune: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language):
+    view = DynamicMixedView(
+        interaction.user,
+        callable_=rune_callable,
+        callable_options={x.name: {'rune_type': x, 'cs': cs, 'language': language} for x in enums.RuneType},
+        embed_dict=await rune_callable(rune, cs, language),
+        callable_key=rune.name,
+        key='Basic Info'
+    )
+    return view

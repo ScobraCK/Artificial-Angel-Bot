@@ -9,3 +9,4 @@ html2text
 pydantic
 psycopg[binary]
 sqlalchemy
+async-lru

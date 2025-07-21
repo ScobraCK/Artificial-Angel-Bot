@@ -3,22 +3,12 @@ from io import StringIO
 from itertools import batched
 
 from discord import Color, Embed, Interaction
-from table2ascii import table2ascii as t2a, Alignment, PresetStyle
 
 from aabot.pagination.views import ButtonView
 from aabot.utils import api
-from aabot.utils.utils import from_world_id, from_quest_id, character_title
+from aabot.utils.utils import character_title, from_quest_id, from_world_id, make_table
 from common import schemas
 from common.enums import Server, Language
-
-def make_table(data, header: list[str]):
-    return t2a(
-        header=header,
-        body=data,
-        style=PresetStyle.thin_compact,
-        alignments=Alignment.LEFT,
-        cell_padding=0
-    )
 
 temple_type = {
     1: 'Green Orb',
@@ -91,7 +81,7 @@ def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIRespon
         for guild in batch:
             rankings.append([rank, guild.world, f'{guild.bp:,}', guild.name])
             rank += 1
-        table = make_table(rankings, ['Rank','World', 'BP', 'Name'])
+        table = make_table(rankings, ['Rank','World', 'BP', 'Name'], style='thin_compact', cell_padding=0)
 
         embed_dict['default'].append(
             Embed(
@@ -115,7 +105,7 @@ def guild_ranking_view(
         for guild in batch:
             rankings.append([rank, guild.server, guild.world, f'{guild.bp:,}', guild.name])
             rank += 1
-        table = make_table(rankings, ['Rank', 'Server', 'World', 'BP',  'Name'])
+        table = make_table(rankings, ['Rank', 'Server', 'World', 'BP',  'Name'], style='thin_compact', cell_padding=0)
 
         embed_dict['default'].append(
             Embed(
@@ -158,9 +148,9 @@ def player_ranking_view(
                 rankings.append([rank, player.server, player.world, category_value, player.name])
             rank += 1
         if show_all:
-            table = make_table(rankings, ['No.', 'Server', 'World', 'Rank', 'Quest', 'BP', 'Name'])
+            table = make_table(rankings, ['No.', 'Server', 'World', 'Rank', 'Quest', 'BP', 'Name'], style='thin_compact', cell_padding=0)
         else:
-            table = make_table(rankings, ['Rank', 'Server', 'World', category.name, 'Name'])
+            table = make_table(rankings, ['Rank', 'Server', 'World', category.name, 'Name'], style='thin_compact', cell_padding=0)
         embed_dict['default'].append(
             Embed(
                 title=f'Player Rankings by {category.name} [{filter_text}]',
@@ -191,7 +181,7 @@ def tower_ranking_view(
         for player in batch:
             rankings.append([rank, player.server, player.world, getattr(player, f'{category.value}_id'), player.name])  # actual attribute are [tower]_id
             rank += 1
-        table = make_table(rankings, ['Rank', 'Server', 'World', 'Floor',  'Name'])
+        table = make_table(rankings, ['Rank', 'Server', 'World', 'Floor',  'Name'], style='thin_compact', cell_padding=0)
         
         embed = Embed(
             title=f'{category.name} Tower Rankings [{filter_text}]',
@@ -278,7 +268,7 @@ async def raid_ranking_view(interaction: Interaction, server: Server|None=None) 
             server, world = from_world_id(world_data['world_id'])
             rankings.append([server, world, f'{world_data['damage']:,}'])
 
-        table = make_table(rankings, ['Server', 'World', 'Damage'])
+        table = make_table(rankings, ['Server', 'World', 'Damage'], style='thin_compact', cell_padding=0)
         embed_dict['default'].append(
             Embed(
                 title=f'Guild Raid Rankings',

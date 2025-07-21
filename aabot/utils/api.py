@@ -2,6 +2,8 @@ import httpx
 import html2text
 from typing import TypeVar
 
+from async_lru import alru_cache
+
 from aabot.utils.error import BotError
 from common.enums import Language
 from common.schemas import APIResponse, CommonStrings, Item, Name, StringKey
@@ -105,14 +107,17 @@ async def fetch_string(key: str) -> APIResponse[StringKey]:
     string_data = await fetch_api(STRING_PATH.format(key=key), response_model=StringKey)
     return string_data
 
-async def fetch_name(char_id: int, language: Language = Language.enus) -> APIResponse[Name]:
+@alru_cache()
+async def fetch_name(char_id: int, language: Language = Language.enus) -> Name:
+    '''Does not return APIResponse[Name]. Use for quick access to a single name.'''
     name_data = await fetch_api(
         STRING_CHARACTER_PATH.format(char_id=char_id),
         response_model=Name,
         query_params={'language': language}
     )
-    return name_data
+    return name_data.data
 
+@alru_cache(ttl=5)
 async def fetch_item(item_id: int, item_type: int, language: Language = Language.enus) -> APIResponse[Item]:
     item_data = await fetch_api(
         ITEM_PATH,

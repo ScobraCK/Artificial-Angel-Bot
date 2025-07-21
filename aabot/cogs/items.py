@@ -32,7 +32,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         '''
         
         item_data = await api.fetch_item(item_id, item_type, language)  # directly use fetch item
-        embed = item_response.item_embed(item_data, self.bot.common_strings[language])
+        embed = item_response.item_embed(item_data.data, self.bot.common_strings[language])
         
         await interaction.response.send_message(embed=embed)
         
@@ -53,17 +53,19 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         view = await item_response.equipment_view(interaction, string, self.bot.common_strings[language], language)
         await show_view(interaction, view)
 
-    # @app_commands.describe(
-    #     rune='Rune',
-    #     language="Text language. Defaults to English."
-    # )
-    # @apply_user_preferences()
-    # async def rune(
-    #     self, interaction: Interaction,
-    #     rune: enums.RuneType,
-    #     language: LanguageOptions|None=None):
-    #     '''Shows rune information'''
-    #     view = await item_response.rune_view(interaction, rune, self.bot.common_strings[language], language)
+    @app_commands.command()
+    @app_commands.describe(
+        rune='Rune',
+        language="Text language. Defaults to English."
+    )
+    @apply_user_preferences()
+    async def rune(
+        self, interaction: Interaction,
+        rune: enums.RuneType,
+        language: LanguageOptions|None=None):
+        '''Shows rune information'''
+        view = await item_response.rune_view(interaction, rune, self.bot.common_strings[language], language)
+        await show_view(interaction, view)
 
 
 async def setup(bot: AABot):

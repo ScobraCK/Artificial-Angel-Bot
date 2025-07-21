@@ -166,7 +166,7 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
             
             name = await api.fetch_name(character)
 
-            embed = misc_page.alias_embed(character_title(name.data.title, name.data.name), aliases)
+            embed = misc_page.alias_embed(character_title(name.title, name.name), aliases)
             await interaction.response.send_message(embed=embed)
 
 

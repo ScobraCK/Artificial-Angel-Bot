@@ -9,15 +9,11 @@ from common import schemas
 from common.enums import Language, Server
 from common.timezones import check_active, convert_from_jst
 
-async def generate_banner_text(gacha_list: list[schemas.GachaPickup], language: Language, name_dict: dict = {}) -> str:
+async def generate_banner_text(gacha_list: list[schemas.GachaPickup], language: Language) -> str:
     banner_text = StringIO()
     for gacha in gacha_list:
-        if gacha.char_id in name_dict:
-            name = name_dict[gacha.char_id]
-        else:
-            name_data = await api.fetch_name(gacha.char_id, language)
-            name = character_title(name_data.data.title, name_data.data.name)
-            name_dict[gacha.char_id] = name
+        char_name = await api.fetch_name(gacha.char_id, language)
+        name = character_title(char_name.title, char_name.name)
         ongoing = ":white_check_mark:" if check_active(gacha.start, gacha.end, Server.Japan) else ":x:"  # Ongoing status
         rerun_count = gacha.run_count
 
@@ -28,16 +24,12 @@ async def generate_banner_text(gacha_list: list[schemas.GachaPickup], language: 
 
     return banner_text.getvalue()
 
-async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup], language: Language, name_dict: dict = {}) -> str:
+async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup], language: Language) -> str:
     banner_text = StringIO()
     for chosen in chosen_list:
         for gacha in chosen.banners:
-            if gacha.char_id in name_dict:
-                name = name_dict[gacha.char_id]
-            else:
-                name_data = await api.fetch_name(gacha.char_id, language)
-                name = character_title(name_data.data.title, name_data.data.name)
-                name_dict[gacha.char_id] = name
+            char_name = await api.fetch_name(gacha.char_id, language)
+            name = character_title(char_name.title, char_name.name)
             banner_text.write(f"- **{name}** | **Run {gacha.run_count}**\n")
             
         ongoing = ":white_check_mark:" if check_active(chosen.start, chosen.end, Server.Japan) else ":x:"  # Ongoing status
@@ -50,19 +42,18 @@ async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup
 
 async def gacha_banner_embed(gacha_data: schemas.APIResponse[schemas.GachaBanners], language: Language):
     banners = gacha_data.data
-    name_dict = {}
 
     embed = BaseEmbed(gacha_data.version, title="Gacha Banners", color=Color.blue())
 
     # Fleeting field (select_list_type == 1)
-    embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of The Fleeting**{emoji.item_emoji[9]}", value=await generate_banner_text(banners.fleeting, language, name_dict), inline=False)
+    embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of The Fleeting**{emoji.item_emoji[9]}", value=await generate_banner_text(banners.fleeting, language), inline=False)
     
-    embed.add_field(name=f'{emoji.item_emoji[9]}**Chosen Prayer of The Fleeting**{emoji.item_emoji[9]}', value=await generate_chosen_banner_text(banners.chosen, language, name_dict), inline=False)
+    embed.add_field(name=f'{emoji.item_emoji[9]}**Chosen Prayer of The Fleeting**{emoji.item_emoji[9]}', value=await generate_chosen_banner_text(banners.chosen, language), inline=False)
 
     # IoC field (select_list_type == 2)
-    embed.add_field(name=f"{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=await generate_banner_text(banners.ioc, language, name_dict), inline=False)
+    embed.add_field(name=f"{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=await generate_banner_text(banners.ioc, language), inline=False)
 
     # IoSG field (select_list_type == 3)
-    embed.add_field(name=f"{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=await generate_banner_text(banners.iosg, language, name_dict), inline=False)
+    embed.add_field(name=f"{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=await generate_banner_text(banners.iosg, language), inline=False)
 
     return embed

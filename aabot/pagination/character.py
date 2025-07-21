@@ -78,9 +78,9 @@ def char_info_embed(char_data: schemas.APIResponse[schemas.Character], skill_dat
 
     return embed
 
-def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name_data: schemas.APIResponse[schemas.Name]):
+def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name: schemas.Name):
     profile = profile_data.data
-    name = character_title(name_data.data.title, name_data.data.name)
+    name = character_title(name.title, name.name)
 
     description = (
         f'**Id:** {profile.char_id}\n'
@@ -148,8 +148,7 @@ async def voiceline_view(
     voicelines = voiceline_data.data
     profile = profile_data.data
     
-    name_data = await fetch_name(voicelines.char_id, language)
-    name = name_data.data
+    name = await fetch_name(voicelines.char_id, language)
 
     title = f'{possessive_form(character_title(name.title, name.name))} Voicelines'
     embeds = []
@@ -171,8 +170,7 @@ async def voiceline_view(
 async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse[schemas.CharacterMemories], language: LanguageOptions):
     h = HTML2Text()
     memories = memory_data.data
-    name_data = await fetch_name(memories.char_id, language)
-    name = name_data.data
+    name = await fetch_name(memories.char_id, language)
     
     title = f'{possessive_form(character_title(name.title, name.name))} Memories'
     embeds = []

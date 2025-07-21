@@ -132,9 +132,9 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
             query_params={'language': language},
             response_model=schemas.Profile
         )
-        name_data = await api.fetch_name(character, language)
+        name = await api.fetch_name(character, language)
         
-        embed = char_page.profile_embed(profile_data, name_data)
+        embed = char_page.profile_embed(profile_data, name)
 
         await interaction.response.send_message(embed=embed)
 

@@ -38,14 +38,14 @@ async def auto_alias(session: Session, char_id: int, serial: int=None) -> list[A
     '''Automatically adds default alias. Add serial for quick adding alt character numbers.'''
     aliases = []
     for language in LanguageOptions:
-        name_data = await api.fetch_name(char_id, language)
-        name = name_data.data.name
+        char_name = await api.fetch_name(char_id, language)
+        name = char_name.name
         if serial is not None:
             name = f'{name}{serial}'
         alias = await add_alias(session, char_id, name, ignore_duplicate=True)
         if alias:
             aliases.append(alias)
-        if title := name_data.data.title:
+        if title := char_name.title:
             alias_title = await add_alias(session, char_id, title, ignore_duplicate=True)
             if alias_title:
                 aliases.append(alias_title)
