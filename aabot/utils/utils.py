@@ -148,10 +148,10 @@ def from_quest_id(quest_id: int)->str:
         return f"1-{quest_id}"
 
 
-def make_table(data, header: list[str], style=Literal['thin_compact', 'simple'], cell_padding=1):
+def make_table(data, header: list[str], style=Literal['thin_compact', 'ascii_simple'], cell_padding=1):
     style_dict = {
         'thin_compact': PresetStyle.thin_compact,
-        'simple': PresetStyle.simple
+        'ascii_simple': PresetStyle.ascii_simple
     }
     return t2a(
         header=header,

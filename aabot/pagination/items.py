@@ -498,7 +498,8 @@ async def rune_callable(rune_type: enums.RuneType, cs: schemas.CommonStrings, la
     basic_embed = BaseEmbed(
         rune_data.version,
         title=f'{rune.name}',
-        description=f'```yaml\n{make_table(level_data, header=['Level', 'Value', 'Cost(Tickets)'], style='simple')}```'
+        description=f'```prolog\n{make_table(level_data, header=['Level', 'Value', 'Cost(Tickets)'], style='ascii_simple')}```',
+        color=Color.blurple()
     )
     return {'Basic Info': [basic_embed], f'Details': detail_embeds}
 
