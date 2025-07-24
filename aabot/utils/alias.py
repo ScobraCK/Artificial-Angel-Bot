@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from aabot.db.alias import get_all_alias, insert_alias
+from aabot.crud.alias import get_all_alias, insert_alias
 from aabot.utils import api
 from aabot.utils.command_utils import LanguageOptions  # Only supported languages
 from aabot.utils.error import BotError

@@ -1,7 +1,7 @@
 from discord import app_commands, Interaction
 from discord.ext import commands
 
-from aabot.db.alias import delete_alias
+from aabot.crud.alias import delete_alias
 from aabot.main import AABot
 from aabot.utils import api
 from aabot.utils.alias import add_alias, auto_alias

@@ -3,7 +3,7 @@ from itertools import dropwhile
 from discord import app_commands, Color, Embed, Interaction
 from discord.ext import commands
 
-from aabot.db.alias import get_alias
+from aabot.crud.alias import get_alias
 from aabot.main import AABot
 from aabot.pagination import misc as misc_page
 from aabot.pagination.views import show_view

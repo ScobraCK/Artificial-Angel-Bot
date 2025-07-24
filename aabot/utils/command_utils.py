@@ -4,7 +4,7 @@ from functools import wraps
 
 from discord import Interaction
 
-from aabot.db.user import get_user
+from aabot.crud.user import get_user
 from common.database import AsyncSession as SessionAABot
 # from common.enums import Language
 

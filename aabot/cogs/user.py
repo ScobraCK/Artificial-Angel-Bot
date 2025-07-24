@@ -1,7 +1,7 @@
 from discord import app_commands, Interaction, Embed
 from discord.ext import commands
 
-from aabot.db.user import update_user, get_user, delete_user
+from aabot.crud.user import update_user, get_user, delete_user
 from aabot.main import AABot
 from aabot.utils.utils import possessive_form
 from aabot.utils.command_utils import LanguageOptions
