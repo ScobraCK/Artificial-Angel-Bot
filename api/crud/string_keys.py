@@ -32,12 +32,14 @@ async def upsert_string_keys(session: AsyncSession, md: MasterData, update_list=
     }
 
     text_dict = defaultdict(dict)
+    updated_languages = []
 
     for lang_code, db_field in languages.items():
         mb = f'TextResource{lang_code}MB'
         if update_list and mb not in update_list:  # Only check updated MB
             continue
         text_data = await md.get_MB(mb)
+        updated_languages.append(db_field)
 
         for text in text_data:
             key = text.get("StringKey")
@@ -56,7 +58,7 @@ async def upsert_string_keys(session: AsyncSession, md: MasterData, update_list=
             update_dict = {
                 c.name: getattr(stmt.excluded, c.name) 
                 for c in StringORM.__table__.columns 
-                if c.name != 'key'
+                if c.name in updated_languages
                 }
             stmt = stmt.on_conflict_do_update(index_elements=['key'], set_=update_dict)
             await session.execute(stmt)
