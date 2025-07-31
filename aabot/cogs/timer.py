@@ -19,12 +19,7 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         self.update_ranking.cancel() 
     
     @tasks.loop(
-        time=[time(hour=0, tzinfo=ZoneInfo("UTC")),
-              time(hour=4, tzinfo=ZoneInfo("UTC")),
-              time(hour=8, tzinfo=ZoneInfo("UTC")),
-              time(hour=12, tzinfo=ZoneInfo("UTC")),
-              time(hour=16, tzinfo=ZoneInfo("UTC")),
-              time(hour=20, tzinfo=ZoneInfo("UTC"))]
+        time=[time(hour=id, tzinfo=ZoneInfo("UTC")) for id in range(0, 24, 1)],
     )
     async def update_ranking(self):
         ch = self.bot.get_channel(self.bot.log_channel)

@@ -88,7 +88,7 @@ def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIRespon
                 title=f'Group Rankings [Group {group} | {server.name}]',
                 description=f'```{table}```',
                 color=Color.orange()
-            )
+            ).set_footer(text='Updates every hour')
         )
 
     return ButtonView(interaction.user, embed_dict)
@@ -112,7 +112,7 @@ def guild_ranking_view(
                 title=f'Guild Rankings [{filter_text}]',
                 description=f'```{table}```',
                 color=Color.orange()
-            )
+            ).set_footer(text='Updates every hour')
         )
 
     return ButtonView(interaction.user, embed_dict)
@@ -156,7 +156,7 @@ def player_ranking_view(
                 title=f'Player Rankings by {category.name} [{filter_text}]',
                 description=f'```{table}```',
                 color=Color.orange()
-            )
+            ).set_footer(text='Updates every hour')
         )
 
     return ButtonView(interaction.user, embed_dict)
@@ -187,7 +187,7 @@ def tower_ranking_view(
             title=f'{category.name} Tower Rankings [{filter_text}]',
             description=f'```{table}```',
             color=Color.orange()
-        )
+        ).set_footer(text='Updates every hour')
         if category != TowerCategory.Infinity:
             embed.set_footer(text=f"Note that ranking data for elemental towers is collected from only the top 20 of each world.")
         embed_dict['default'].append(embed)
