@@ -2,10 +2,11 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.crud.alias import delete_alias
+from aabot.crud.emoji import update_emojis
 from aabot.main import AABot
 from aabot.utils import api
 from aabot.utils.alias import add_alias, auto_alias
-from common.database import AsyncSession as SessionAABot
+from common.database import SessionAA
 
 class AdminCommands(commands.Cog, name='Admin Commands'):
     '''Admin Commands'''
@@ -66,7 +67,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         # chars = data.get('new_chars')
 
         # aliases = []
-        # async with SessionAABot() as session:
+        # async with SessionAA() as session:
         #     for char in chars:
         #         aliases.extend(await auto_alias(session, char))
 
@@ -99,7 +100,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         data = response.json()
         chars = data.get('new')
         aliases = []
-        async with SessionAABot() as session:
+        async with SessionAA() as session:
             for char in chars:
                 await auto_alias(session, char)
 
@@ -115,7 +116,10 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         character: int,
         alias: str
     ):
-        async with SessionAABot() as session:
+        '''
+        Add alias
+        '''
+        async with SessionAA() as session:
             result = await add_alias(session, character, alias, is_custom=True)
             await interaction.response.send_message(f'Added alias `{result.alias}` for character {result.char_id}')
 
@@ -126,10 +130,13 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         character: int,
         serial: int|None
     ):
-        async with SessionAABot() as session:
+        '''
+        Auto alias
+        '''
+        async with SessionAA() as session:
             results = await auto_alias(session, character, serial=serial)
-            aliases = ', '. join((f'`{alias.alias}`' for alias in results))
-            await interaction.response.send_message(f'Added aliases {aliases} for character {character}')
+            aliases = ', '. join(results)
+        await interaction.response.send_message(f'Added aliases {aliases} for character {character}')
 
     @app_commands.command()
     async def deletealias(
@@ -137,13 +144,29 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         interaction: Interaction,
         alias: str
     ):
-        async with SessionAABot() as session:
+        '''
+        Delete alias
+        '''
+        async with SessionAA() as session:
             result = await delete_alias(session, alias)
             if result:
                 await interaction.response.send_message(f'Removed alias `{alias}`.')
             else:
                 await interaction.response.send_message(f'Alias `{alias}` did not exist.')
-        
+
+    @app_commands.command()
+    async def updateemojis(
+        self,
+        interaction: Interaction
+    ):
+        '''
+        Update emoji
+        '''
+        emojis = await self.bot.fetch_application_emojis()
+        async with SessionAA() as session:
+            await update_emojis(session, emojis)
+        await interaction.response.send_message('Updated emojis.')
+
 async def setup(bot: AABot):
     await bot.add_cog(AdminCommands(bot))
  

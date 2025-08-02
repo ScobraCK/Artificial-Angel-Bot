@@ -9,6 +9,7 @@ from aabot.utils.error import BotError
 from aabot.utils.utils import to_quest_id
 from common import schemas
 from common.enums import TowerType
+from common.database import SessionAA
 
 class PvECommands(commands.Cog, name='PvE Commands'):
     '''Commands for pve information'''
@@ -35,8 +36,8 @@ class PvECommands(commands.Cog, name='PvE Commands'):
             response_model=schemas.Quest,
             query_params={'language': 'enus'}  # TODO add later
         )
-
-        view = pve_page.quest_view(interaction, quest_data, self.bot.common_strings['enus'])  # spacing issue for other languages
+        async with SessionAA() as session:
+            view = await pve_page.quest_view(interaction, quest_data, session, self.bot.common_strings['enus'])  # spacing issue for other languages
         await show_view(interaction, view)
 
     @app_commands.command()
@@ -63,8 +64,8 @@ class PvECommands(commands.Cog, name='PvE Commands'):
                 'language': 'enus'  # TODO add later
             }
         )
-
-        view = await pve_page.tower_view(interaction, tower_data, self.bot.common_strings['enus'])  # spacing issue for other languages
+        async with SessionAA() as session:
+            view = await pve_page.tower_view(interaction, tower_data, session, self.bot.common_strings['enus'])  # spacing issue for other languages
         await show_view(interaction, view)
 
 

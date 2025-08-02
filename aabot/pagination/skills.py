@@ -2,16 +2,17 @@ from io import StringIO
 from itertools import chain
 
 from discord import Color, Interaction
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.views import DropdownView, MixedView
 from aabot.utils.assets import RAW_ASSET_BASE
-from aabot.utils.emoji import level_emoji, rarity_emoji
+from aabot.utils.emoji import to_emoji
 from aabot.utils.utils import character_title, possessive_form, remove_linebreaks
 from common import enums, schemas
 
 
-def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkill], uw_desc: schemas.UWDescriptions, uw_name: str, include_name=True) -> str:
+async def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkill], uw_desc: schemas.UWDescriptions, uw_name: str, session: AsyncSession, include_name=True) -> str:
     if not skills:
         return None
 
@@ -33,31 +34,33 @@ def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkill], uw
         for info in skill.skill_infos:
             if (rarity := enums.ItemRarity(info.uw_rarity).name):  # Convert to rarity str [SSR, UR, LR]
                 uw_description = getattr(uw_desc, rarity) if uw_desc else 'Description unavaliable.'
-                description.write(f"**{rarity} Weapon**{rarity_emoji.get(rarity)}\n{remove_linebreaks(uw_description)}\n")
+                description.write(f"**{rarity} Weapon**{await to_emoji(session, rarity)}\n{remove_linebreaks(uw_description)}\n")
             else:
                 description.write(
-                    f'**Skill Lv.{info.order_number}**{level_emoji.get(info.order_number)} (Lv.{info.level})\n'
+                    f'**Skill Lv.{info.order_number}**{await to_emoji(session, f'skill_level_{info.order_number}')} (Lv.{info.level})\n'
                     f'{remove_linebreaks(info.description)}\n'
                 )
             description.write('\n')
 
     return description.getvalue()
 
-def uw_skill_description(uw: schemas.UWDescriptions, uw_name: str = None) -> str: 
+async def uw_skill_description(uw: schemas.UWDescriptions, session: AsyncSession, uw_name: str = None) -> str: 
     if not uw:
         return None
     description = StringIO()
     if uw_name:
         description.write(f'__{uw_name}__\n')  # Given for skills
     for rarity in ('SSR', 'UR', 'LR'):
-        description.write(f"__**{rarity} Weapon**__{rarity_emoji.get(rarity)}\n{getattr(uw,(rarity))}\n")
-    
+        description.write(f"__**{rarity} Weapon**__{await to_emoji(session, rarity)}\n{getattr(uw,(rarity))}\n")
+
     return description.getvalue()
 
-def skill_view(
+async def skill_view(
     interaction: Interaction,
     skill_data: schemas.APIResponse[schemas.Skills],
-    char_data: schemas.APIResponse[schemas.Character]):
+    char_data: schemas.APIResponse[schemas.Character],
+    session: AsyncSession
+):
     skills = skill_data.data
     char = char_data.data
     embed_dict = {}
@@ -69,7 +72,7 @@ def skill_view(
         BaseEmbed(
             skill_data.version,
             title=f'{title_text} Active Skills',
-            description=skill_description(skills.actives, skills.uw_descriptions, char.uw),
+            description=await skill_description(skills.actives, skills.uw_descriptions, char.uw, session),
             color=Color.blue()
         ).set_thumbnail(url=icon_url)
     ]
@@ -79,7 +82,7 @@ def skill_view(
             BaseEmbed(
                 skill_data.version,
                 title=f'{title_text} Passive Skills',
-                description=skill_description(skills.passives, skills.uw_descriptions, char.uw),
+                description=await skill_description(skills.passives, skills.uw_descriptions, char.uw, session),
                 color=Color.blue()
             ).set_thumbnail(url=icon_url)
         ]
@@ -89,7 +92,7 @@ def skill_view(
             BaseEmbed(
                 skill_data.version,
                 title=f'{title_text} Unique Weapon',
-                description=uw_skill_description(skills.uw_descriptions, char.uw),
+                description=await uw_skill_description(skills.uw_descriptions, session, char.uw),
                 color=Color.blue()
             ).set_thumbnail(url=icon_url)
         ]
@@ -97,10 +100,12 @@ def skill_view(
     return DropdownView(interaction.user, embed_dict, 'Active')
 
 
-def skill_detail_view(
+async def skill_detail_view(
     interaction: Interaction,
     skill_data: schemas.APIResponse[schemas.Skills],
-    char_data: schemas.APIResponse[schemas.Character]):
+    char_data: schemas.APIResponse[schemas.Character],
+    session: AsyncSession
+):
     skills = skill_data.data
     char = char_data.data
     embed_dict = {}
@@ -108,8 +113,8 @@ def skill_detail_view(
     for skill in chain(skills.actives, skills.passives):
         embeds = []
         icon_url = RAW_ASSET_BASE + f"Characters/Skills/CSK_00{skill.id:07}.png"
-        description = skill_description([skill], skills.uw_descriptions, char.uw, False)
-        
+        description = await skill_description([skill], skills.uw_descriptions, char.uw, session)
+
         if skill.name == '*' and skill.skill_infos[0].uw_rarity == 0:  # Special skills such as Rosalie(SR), Paladea
             title = 'Special Skill'
         else:

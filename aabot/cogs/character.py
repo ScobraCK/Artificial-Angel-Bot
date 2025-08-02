@@ -12,6 +12,7 @@ from aabot.utils.alias import IdTransformer
 from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
 from aabot.utils.error import BotError
 from common import schemas
+from common.database import SessionAA
 
 class CharacterCommands(commands.Cog, name='Character Commands'):
     '''Commands related to characters'''
@@ -164,8 +165,8 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
             query_params={'language': language},
             response_model=schemas.Character
         )
-
-        view = skill_view(interaction, skill_data, char_data)
+        async with SessionAA() as session:
+            view = await skill_view(interaction, skill_data, char_data, session)
         await show_view(interaction, view)
 
     @app_commands.command()
@@ -194,8 +195,8 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
             query_params={'language': language},
             response_model=schemas.Character
         )
-
-        view = skill_detail_view(interaction, skill_data, char_data)
+        async with SessionAA() as session:
+            view = await skill_detail_view(interaction, skill_data, char_data, session)
         await show_view(interaction, view)
             
     @app_commands.command()

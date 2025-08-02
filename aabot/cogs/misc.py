@@ -13,7 +13,7 @@ from aabot.utils.assets import RAW_ASSET_BASE
 from aabot.utils.command_utils import apply_user_preferences
 from aabot.utils.error import BotError
 from aabot.utils.utils import character_title
-from common.database import AsyncSession as SessionAABot
+from common.database import SessionAA
 from common.enums import Server
 
 class MiscCommands(commands.Cog, name='Misc Commands'):
@@ -158,7 +158,7 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer]
     ):
-        async with SessionAABot() as session:
+        async with SessionAA() as session:
             aliases = await get_alias(session, character)
             if not aliases:
                 await interaction.response.send_message(f'No alias found for character `{character}`.')

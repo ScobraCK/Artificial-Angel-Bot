@@ -2,11 +2,14 @@ from collections import Counter
 from io import StringIO
 
 from discord import Color, Embed, Interaction
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.pagination.embeds import BaseEmbed
+from aabot.pagination.items import ItemCounter
 from aabot.pagination.views import MixedView
-from aabot.utils import api, emoji
+from aabot.utils import api
 from aabot.utils.assets import RAW_ASSET_BASE, SOUL_BONUS
+from aabot.utils.emoji import to_emoji
 from aabot.utils.utils import decimal_format, from_quest_id, human_format as hf
 from common import enums, schemas
 
@@ -34,20 +37,21 @@ def get_bonus_url(soul_list):
     bonus_url = SOUL_BONUS.format(bonus=bonus)
     return bonus_url
 
-def basic_enemy_field(enemy: schemas.Enemy)->dict:
+async def basic_enemy_field(enemy: schemas.Enemy, session: AsyncSession)->dict:
     '''
     returns a basic embed field for an enemy
     '''
-    soul_emj = emoji.soul_emoji.get(enemy.element)
+    soul_emj = await to_emoji(session, enemy.element)
     name = f"[{enums.CharacterRarity(enemy.rarity).name.replace('Plus', '+')}] Lv.{enemy.level} {enemy.name} {soul_emj}"
     value = (
-                f":crossed_swords: {hf(enemy.battle_params.attack)} :heart: {hf(enemy.battle_params.hp)} "
-                f":shield: {hf(enemy.battle_params.defense)}\n"
-                f"**Speed:** {enemy.battle_params.speed}\n"
-                f"**{emoji.emoji_list['str']}** {hf(enemy.base_params.str)} "
-                f"**{emoji.emoji_list['dex']}** {hf(enemy.base_params.dex)} "
-                f"**{emoji.emoji_list['mag']}** {hf(enemy.base_params.mag)} "
-                f"**{emoji.emoji_list['sta']}** {hf(enemy.base_params.sta)}"
+                f"{await to_emoji(session, 'atk')}{hf(enemy.battle_params.attack)} "
+                f"{await to_emoji(session, 'hp')}{hf(enemy.battle_params.hp)} "
+                f"{await to_emoji(session, 'def')}{hf(enemy.battle_params.defense)} "
+                f"{await to_emoji(session, 'spd')}{enemy.battle_params.speed}\n"
+                f"{await to_emoji(session, 'str')}{hf(enemy.base_params.str)} "
+                f"{await to_emoji(session, 'dex')}{hf(enemy.base_params.dex)} "
+                f"{await to_emoji(session, 'mag')}{hf(enemy.base_params.mag)} "
+                f"{await to_emoji(session, 'sta')}{hf(enemy.base_params.sta)}"
             )
     
     return {'name': name, 'value': value, 'inline': False}
@@ -84,8 +88,8 @@ def battle_param_text(params: schemas.BattleParameters, cs: schemas.CommonString
     )
     return text
 
-def detailed_enemy_embed(enemy: schemas.Enemy, cs: schemas.CommonStrings, version: str)->Embed:
-    soul_emj = emoji.soul_emoji.get(enemy.element)  # TODO I made a big mistake
+async def detailed_enemy_embed(enemy: schemas.Enemy, session: AsyncSession, cs: schemas.CommonStrings, version: str)->Embed:
+    soul_emj = await to_emoji(session, enemy.element)
     name = f"[{enemy.rarity}] Lv.{enemy.level} {enemy.name} {soul_emj}"
 
     embed = BaseEmbed(
@@ -139,7 +143,7 @@ def add_resonance(embed:Embed, def_list: list):
             max_ind, name=max_field.name+resonance+' (High)', 
             value=max_field.value, inline=max_field.inline)
 
-def quest_view(interaction: Interaction, quest_data: schemas.APIResponse[schemas.Quest], cs: schemas.CommonStrings)->MixedView:
+async def quest_view(interaction: Interaction, quest_data: schemas.APIResponse[schemas.Quest], session: AsyncSession, cs: schemas.CommonStrings)->MixedView:
     embed_dict = {}
     quest = quest_data.data
 
@@ -151,24 +155,24 @@ def quest_view(interaction: Interaction, quest_data: schemas.APIResponse[schemas
     bp = 0
     def_list = []
     for enemy in quest.enemy_list:
-        main_embed.add_field(**basic_enemy_field(enemy))
+        main_embed.add_field(**(await basic_enemy_field(enemy, session)))
         def_list.append(enemy.battle_params.defense)
         bp += enemy.bp
 
-    main_embed.description = f"**BP:** {bp:,}\n**Daily red orb gain:** {quest.red_orb}"
+    main_embed.description = f"**BP:** {bp:,}\n{await to_emoji(session, 'red_orb')}×{quest.red_orb}/d"
     add_resonance(main_embed, def_list)
 
     # Enemy Data
     enemy_embeds = []
     for enemy in quest.enemy_list:
-        enemy_embeds.append(detailed_enemy_embed(enemy, cs, quest_data.version))
+        enemy_embeds.append(await detailed_enemy_embed(enemy, session, cs, quest_data.version))
 
     embed_dict['Quest Data'] = [main_embed]
     embed_dict['Enemy Data'] = enemy_embeds
     
     return MixedView(interaction.user, embed_dict, 'Quest Data')
 
-async def tower_view(interaction: Interaction, tower_data: schemas.APIResponse[schemas.Tower], cs: schemas.CommonStrings)->MixedView:
+async def tower_view(interaction: Interaction, tower_data: schemas.APIResponse[schemas.Tower], session: AsyncSession, cs: schemas.CommonStrings)->MixedView:
     embed_dict = {}
     tower = tower_data.data
     fixed_rewards = tower.fixed_rewards
@@ -185,29 +189,29 @@ async def tower_view(interaction: Interaction, tower_data: schemas.APIResponse[s
     bp = 0
     def_list = []
     for enemy in tower.enemy_list:
-        main_embed.add_field(**basic_enemy_field(enemy))
+        main_embed.add_field(**(await basic_enemy_field(enemy, session)))
         def_list.append(enemy.battle_params.defense)
         bp += enemy.bp
 
     description.write(f"**BP:** {bp:,}\n")
 
+    ic = ItemCounter()
     if fixed_rewards:
         description.write('**Fixed Rewards:**\n')
-        for reward in fixed_rewards:
-            item = await api.fetch_item(reward.item_id, reward.item_type)
-            description.write(f"-{reward.count:,}x {item.data.name}\n")
+        ic.add_items(fixed_rewards)
+        description.write(f"{' '.join(await ic.get_total_strings())}\n")
     if first_time_rewards:
+        ic.clear()
         description.write('**First Time Rewards:**\n')
-        for reward in first_time_rewards:
-            item = await api.fetch_item(reward.item_id, reward.item_type)
-            description.write(f"-{reward.count:,}x {item.data.name}\n")
+        ic.add_items(first_time_rewards)
+        description.write(f"{' '.join(await ic.get_total_strings())}\n")
 
     main_embed.description = description.getvalue()
     add_resonance(main_embed, def_list)
 
     enemy_embeds = []
     for enemy in tower.enemy_list:
-        enemy_embeds.append(detailed_enemy_embed(enemy, cs, tower_data.version))
+        enemy_embeds.append(await detailed_enemy_embed(enemy, session, cs, tower_data.version))
 
     embed_dict['Tower Data'] = [main_embed]
     embed_dict['Enemy Data'] = enemy_embeds

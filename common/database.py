@@ -11,4 +11,4 @@ class Base(DeclarativeBase):
     pass
 
 engine = create_async_engine(DATABASE_URL)
-AsyncSession = async_sessionmaker(engine, expire_on_commit=False)
+SessionAA = async_sessionmaker(engine, expire_on_commit=False)

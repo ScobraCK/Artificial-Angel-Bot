@@ -8,6 +8,7 @@ from aabot.pagination.views import show_view
 from aabot.utils import api
 from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
 from common import enums
+from common.database import SessionAA
 
 class ItemCommands(commands.Cog, name='Item Commands'):
     '''Commands related to items'''
@@ -50,7 +51,8 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         language: LanguageOptions|None=None):
         '''Shows equipment information'''
         await interaction.response.defer()
-        view = await item_response.equipment_view(interaction, string, self.bot.common_strings[language], language)
+        async with SessionAA() as session:
+            view = await item_response.equipment_view(interaction, string, session, self.bot.common_strings[language], language)
         await show_view(interaction, view)
 
     @app_commands.command()

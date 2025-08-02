@@ -4,8 +4,10 @@ from discord import Color
 
 from aabot.pagination.embeds import BaseEmbed
 from aabot.utils import api, emoji
+from aabot.utils.emoji import to_emoji
 from aabot.utils.utils import character_title
 from common import schemas
+from common.database import SessionAA
 from common.enums import Language, Server
 from common.timezones import check_active, convert_from_jst
 
@@ -45,15 +47,21 @@ async def gacha_banner_embed(gacha_data: schemas.APIResponse[schemas.GachaBanner
 
     embed = BaseEmbed(gacha_data.version, title="Gacha Banners", color=Color.blue())
 
-    # Fleeting field (select_list_type == 1)
-    embed.add_field(name=f"{emoji.item_emoji[9]}**Prayer of The Fleeting**{emoji.item_emoji[9]}", value=await generate_banner_text(banners.fleeting, language), inline=False)
-    
-    embed.add_field(name=f'{emoji.item_emoji[9]}**Chosen Prayer of The Fleeting**{emoji.item_emoji[9]}', value=await generate_chosen_banner_text(banners.chosen, language), inline=False)
+    async with SessionAA() as session:
+        # Fleeting field (select_list_type == 1)
+        if banners.fleeting:
+            embed.add_field(name=f"{await to_emoji(session, 'fleeting')}**Prayer of The Fleeting**{await to_emoji(session, 'fleeting')}", value=await generate_banner_text(banners.fleeting, language), inline=False)
 
-    # IoC field (select_list_type == 2)
-    embed.add_field(name=f"{emoji.item_emoji[54]}**Invocation of Chance**{emoji.item_emoji[54]}", value=await generate_banner_text(banners.ioc, language), inline=False)
+        # Chosen field (select_list_type == 4)
+        if banners.chosen:
+            embed.add_field(name=f"{await to_emoji(session, 'chosen')}**Chosen Prayer**{await to_emoji(session, 'chosen')}", value=await generate_chosen_banner_text(banners.chosen, language), inline=False)
 
-    # IoSG field (select_list_type == 3)
-    embed.add_field(name=f"{emoji.item_emoji[121]}**Invocation of Stars' Guidance**{emoji.item_emoji[121]}", value=await generate_banner_text(banners.iosg, language), inline=False)
+        # IoC field (select_list_type == 2)
+        if banners.ioc:
+            embed.add_field(name=f"{await to_emoji(session, 'ioc')}**Invocation of Chance**{await to_emoji(session, 'ioc')}", value=await generate_banner_text(banners.ioc, language), inline=False)
 
-    return embed
+        # IoSG field (select_list_type == 3)
+        if banners.iosg:
+            embed.add_field(name=f"{await to_emoji(session, 'iosg')}**Invocation of Stars' Guidance**{await to_emoji(session, 'iosg')}", value=await generate_banner_text(banners.iosg, language), inline=False)
+
+        return embed

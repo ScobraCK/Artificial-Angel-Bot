@@ -39,7 +39,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         )
         data = resp.json()
 
-        embed = mentemori_page.temple_embed(data, server, world)
+        embed = await mentemori_page.temple_embed(data, server, world)
         await interaction.response.send_message(
             embed=embed
         )

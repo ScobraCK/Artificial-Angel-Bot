@@ -6,17 +6,11 @@ from discord import Color, Embed, Interaction
 
 from aabot.pagination.views import ButtonView
 from aabot.utils import api
+from aabot.utils.emoji import to_emoji
 from aabot.utils.utils import character_title, from_quest_id, from_world_id, make_table
 from common import schemas
+from common.database import SessionAA
 from common.enums import Server, Language
-
-temple_type = {
-    1: 'Green Orb',
-    2: 'Water',
-    3: 'Red Potion',
-    4: 'Red Orbs',
-    5: 'Rune Tickets'
-}
 
 def world_ids_help():
     text = (
@@ -32,7 +26,15 @@ def world_ids_help():
 
     return text
 
-def temple_embed(data, server: Server, world: int):
+temple_type = {
+    1: 'green_orb',
+    2: 'water',
+    3: 'red_pot',
+    4: 'red_orb',
+    5: 'rune_ticket'
+}
+
+async def temple_embed(data, server: Server, world: int):
     description = StringIO()
     quest_ids = data['data']['quest_ids']
     # world_id = data['data']['world_id']
@@ -41,9 +43,18 @@ def temple_embed(data, server: Server, world: int):
         description.write(f"Temple event is ongoing")
     else:
         description.write(f'Lv. {int(str(quest_ids[0])[1:4])}\n\n')
-        for quest in quest_ids:
-            quest_id_str = str(quest)
-            description.write(f'**{int(quest_id_str[-2:])} Star: {temple_type.get(int(quest_id_str[0]))}**\n')
+        async with SessionAA() as session:
+            for quest in quest_ids[::-1]:
+                quest_id_str = str(quest)
+                description.write(f'{await to_emoji(session, f"{temple_type.get(int(quest_id_str[0]))}")}: ')
+                stars = int(quest_id_str[-2:])
+                for i in range(stars):
+                    if i < 5:
+                        description.write(f'{await to_emoji(session, f"star1")} ')
+                    else:
+                        description.write(f'{await to_emoji(session, f"star2")} ')
+                if quest != quest_ids[0]:
+                    description.write('\n')
     time = str(data["timestamp"])
     description.write(f'\nLast Update: <t:{time}:R>')
 

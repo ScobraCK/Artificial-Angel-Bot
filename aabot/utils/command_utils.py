@@ -5,7 +5,7 @@ from functools import wraps
 from discord import Interaction
 
 from aabot.crud.user import get_user
-from common.database import AsyncSession as SessionAABot
+from common.database import SessionAA
 # from common.enums import Language
 
 # limit language options to officially supported languages
@@ -32,7 +32,7 @@ def apply_user_preferences():
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(self, interaction: Interaction, *args, **kwargs):
-            async with SessionAABot() as session:
+            async with SessionAA() as session:
                 user_id = interaction.user.id
                 user_pref = await get_user(session, user_id)
 

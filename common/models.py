@@ -130,4 +130,9 @@ class Alias(Base):
     alias: Mapped[str] = mapped_column(Text, unique=True)
     is_custom: Mapped[bool] = mapped_column(Boolean, default=False)  # Custom vs official names
     
-## TODO Emojis https://discordpy.readthedocs.io/en/latest/api.html#discord.Client.fetch_application_emoji
+class EmojiORM(Base):
+    __tablename__ = 'emoji'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(Text, unique=True)
+    # animated: Mapped[bool] = mapped_column(Boolean)

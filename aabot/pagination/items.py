@@ -6,18 +6,19 @@ from re import finditer
 from typing import Union
 
 from discord import Color, Interaction
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.utils import api
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.skills import uw_skill_description
 from aabot.pagination.views import MixedView, DynamicMixedView
-from aabot.utils import emoji
 from aabot.utils.alias import alias_lookup
 from aabot.utils.assets import EQUIPMENT_THUMBNAIL
+from aabot.utils.emoji import to_emoji
 from aabot.utils.error import BotError
 from aabot.utils.utils import make_table, param_string, remove_html
 from common import enums, schemas
-from common.database import AsyncSession as SessionAABot
+from common.database import SessionAA
 
 rarity_color = {
     1: Color.default(),
@@ -78,7 +79,7 @@ equip_type_string = {
 EquipArgs = namedtuple("EquipArgs", ["rarity", "level", "upgrade"])
 
 class ItemCounter:
-    def __init__(self, blacklist = []):
+    def __init__(self, blacklist:list[enums.ItemType] = []):
         self.items = defaultdict(int)  # Stores (item_id, item_type) -> count
         self.blacklist = blacklist  # type blacklist
 
@@ -136,15 +137,14 @@ def item_embed(item_data: schemas.APIResponse[schemas.Item], cs: schemas.CommonS
         color=rarity_color.get(item.rarity)
     )
 
-async def item_count_string(itemcount: schemas.ItemCount) -> str:
-    # TODO emojis
-    if itemcount.item_type == 5:
-        return f'{itemcount.count:,}x Fragments'  # Temp solution
-    if itemcount.item_type == 9:
-        return f'{itemcount.count:,}x Temp'  # Temp solution
+async def item_count_string(itemcount: schemas.ItemCount, session: AsyncSession=None) -> str:
     item_data = await api.fetch_item(itemcount.item_id, itemcount.item_type)
     item = item_data.data
-    return f'{itemcount.count:,}x {item.name}'
+    if not session:  # called from ItemCounter(asyncio.gather)
+        async with SessionAA() as session_:
+            return f'{await to_emoji(session_, item)}×{itemcount.count:,}'
+    else:
+        return f'{await to_emoji(session, item)}×{itemcount.count:,}'
 
 def parse_equip_string(string: str) -> tuple[str|EquipType, list[EquipArgs]]:
     tokens = string.split(maxsplit=1)
@@ -219,7 +219,7 @@ async def get_equipment(equip_type: EquipType|str, equipment_args: EquipArgs, la
             response_model=schemas.Equipment
         )
     else:  # character string
-        async with SessionAABot() as session:
+        async with SessionAA() as session:
             char_id = await alias_lookup(session, equip_type)
         equipment_data = await api.fetch_api(
             api.EQUIPMENT_UNIQUE_PATH,
@@ -246,7 +246,7 @@ async def get_equipment(equip_type: EquipType|str, equipment_args: EquipArgs, la
 
     return equipment_data, upgrade_data
 
-def equip_embed(equip_data: schemas.APIResponse[schemas.Equipment|schemas.UniqueWeapon], cs: schemas.CommonStrings, upgrade=0, upgrade_coeff=1):
+async def equip_embed(equip_data: schemas.APIResponse[schemas.Equipment|schemas.UniqueWeapon], session: AsyncSession, cs: schemas.CommonStrings, upgrade=0, upgrade_coeff=1):
     equipment = equip_data.data
     description = StringIO()
 
@@ -294,17 +294,17 @@ def equip_embed(equip_data: schemas.APIResponse[schemas.Equipment|schemas.Unique
 
     return BaseEmbed(
         version=equip_data.version,
-        title=f'{emoji.rarity_emoji.get(rarity_str)} {rarity_str} {equipment.name}',
+        title=f'{await to_emoji(session, rarity_str)} {rarity_str} {equipment.name}',
         description=description.getvalue(),
         color=Color.blurple()
     ).set_thumbnail(url=EQUIPMENT_THUMBNAIL.format(equip_id=equipment.icon_id))
 
-def uw_embed(equipment_data: schemas.APIResponse[schemas.UniqueWeapon]):
+async def uw_embed(equipment_data: schemas.APIResponse[schemas.UniqueWeapon], session: AsyncSession):
     '''UW Descriptions Embed'''
     return BaseEmbed(
         equipment_data.version,
-        title=f'{emoji.rarity_emoji.get(equipment_data.data.rarity)} {equipment_data.data.rarity} {equipment_data.data.name}',
-        description=uw_skill_description(equipment_data.data.uw_descriptions),
+        title=f'{await to_emoji(session, equipment_data.data.rarity)} {equipment_data.data.rarity} {equipment_data.data.name}',
+        description=await uw_skill_description(equipment_data.data.uw_descriptions, session),
         color=Color.blurple()
     )
 
@@ -352,40 +352,40 @@ async def cost_description(costs: schemas.EquipmentCosts, start_level: int=0, st
     # Descriptions
     if synth_items:
         description.write('**Synthesis Costs**\n')
-        description.write(f'{'\n'.join(await synth_items.get_total_strings())}\n\n')
+        description.write(f'{' '.join(await synth_items.get_total_strings())}\n\n')
         total_items.add_items(synth_items)
 
     if enhance_items:
         description.write('**Enhance Costs**\n')
-        description.write(f'{'\n'.join(await enhance_items.get_total_strings())}\n\n')
+        description.write(f'{' '.join(await enhance_items.get_total_strings())}\n\n')
         total_items.add_items(enhance_items)
 
     if upgrade_items:
         description.write('**Upgrade Costs**\n')
-        description.write(f'{'\n'.join(await upgrade_items.get_total_strings())}\n\n')
+        description.write(f'{' '.join(await upgrade_items.get_total_strings())}\n\n')
         total_items.add_items(upgrade_items)
 
     if total_items:
         description.write('**Total Costs**\n')
-        description.write(f'{'\n'.join(await total_items.get_total_strings())}')
+        description.write(f'{' '.join(await total_items.get_total_strings())}')
     else:
         description.write('No costs')
         
     return description.getvalue()
 
-async def upgrade_embed(upgrade_data: schemas.APIResponse[schemas.EquipmentCosts], start_level=0, start_upgrade=0, start_rarity=0):
+async def upgrade_embed(upgrade_data: schemas.APIResponse[schemas.EquipmentCosts], session: AsyncSession, start_level=0, start_upgrade=0, start_rarity=0):
     costs = upgrade_data.data
     equipment = costs.equipment
     rarity_str = enums.ItemRarity(equipment.rarity).name
 
     return BaseEmbed(
         upgrade_data.version,
-        title = f'{emoji.rarity_emoji.get(rarity_str)} {rarity_str} {equipment.name}',
+        title = f'{await to_emoji(session, rarity_str)} {rarity_str} {equipment.name}',
         description=await cost_description(costs, start_level, start_upgrade, start_rarity),
         color=Color.blurple()
     )
     
-async def equipment_view(interaction: Interaction, equip_string: str, cs: schemas.CommonStrings, language: enums.Language):
+async def equipment_view(interaction: Interaction, equip_string: str, session: AsyncSession, cs: schemas.CommonStrings, language: enums.Language):
     embed_dict = {}
     embed_dict['Equipment Details'] = []
     embed_dict['Costs'] = []
@@ -422,19 +422,19 @@ async def equipment_view(interaction: Interaction, equip_string: str, cs: schema
         if upgrade_costs := upgrade_data.data.upgrade_costs.upgrades:  # upgrade > 0
             upgrade_level = upgrade_costs[-1].upgrade_level
             coefficient = upgrade_costs[-1].coefficient
-            embed_dict['Equipment Details'].append(equip_embed(equipment_data, cs, upgrade_level, coefficient))
+            embed_dict['Equipment Details'].append(await equip_embed(equipment_data, session, cs, upgrade_level, coefficient))
         else:
-            embed_dict['Equipment Details'].append(equip_embed(equipment_data, cs))
+            embed_dict['Equipment Details'].append(await equip_embed(equipment_data, session, cs))
 
     if len(equipments) == 1:
-        embed_dict['Costs'].append(await upgrade_embed(upgrade_data))
+        embed_dict['Costs'].append(await upgrade_embed(upgrade_data, session))
     else:
         for upgrade_data in upgrades[1:]:
-            embed_dict['Costs'].append(await upgrade_embed(upgrade_data, results[0].level, results[0].upgrade, enums.ItemRarity[results[0].rarity].value))
+            embed_dict['Costs'].append(await upgrade_embed(upgrade_data, session, results[0].level, results[0].upgrade, enums.ItemRarity[results[0].rarity].value))
     
     # UW descriptions
     if isinstance(equipments[0].data, schemas.UniqueWeapon):
-        embed_dict['UW Skills'] = [uw_embed(equipments[0])]
+        embed_dict['UW Skills'] = [await uw_embed(equipments[0], session)]
 
     return MixedView(interaction.user, embed_dict, 'Equipment Details')
 

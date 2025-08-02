@@ -4,14 +4,14 @@ from discord import Interaction, app_commands
 from fuzzywuzzy import process, fuzz
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from aabot.crud.alias import get_all_alias, insert_alias
 from aabot.utils import api
 from aabot.utils.command_utils import LanguageOptions  # Only supported languages
 from aabot.utils.error import BotError
-from common.database import AsyncSession as SessionAABot
+from common.database import SessionAA
 from common.models import Alias
+
 
 def normalize_alias(string: str):
     pattern = r"[^\w\s]"
@@ -34,7 +34,7 @@ async def add_alias(session: AsyncSession, char_id: int, alias: str, is_custom=F
             return None
         raise BotError(f'Alias {alias} already exists.')
 
-async def auto_alias(session: Session, char_id: int, serial: int=None) -> list[Alias]:
+async def auto_alias(session: AsyncSession, char_id: int, serial: int=None) -> list[str]:
     '''Automatically adds default alias. Add serial for quick adding alt character numbers.'''
     aliases = []
     for language in LanguageOptions:
@@ -44,12 +44,12 @@ async def auto_alias(session: Session, char_id: int, serial: int=None) -> list[A
             name = f'{name}{serial}'
         alias = await add_alias(session, char_id, name, ignore_duplicate=True)
         if alias:
-            aliases.append(alias)
+            aliases.append(alias.alias)
         if title := char_name.title:
             alias_title = await add_alias(session, char_id, title, ignore_duplicate=True)
             if alias_title:
-                aliases.append(alias_title)
-
+                aliases.append(alias_title.alias)
+    
     return aliases
 
 # transformer for id
@@ -58,6 +58,6 @@ class IdTransformer(app_commands.Transformer):
         try:
             id = int(value)
         except ValueError:
-            async with SessionAABot() as session:
+            async with SessionAA() as session:
                 id = await alias_lookup(session, value)
         return id

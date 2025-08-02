@@ -5,7 +5,7 @@ from aabot.crud.user import update_user, get_user, delete_user
 from aabot.main import AABot
 from aabot.utils.utils import possessive_form
 from aabot.utils.command_utils import LanguageOptions
-from common.database import AsyncSession as SessionAABot
+from common.database import SessionAA
 from common.enums import Server
 from common.models import UserPreference
 
@@ -41,7 +41,7 @@ class UserCommands(commands.Cog, name='User Commands'):
         world: int|None
     ):
         '''Sets a default input for language, server, and world settings when applicable. Ranking commands do not use preference data.'''
-        async with SessionAABot() as session:
+        async with SessionAA() as session:
             user = await update_user(session, interaction.user.id, language, server, world)
             embed = user_embed(user, interaction.user.display_name)
 
@@ -53,7 +53,7 @@ class UserCommands(commands.Cog, name='User Commands'):
         interaction: Interaction
     ):
         '''View current preference setting. Ranking commands do not use preference data.'''
-        async with SessionAABot() as session:
+        async with SessionAA() as session:
             user = await get_user(session, interaction.user.id)
             name = interaction.user.display_name
             embed = user_embed(user, name)
@@ -65,7 +65,7 @@ class UserCommands(commands.Cog, name='User Commands'):
         interaction: Interaction
     ):
         '''Deletes preference data.'''
-        async with SessionAABot() as session:
+        async with SessionAA() as session:
             result = await delete_user(session, interaction.user.id)
             if result:
                 await interaction.response.send_message('Successfully deleted preference data.')
