@@ -115,8 +115,14 @@ async def skill_detail_view(
         icon_url = RAW_ASSET_BASE + f"Characters/Skills/CSK_00{skill.id:07}.png"
         description = await skill_description([skill], skills.uw_descriptions, char.uw, session)
 
-        if skill.name == '*' and skill.skill_infos[0].uw_rarity == 0:  # Special skills such as Rosalie(SR), Paladea
-            title = 'Special Skill'
+        if skill.name == '*' or not skill.name:
+            # Alt skills such as Rosalie(SR), Paladea
+            if (uw_rarity := skill.skill_infos[0].uw_rarity) == 0 and skill.skill_infos[0].level in {1, 21, 41, 81, 121, 161, 181}:  # active skill levels
+                title = 'Alternative Skill Trigger'
+            elif uw_rarity > 0 and isinstance(skill, schemas.PassiveSkill):
+                title = f'Unique Weapon Passive'
+            else:
+                title = 'Unknown Skill'
         else:
             title = skill.name
         
@@ -171,7 +177,7 @@ async def skill_detail_view(
                 for sub in subskills:
                     info_description += (
                         '```json\n'
-                        f'Passive Trigger: {sub.trigger}\n'
+                        f'Passive Trigger: {enums.PassiveTrigger(sub.trigger).name}({sub.trigger})\n'
                         f'Initial CD: {sub.init_cooltime}\n'
                         f'Max CD: {sub.max_cooltime}\n'
                         f'Group Id: {sub.group_id}\n'

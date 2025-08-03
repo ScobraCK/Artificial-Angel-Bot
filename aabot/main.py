@@ -49,7 +49,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
             color=discord.Color.red()
         )
         await err_channel.send(embed=embed)
-        await interaction.response.send_message(f'An unexpected error occured. Message @habenyan if this persists.', ephemeral=True)
+        await interaction.response.send_message(f'An unexpected error occured. This error has been logged for fixing. Message @habenyan if this persists.', ephemeral=True)
 
 class AABot(commands.Bot):  # include masterdata in the class
     def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity, log_channel, api_key, common_strings):
