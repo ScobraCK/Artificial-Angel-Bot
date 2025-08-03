@@ -20,11 +20,11 @@ async def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkil
 
     for skill in skills:
         if include_name:
-            if skill.name == '*':
-                if skill.skill_infos[0].uw_rarity == 0:  # Special skills such as Rosalie(SR), Paladea
-                    continue
-                else:
+            if skill.name == '*' or not skill.name:
+                if skill.skill_infos[0].uw_rarity > 0 and isinstance(skill, schemas.PassiveSkill):
                     name = f'### {uw_name}'  # UW passive
+                else:  # Skip alt skills such as Rosalie(SR), Paladea
+                    continue
             else:
                 name = f'### {skill.name}'
             if isinstance(skill, schemas.ActiveSkill):
