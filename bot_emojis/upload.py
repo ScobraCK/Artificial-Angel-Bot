@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 APP_ID = os.getenv("APP_ID")
 TOKEN = os.getenv("TOKEN")
+EMOJI_DIRECTIORY = 'emojis\\data'
 
 def upload_emoji(image_path: str):
     with open(image_path, "rb") as f:
@@ -49,13 +50,13 @@ if __name__ == "__main__":
     new_emojis = []
     
     # Don't async since it is easier to avoid rate limits this way
-    for filename in os.listdir("emojis\\data"):
+    for filename in os.listdir(EMOJI_DIRECTIORY):
         if filename.endswith(".png"):
             emoji_name = os.path.splitext(filename)[0]
             if emoji_name.startswith("icon_"):
                 emoji_name = emoji_name[5:]
             if emoji_name not in existing_emojis:
-                emoji = upload_emoji(os.path.join("emojis\\data", filename))
+                emoji = upload_emoji(os.path.join(EMOJI_DIRECTIORY, filename))
                 new_emojis.append(emoji)
                 print(f"Uploaded emoji: {emoji['name']} ({emoji['id']})")
                 

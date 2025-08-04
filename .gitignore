@@ -140,3 +140,4 @@ aabot/logs/*
 api/logs/*
 .vscode/
 log/*
+bot_emojis/data/*
