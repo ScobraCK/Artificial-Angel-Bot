@@ -32,6 +32,10 @@ class Element(IntEnum):
     Radiance = 5
     Chaos = 6
 
+class ParameterCategory(StrEnum):
+    Base = 'Base'
+    Battle = 'Battle'
+
 class BaseParameter(IntEnum):
     STR = 1
     DEX = 2
@@ -58,6 +62,11 @@ class BattleParameter(IntEnum):
     COUNTER = 17
     HP_DRAIN = 18
     SPD = 19
+
+class ParameterChangeType(IntEnum):
+    Add = 1  # Addition
+    AddPercent = 2  # AdditionPercent
+    CharacterLevelAdd = 3  # CharacterLevelConstantMultiplicationAddition
 
 # Character
 class Job(IntFlag):
@@ -293,3 +302,4 @@ class GachaType(IntEnum):
     IoC = 2
     IoSG = 3
     Chosen = 4
+    Eminence = 5

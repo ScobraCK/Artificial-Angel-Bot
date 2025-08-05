@@ -18,7 +18,7 @@ from api.routers import (
     admin, master, string_keys,
     character, skills,
     items, equipment,
-    pve, events,
+    pve, gacha,
     mentemori,
 )
 
@@ -26,7 +26,7 @@ ROUTERS = [
     admin.router, string_keys.router,
     character.router, skills.router,
     items.router, equipment.router,
-    pve.router, events.router,
+    pve.router, gacha.router,
     mentemori.router, master.router,
 ]
 

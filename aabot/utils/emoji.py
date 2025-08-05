@@ -56,7 +56,9 @@ emoji_list = {
     'ioc': 'Item_0054',
     'rune': 'Item_0058',
     'iosg': 'Item_0121',
-    'fleeting': 'Item_0112_S',
+    'fleeting': 'Item_0112',
+    'fleeting_s': 'Item_0112_S',
+    'eminence': 'Item_0217',
     # stats (rune)
     'sta': 'SPH_1003',
     'mag': 'SPH_0303',
@@ -109,4 +111,6 @@ emoji_list = {
     'fragment': 'fragment',
     'star1': 'battle_difficulty_01',
     'star2': 'battle_difficulty_02',
+    'x': 'close',
+    'check': 'check_03',
 }

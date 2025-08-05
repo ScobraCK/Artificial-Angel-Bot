@@ -33,19 +33,19 @@ class APIResponse(APIBaseModel, Generic[T]):
         return cls(timestamp=data["timestamp"], version=data["version"], data=parsed_data)
 
 class Parameter(APIBaseModel):
-    parameter_type: Literal['Base', 'Battle']
+    category: enums.ParameterCategory
     type: int = Field(..., validation_alias=AliasChoices('BaseParameterType', 'BattleParameterType'))
-    change_type: int = Field(..., alias='ChangeParameterType') 
+    change_type: enums.ParameterChangeType = Field(..., alias='ChangeParameterType') 
     value: int = Field(..., alias='Value')
     
     @model_validator(mode='before')
     @classmethod
     def set_param_type(cls, data: Any) -> Any:
-        if data and data.get('parameter_type') is None:  # only set once. Check data for validation checks in case of union (NoneType may be passed)
+        if data and data.get('category') is None:  # only set once. Check data for validation checks in case of union (NoneType may be passed)
             if data.get('BaseParameterType') is not None:
-                data['parameter_type'] = 'Base'
+                data['category'] = enums.ParameterCategory.Base
             else:
-                data['parameter_type'] = 'Battle'
+                data['category'] = enums.ParameterCategory.Battle
         return data
 
 # class BaseParameterModel(APIBaseModel):   
@@ -139,6 +139,37 @@ class CharacterMemories(APIBaseModel):
     char_id: int
     memories: list[Memory]
 
+class ArcanaLevel(APIBaseModel):
+    level_id: int = Field(..., validation_alias='Id')
+    arcana_id: int = Field(..., validation_alias='CollectionId')
+    level: int = Field(..., validation_alias='CollectionLevel')
+    parameters: list[Parameter]
+    rarity: enums.CharacterRarity = Field(..., validation_alias='CharacterRarityFlags', description='Required character rarity')
+    awaken_bonus: int = Field(..., validation_alias='CharacterRarityBonus')
+    level_bonus: int = Field(..., validation_alias='MaxLevelIncreaseValue')
+    reward: list[ItemCount] = Field([])  # CharacterCollectionRewardMB
+
+    @model_validator(mode='before')
+    @classmethod
+    def set_params(cls, data: Any) -> Any:
+        if isinstance(data, dict) and data.get('parameters') is None:  # parameters are already set during transformer
+            params = []
+            if data.get('BaseParameterChangeInfo') is not None:
+                params.extend(data.get('BaseParameterChangeInfo'))
+            if data.get('BattleParameterChangeInfo') is not None:
+                params.extend(data.get('BattleParameterChangeInfo'))
+            data['parameters'] = params
+        return data
+    
+class Arcana(APIBaseModel):
+    arcana_id: int = Field(..., validation_alias='Id')
+    name: str = Field(..., validation_alias='NameKey')
+    characters: list[int] = Field(..., validation_alias='RequiredCharacterIds')
+    levels: list[ArcanaLevel]
+    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    required_level: int = Field(..., validation_alias='RequiredPartyLv', description='Required level link to unlock arcana')
+
 # Equipment
 class Equipment(APIBaseModel):
     equip_id: int = Field(..., validation_alias='Id')
@@ -168,7 +199,7 @@ class SetEffect(APIBaseModel):
     @model_validator(mode='before')
     @classmethod
     def set_param(cls, data: Any) -> Any:
-        if data.get('parameter') is None:  # parameter is already set during transformer
+        if isinstance(data, dict) and data.get('parameter') is None:  # parameter is already set during transformer
             if data.get('BaseParameterChangeInfo') is not None:
                 data['parameter'] = data.get('BaseParameterChangeInfo')
             else:
@@ -215,7 +246,7 @@ class EquipmentCosts(APIBaseModel):
     enhance_costs: list[EquipmentEnhanceLevel] = Field(..., description='Cost to increase equipment level')
     rarity_enhance_costs: list[EquipmentEnhanceRarity] = Field(..., description='Cost to upgrade equipment rarity')
 
-# Events
+# Gacha
 class GachaPickup(APIBaseModel):
     start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
@@ -228,12 +259,25 @@ class GachaChosenGroup(APIBaseModel):
     start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     banners: list[GachaPickup]
+    
+class GachaEminenceGroup(APIBaseModel):
+    banner_id: int = Field(..., validation_alias='Id', description='Discriminator for grouping of eminence banners')
+    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    limit_days: int = Field(..., validation_alias='GachaLimitDay', description='Number of days the banner will be active')
+    open_day: int = Field(..., validation_alias='GachaOpenDayFromCreatePlayer', description='Days from player creation the banner becomes available')
+    banners: list[GachaPickup]
 
-class GachaBanners(APIBaseModel):
+class GachaPickupBanners(APIBaseModel):
     fleeting: list[GachaPickup]
     ioc: list[GachaPickup]
     iosg: list[GachaPickup]
     chosen: list[GachaChosenGroup]
+    eminence: list[GachaEminenceGroup]
+    
+class GachaBanner(APIBaseModel):
+    # TODO for actual banners
+    pass
 
 # Groups
 class GrandBattleDate(APIBaseModel):

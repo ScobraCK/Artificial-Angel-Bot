@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 
-from api.schemas.events import get_gacha
+from api.schemas.gacha import get_gacha
 from api.schemas.requests import GachaRequest
 from api.utils.masterdata import MasterData
 from common import schemas
@@ -14,7 +14,7 @@ router = APIRouter()
     '/gacha',
     summary='Gacha Banner Info',
     description='Returns gacha banner information',
-    response_model=schemas.APIResponse[schemas.GachaBanners],
+    response_model=schemas.APIResponse[schemas.GachaPickupBanners],
 )
 async def gacha(
     request: Request,
@@ -22,4 +22,4 @@ async def gacha(
     ):
     md: MasterData = request.app.state.md
     gacha = await get_gacha(md, payload.char_id, payload.is_active, payload.include_future)
-    return schemas.APIResponse[schemas.GachaBanners].create(request, gacha)
+    return schemas.APIResponse[schemas.GachaPickupBanners].create(request, gacha)

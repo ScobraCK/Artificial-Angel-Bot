@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 APP_ID = os.getenv("APP_ID")
 TOKEN = os.getenv("TOKEN")
-EMOJI_DIRECTIORY = 'emojis\\data'
+EMOJI_DIRECTIORY = 'bot_emojis\\data'
 
 def upload_emoji(image_path: str):
     with open(image_path, "rb") as f:

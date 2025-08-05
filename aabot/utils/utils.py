@@ -47,7 +47,7 @@ def decimal_format(num: int)->str:
     return f'{num/100:.{decimal}f}'
 
 def param_string(param: Parameter, cs: CommonStrings):
-    param_type = param.parameter_type
+    param_type = param.category
     if param_type == 'Base':
         param_type_dict = cs.base_param
     else:

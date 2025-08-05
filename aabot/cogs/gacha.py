@@ -2,7 +2,7 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.pagination import events as event_page
+from aabot.pagination import gacha as event_page
 from aabot.utils import api, assets
 from aabot.utils.alias import IdTransformer
 from aabot.utils.command_utils import LanguageOptions
@@ -25,7 +25,7 @@ class EventCommands(commands.Cog, name='Event Commands'):
         '''Shows gacha banners'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=schemas.GachaBanners,
+            response_model=schemas.GachaPickupBanners,
             query_params={
                 'include_future': True
             }
@@ -47,7 +47,7 @@ class EventCommands(commands.Cog, name='Event Commands'):
         '''Shows gacha history of a character'''
         gacha_data = await api.fetch_api(
             api.GACHA_PATH,
-            response_model=schemas.GachaBanners,
+            response_model=schemas.GachaPickupBanners,
             query_params={
                 'char_id': character,
                 'is_active': False
