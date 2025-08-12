@@ -2,7 +2,7 @@ import re
 from typing import Literal
 
 from table2ascii import Alignment, PresetStyle, table2ascii as t2a
-from common.enums import BattleParameter, Server
+from common.enums import BattleParameter, Language, Server
 from common.schemas import Parameter, CommonStrings
 
 PERCENTAGE_PARAMS = [
@@ -106,7 +106,6 @@ def to_quest_id(quest: str)->int:
     else:
         return (1020 + (chap-35)*60 + stage if stage <= 60 else None) # 25-40 is 1020
 
-
 def from_quest_id(quest_id: int)->str:
     '''
     Converts quest id to [chapter]-[stage]
@@ -146,7 +145,6 @@ def from_quest_id(quest_id: int)->str:
         return f"2-{quest_id-12}"
     else: # chapter 1
         return f"1-{quest_id}"
-
 
 def make_table(data, header: list[str], style=Literal['thin_compact', 'ascii_simple'], cell_padding=1):
     style_dict = {

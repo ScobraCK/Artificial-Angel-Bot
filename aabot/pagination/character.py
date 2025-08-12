@@ -5,13 +5,12 @@ from itertools import batched
 from discord import Color, Interaction
 from html2text import HTML2Text
 
-from aabot.crud.character import get_character
 from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.views import ButtonView, MixedView
 from aabot.utils.api import fetch_name
 from aabot.utils.assets import RAW_ASSET_BASE, CHARACTER_THUMBNAIL, MOONHEART_ASSET_MEMORY
 from aabot.utils.command_utils import LanguageOptions
-from aabot.utils.emoji import to_emoji, char_ele_emoji
+from aabot.utils.emoji import to_emoji, character_string
 from aabot.utils.itemcounter import ItemCounter
 from aabot.utils.utils import character_title, calc_buff, param_string, possessive_form
 from common import enums, schemas
@@ -218,9 +217,8 @@ async def arcana_basic_text(arcana: schemas.Arcana, cs: schemas.CommonStrings, l
 
     names = []
     for char in arcana.characters:
-        name = await fetch_name(char, language)
-        element = await char_ele_emoji(char)
-        names.append(f'{element}{character_title(name.title, name.name)}')
+        char_str = await character_string(char, language)
+        names.append(char_str)
     text.write(', '.join(names))
 
     bonus = []
@@ -241,9 +239,8 @@ async def arcana_detail_text(arcana: schemas.Arcana, cs: schemas.CommonStrings, 
     text.write(f'**{cs.common.get('characters', 'Characters')}:**\n')
     names = []
     for char in arcana.characters:
-        name = await fetch_name(char, language)
-        element = await char_ele_emoji(char)
-        names.append(f'- {element}{character_title(name.title, name.name)}')
+        char_str = await character_string(char, language)
+        names.append(f'- {char_str}')
     text.write('\n'.join(names))
     text.write('\n\n')
 

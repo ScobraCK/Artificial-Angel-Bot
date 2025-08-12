@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.crud.character import get_character
 from aabot.crud.emoji import get_emoji
+from aabot.utils.api import fetch_name
+from aabot.utils.utils import character_title
 from common.database import SessionAA
-from common.enums import Element
+from common.enums import Element, Language
 from common.schemas import Character, ItemBase, EquipmentFragment, QuickTicket, ActiveSkill, PassiveSkill, Rune
 
 _emoji_cache = {}
@@ -68,6 +70,13 @@ async def char_ele_emoji(char_id: int) -> str:
         char = await get_character(session, char_id)
         emoji = await to_emoji(session, Element(char.element))
     return emoji
+
+async def character_string(id: int, language: Language) -> str:
+    if id == 0:
+        return '???'
+    element = await char_ele_emoji(id)
+    name = await fetch_name(id, language)
+    return f'{element}{character_title(name.title, name.name)}'
 
 emoji_list = {
     # items
