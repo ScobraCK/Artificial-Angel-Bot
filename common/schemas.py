@@ -154,10 +154,10 @@ class ArcanaLevel(APIBaseModel):
     def set_params(cls, data: Any) -> Any:
         if isinstance(data, dict) and data.get('parameters') is None:  # parameters are already set during transformer
             params = []
-            if data.get('BaseParameterChangeInfo') is not None:
-                params.extend(data.get('BaseParameterChangeInfo'))
-            if data.get('BattleParameterChangeInfo') is not None:
-                params.extend(data.get('BattleParameterChangeInfo'))
+            if data.get('BaseParameterChangeInfos') is not None:
+                params.extend(data.get('BaseParameterChangeInfos'))
+            if data.get('BattleParameterChangeInfos') is not None:
+                params.extend(data.get('BattleParameterChangeInfos'))
             data['parameters'] = params
         return data
     
@@ -307,6 +307,59 @@ class ItemBase(APIBaseModel):
     rarity: enums.ItemRarity = Field(..., validation_alias=AliasChoices('ItemRarityFlags', 'RarityFlags'))
     max_count: int = Field(0, validation_alias='MaxItemCount')
 
+class EquipmentFragment(ItemBase):
+    # EquipmentCompositeMB
+    # icon need to get from EquipmentMB
+    item_id: int = Field(..., validation_alias='Id')
+    item_type: enums.ItemType = enums.ItemType.EquipmentFragment
+    equip_id: int = Field(..., validation_alias='EquipmentId')
+    required_count: int = Field(..., validation_alias='RequiredFragmentCount')
+    name: str = '[CommonItemEquipmentFragmentFormat]'
+    equip_name: str = Field(...)  # From EquipmentMB
+    description: str = '[ItemTypeEquipmentFragmentDescription]'
+    cost: list[ItemCount] = Field(..., validation_alias='RequiredItemList', description='Cost to enhance equipment')
+    
+    @field_serializer('name')
+    def format_name(self, name: str) -> str:
+        return name.format(self.equip_name)
+
+    @field_serializer('description')
+    def format_description(self, description: str) -> str:
+        return description.format(self.equip_name, self.required_count)
+
+# Insert CharacterMB to schema directly
+class CharacterFragment(ItemBase):
+    item_id: int = Field(..., validation_alias='Id', description='Charater Id')
+    item_type: enums.ItemType = enums.ItemType.CharacterFragment
+    char_name: str = Field(..., validation_alias='NameKey')
+    char_title: str|None = Field(..., validation_alias='Name2Key')
+    name: str = '[CommonItemCharacterFragment]'
+    description: str = '[ItemTypeCharacterFragmentDescription]'
+    icon: int = Field(..., validation_alias='Id')
+
+    @field_serializer('name')
+    def format_name(self, name: str) -> str:
+        return name.format(self.char_name)
+    
+    @field_serializer('description')
+    def format_description(self, description: str) -> str:
+        name = self.char_name
+        if self.char_title:
+            name = f'[{self.char_title}] {name}'
+            
+        return description.format(name, 60)
+    
+class EquipmentSetMaterial(ItemBase):
+    item_id: int = Field(..., validation_alias='Id')
+    item_type: enums.ItemType = enums.ItemType.EquipmentSetMaterial
+    lv: int = Field(..., validation_alias='Lv')
+    treasure_chest_id: int = Field(..., validation_alias='TreasureChestId', description='Weapon adamantite Id')
+    quest_id_list: list[int] = Field(..., validation_alias='QuestIdList')
+
+# N-hour consumables
+class QuickTicket(ItemBase):
+    hours: int = Field(..., validation_alias='SecondaryFrameNum')
+
 class Rune(ItemBase):
     item_id: int = Field(..., validation_alias='Id')
     item_type: enums.ItemType = enums.ItemType.Sphere
@@ -352,56 +405,7 @@ class CharacterItem(ItemBase):
     title: str|None = Field(..., validation_alias='Name2Key')
     description: str = 'Character'
 
-# Insert CharacterMB to schema directly
-class CharacterFragment(ItemBase):
-    item_id: int = Field(..., validation_alias='Id', description='Charater Id')
-    item_type: enums.ItemType = enums.ItemType.CharacterFragment
-    char_name: str = Field(..., validation_alias='NameKey')
-    char_title: str|None = Field(..., validation_alias='Name2Key')
-    name: str = '[CommonItemCharacterFragment]'
-    description: str = '[ItemTypeCharacterFragmentDescription]'
-    icon: int = Field(..., validation_alias='Id')
-
-    @field_serializer('name')
-    def format_name(self, name: str) -> str:
-        return name.format(self.char_name)
-    
-    @field_serializer('description')
-    def format_description(self, description: str) -> str:
-        name = self.char_name
-        if self.char_title:
-            name = f'[{self.char_title}] {name}'
-            
-        return description.format(name, 60)
-    
-class EquipmentSetMaterial(ItemBase):
-    item_id: int = Field(..., validation_alias='Id')
-    item_type: enums.ItemType = enums.ItemType.EquipmentSetMaterial
-    lv: int = Field(..., validation_alias='Lv')
-    treasure_chest_id: int = Field(..., validation_alias='TreasureChestId', description='Weapon adamantite Id')
-    quest_id_list: list[int] = Field(..., validation_alias='QuestIdList')
-
-class EquipmentFragment(ItemBase):
-    # EquipmentCompositeMB
-    # icon need to get from EquipmentMB
-    item_id: int = Field(..., validation_alias='Id')
-    item_type: enums.ItemType = enums.ItemType.EquipmentFragment
-    equip_id: int = Field(..., validation_alias='EquipmentId')
-    required_count: int = Field(..., validation_alias='RequiredFragmentCount')
-    name: str = '[CommonItemEquipmentFragmentFormat]'
-    equip_name: str = Field(...)  # From EquipmentMB
-    description: str = '[ItemTypeEquipmentFragmentDescription]'
-    cost: list[ItemCount] = Field(..., validation_alias='RequiredItemList', description='Cost to enhance equipment')
-    
-    @field_serializer('name')
-    def format_name(self, name: str) -> str:
-        return name.format(self.equip_name)
-
-    @field_serializer('description')
-    def format_description(self, description: str) -> str:
-        return description.format(self.equip_name, self.required_count)
-
-type Item = EquipmentFragment|CharacterItem|CharacterFragment|EquipmentSetMaterial|Rune|TreasureChest|ItemBase
+type Item = EquipmentFragment|CharacterItem|CharacterFragment|EquipmentSetMaterial|QuickTicket|Rune|TreasureChest|ItemBase
 
 # PvE
 class BaseParameters(APIBaseModel):
@@ -607,6 +611,14 @@ class CommonStrings(BaseModel):
         'rune': '[CommonSphereLabel]',
         'parameter': '[CommonPotentialParameterLabel]',
         'status': '[CommonStatusLabel]',
+        'characters': '[CommonHeaderCharacterListLabel]',  # Characters
+        'arcana': '[ArcanaTitle]',  # Arcana
+        'arcana bonus level': '[ArcanaStatusBonusPartyLevelLabel]',  # Max Party Lv
+        'arcana level limit': '[ArcanaNotRankRelease]',  # Unlocked at Party Lv 300.
+        'arcana awaken': '[ArcanaRarityBonusLabel]',  # Arcana Group Max Awaken.
+        'arcana target': '[ArcanaStatusBonusTargetLabel]',  # Enhanced Targets
+        'arcana target all': '[ArcanaStatusBonusTargetAll]',  # All Characters
+        'arcana target group': '[ArcanaStatusBonusTargetArcana]'  # Arcana Group
     }, description='Only contains partial data. More may be added later.')
     base_param: dict[enums.BaseParameter, str] = Field({
         1: '[BaseParameterTypeMuscle]',

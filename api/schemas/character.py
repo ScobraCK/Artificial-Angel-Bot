@@ -3,7 +3,7 @@ from typing import Literal
 from api.utils.error import APIError
 from api.utils.masterdata import MasterData
 from api.schemas.equipment import search_uw_info
-from common import schemas
+from common import schemas, enums
 
 async def get_character(md: MasterData, id: int):
     char_data = await md.search_id(id, 'CharacterMB')
@@ -55,19 +55,34 @@ async def get_arcana_levels(md: MasterData) -> dict[int, list[dict]]:
         levels[arcana_id].append(level)
     return levels
 
+def check_parameter(
+    parameter: schemas.Parameter,
+    category: enums.ParameterCategory|None,
+    parameter_type: int|None,
+    change_type: enums.ParameterChangeType|None
+) -> bool:
+    if category is not None and category != parameter.category:
+        return False
+    if parameter_type is not None and parameter_type != parameter.type:
+        return False
+    if change_type is not None and change_type != parameter.change_type:
+        return False
+    return True
+
 async def get_arcana(
     md: MasterData,
     character: int|None=None,
-    parameter_category: Literal['Base', 'Battle']|None=None,
+    parameter_category: enums.ParameterCategory|None=None,
     parameter_type: int|None=None,
-    parameter_change_type: int|None=None
-):
+    parameter_change_type: enums.ParameterChangeType|None=None,
+    has_level_bonus: bool|None=None
+) -> list[schemas.Arcana]:
     arcanas = []
     arcana_data = await md.get_MB('CharacterCollectionMB')
     level_data = await get_arcana_levels(md)
     reward_data = await get_arcana_rewards(md)
 
-    for arcana in arcana_data:
+    for arcana in arcana_data:  # reverse filter. Continues if any of the conditions are met.
         if character and character not in arcana['RequiredCharacterIds']:
             continue
 
@@ -79,14 +94,15 @@ async def get_arcana(
                 reward=reward_data.get((level['CollectionLevel'], char_count), [])
             ))
 
-        if levels and (parameter_category or parameter_type or parameter_change_type):
-            for param in levels[-1].parameters:  # check from max level arcana
-                if parameter_category is not None and parameter_category != param.category:
+        if levels:
+            if parameter_category is not None or parameter_type is not None or parameter_change_type is not None:
+                if not any(check_parameter(param, parameter_category, parameter_type, parameter_change_type) for param in levels[-1].parameters):
                     continue
-                if parameter_type is not None and parameter_type != param.type:
+
+            if has_level_bonus is not None:
+                if (levels[-1].level_bonus > 0) != has_level_bonus:  # Left True => has level bonus. If left != has_level_bonus fails check.
                     continue
-                if parameter_change_type is not None and parameter_change_type != param.change_type:
-                    continue
+
 
         arcanas.append(schemas.Arcana(**arcana, levels=levels))
     return arcanas

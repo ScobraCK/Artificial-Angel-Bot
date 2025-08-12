@@ -5,8 +5,9 @@ from api.crud.string_keys import translate_keys
 from api.schemas.requests import CharacterDBRequest
 from common.schemas import APIResponse
 from api.schemas.character import (
-    get_character, get_profile, get_lament, get_voicelines, get_memories
+    get_character, get_profile, get_lament, get_voicelines, get_memories, get_arcana
 )
+from api.schemas.requests import ArcanaRequest
 from api.schemas.skills import get_skills_char
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.masterdata import MasterData
@@ -137,3 +138,32 @@ async def memory(
     memories = await get_memories(md, char_id)
     await translate_keys(memories, session, language)
     return APIResponse[schemas.CharacterMemories].create(request, memories)
+
+@router.get(
+    '/arcana',
+    summary='Arcana data',
+    description='Returns arcana data. Can filter by character, parameter category, type and change type.',
+    response_model=APIResponse[list[schemas.Arcana]]
+)
+async def arcana(
+    session: SessionDep,
+    request: Request,
+    payload: ArcanaRequest = Depends(),
+    language: Language = Depends(language_parameter),
+
+):
+    md: MasterData = request.app.state.md
+    arcana_data = await get_arcana(
+        md,
+        character=payload.character,
+        parameter_category=payload.param_category,
+        parameter_type=payload.param_type,
+        parameter_change_type=payload.param_change_type,
+        has_level_bonus=payload.level_bonus
+    )
+    
+    if not arcana_data:
+        raise HTTPException(status_code=404, detail='No arcana data found with the provided filter conditions')
+    await translate_keys(arcana_data, session, language)
+
+    return APIResponse[list[schemas.Arcana]].create(request, arcana_data)

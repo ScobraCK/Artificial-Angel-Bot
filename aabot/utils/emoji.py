@@ -1,41 +1,58 @@
 from enum import Enum
 
+from async_lru import alru_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from aabot.crud.character import get_character
 from aabot.crud.emoji import get_emoji
-from common.schemas import Character, ItemBase, EquipmentFragment, ActiveSkill, PassiveSkill, Rune
+from common.database import SessionAA
+from common.enums import Element
+from common.schemas import Character, ItemBase, EquipmentFragment, QuickTicket, ActiveSkill, PassiveSkill, Rune
 
 _emoji_cache = {}
 
-def _get_emoji_name(obj: Character|ItemBase|ActiveSkill|PassiveSkill) -> str:
-    if isinstance(obj, Rune):
+def _get_emoji_name(
+        obj: Character|ItemBase|EquipmentFragment|QuickTicket|ActiveSkill|PassiveSkill|Enum|str
+) -> str:
+    if isinstance(obj, Enum):
+        return emoji_list.get(obj.name.lower())
+    elif isinstance(obj, str):  
+        return emoji_list.get(obj.lower())
+    elif isinstance(obj, Rune):
         return f'SPH_{obj.icon:04}'
+    elif isinstance(obj, EquipmentFragment):
+        return 'fragment'
+    elif isinstance(obj, QuickTicket):
+        if obj.item_id <= 5:
+            return emoji_list['gold']
+        elif obj.item_id <= 10:
+            return emoji_list['green_orb']
+        elif obj.item_id <= 15:
+            return emoji_list['red_orb']
+        else:
+            return f'Item_{obj.icon:04}'  # TODO add growth set
     elif isinstance(obj, ItemBase):
         return f'Item_{obj.icon:04}'
     else:
         return obj.name  # TODO handle other types later
 
-async def to_emoji(session: AsyncSession, obj: Character|ItemBase|EquipmentFragment|ActiveSkill|PassiveSkill|Enum|str) -> str:
-    name = None
-    # manual emoji list check
-    if isinstance(obj, Enum):
-        name = emoji_list.get(obj.name.lower())
-    elif isinstance(obj, str):  
-        name = emoji_list.get(obj.lower())
-    elif isinstance(obj, EquipmentFragment):
-        name = 'fragment'
-    else:
-        name = _get_emoji_name(obj)
-
+async def to_emoji(
+        session: AsyncSession,
+        obj: Character|ItemBase|EquipmentFragment|QuickTicket|ActiveSkill|PassiveSkill|Enum|str
+) -> str:
+    name = _get_emoji_name(obj)
     if name in _emoji_cache:
         return _emoji_cache[name]
 
     emoji = await get_emoji(session, name)
 
     if emoji:
-        _emoji_cache[name] = f'<:{emoji.name}:{emoji.id}>'
+        if isinstance(obj, QuickTicket):
+            _emoji_cache[name] = f'<:{emoji.name}:{emoji.id}>({obj.hours}h)'
+        else:
+            _emoji_cache[name] = f'<:{emoji.name}:{emoji.id}>'
         return _emoji_cache[name]
-    elif name:  # default emoji
+    elif name.startswith(':') and name.endswith(':'):  # default emoji
         _emoji_cache[name] = name
         return name
     else:
@@ -45,9 +62,17 @@ async def to_emoji(session: AsyncSession, obj: Character|ItemBase|EquipmentFragm
         else:
             return obj.name
 
+@alru_cache()
+async def char_ele_emoji(char_id: int) -> str:
+    async with SessionAA() as session:
+        char = await get_character(session, char_id)
+        emoji = await to_emoji(session, Element(char.element))
+    return emoji
+
 emoji_list = {
     # items
     'dia': 'Item_0009',
+    'gold': 'Item_0010',
     'green_orb': 'Item_0015',
     'red_orb': 'Item_0016',
     'water': 'Item_0017',

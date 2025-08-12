@@ -219,6 +219,12 @@ class ItemType(IntEnum):
     EventExchangePlaceItem = 50
     StripeCoupon = 1001
 
+# class SecondaryFrameType(IntEnum):
+#     ElementIcon = 1
+#     EffectTime = 2
+#     Level = 3
+#     CenteredCharacterIcon = 4
+
 class RuneType(IntEnum):
     STR = 1
     DEX = 2

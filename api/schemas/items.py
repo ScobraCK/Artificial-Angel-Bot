@@ -52,7 +52,10 @@ async def get_item(md: MasterData, payload: requests.ItemRequest) -> schemas.Ite
             item = schemas.TreasureChest(**treasure_data, ItemId=payload.item_id, ItemType=item_type)
         else:
             item_data = next(await md.search_filter('ItemMB', ItemId=payload.item_id, ItemType=payload.item_type))
-            item = schemas.ItemBase(**item_data)
+            if item_type == enums.ItemType.QuestQuickTicket:
+                item = schemas.QuickTicket(**item_data)
+            else:
+                item = schemas.ItemBase(**item_data)
         return item
     except TypeError:  # None result from search_id
         raise APIError('Item could not be found.')

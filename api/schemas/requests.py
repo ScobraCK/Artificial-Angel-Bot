@@ -6,6 +6,27 @@ from api.utils.error import APIError
 from common import enums
 from common.models import CharacterColumns, PlayerColumns
 
+# Character
+class ArcanaRequest(BaseModel):
+    character: int|None = Field(Query(None), description='Character ID filter')
+    param_category: enums.ParameterCategory|None = Field(
+        Query(None, description='Category filter: "Base" or "Battle"')
+    )
+    param_type: int|None = Field(
+        Query(
+            None,
+            description=(
+                f'Parameter type filter:<br>'
+                f'Base<br>{', '.join(f'{type_.value}-{type_.name.lower()}' for type_ in enums.BaseParameter)}<br>'
+                f'Battle<br>{', '.join(f'{type_.value}-{type_.name.lower()}' for type_ in enums.BattleParameter)}'
+            )
+        )
+    )
+    param_change_type: int|None = Field(
+        Query(None, description='Parameter change type filter: 1-Addition, 2-AdditionPercent, 3-CharacterLevelConstantMultiplicationAddition'))
+    level_bonus: bool|None = Field(Query(None, description='Level bonus filter. Set true to only show arcana giving bonus party level. Set false to hide. Defaults to None (no filter)'))
+
+
 # Equipment
 class EquipmentRequest(BaseModel):
     slot: enums.EquipSlot = Field(Query(..., examples=[1]))
@@ -71,8 +92,6 @@ class TowerRequest(BaseModel):
         )
     ))
 
-
-
 # Mentemori
 class PlayerRankingRequest(BaseModel):
     count: int = Field(Query(200, gt=0, le=5000), description="Number of players to fetch.")
@@ -87,7 +106,6 @@ class PlayerRankingRequest(BaseModel):
             raise APIError("Only one of the filter options world_id, server can be provided.")
         return values
 
-
 class GuildRankingRequest(BaseModel):
     count: int = Field(Query(50, gt=0, le=2000), description="Number of guilds to fetch.")
     world_id: list[int]|None = Field(Query(None), description="Filter by a list of world IDs")
@@ -99,7 +117,6 @@ class GuildRankingRequest(BaseModel):
         if values.get("world_id") and values.get("server"):
             raise APIError("Only one of the filter options world_id, server can be provided.")
         return values
-
 
 class CharacterDBRequest(BaseModel):
     option: CharacterColumns = Field(Query(

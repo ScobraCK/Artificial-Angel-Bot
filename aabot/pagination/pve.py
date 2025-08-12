@@ -5,11 +5,11 @@ from discord import Color, Embed, Interaction
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.pagination.embeds import BaseEmbed
-from aabot.pagination.items import ItemCounter
 from aabot.pagination.views import MixedView
 from aabot.utils import api
 from aabot.utils.assets import RAW_ASSET_BASE, SOUL_BONUS
 from aabot.utils.emoji import to_emoji
+from aabot.utils.itemcounter import ItemCounter
 from aabot.utils.utils import decimal_format, from_quest_id, human_format as hf
 from common import enums, schemas
 

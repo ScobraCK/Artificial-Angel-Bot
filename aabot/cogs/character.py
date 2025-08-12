@@ -1,3 +1,4 @@
+from collections import namedtuple
 from re import split
 
 from discord import app_commands, Interaction
@@ -13,6 +14,57 @@ from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
 from aabot.utils.error import BotError
 from common import schemas
 from common.database import SessionAA
+
+ArcanaOption = namedtuple('ArcanaOption', ['category', 'type', 'change_type', 'level_bonus'], defaults=(None, None, None, None))
+
+ArcanaOptions = {
+    'STR Flat': ArcanaOption('Base', 1, 1),
+    'STR Chara. Lv': ArcanaOption('Base', 1, 3),
+    'DEX Flat': ArcanaOption('Base', 2, 1),
+    'DEX Chara. Lv': ArcanaOption('Base', 2, 3),
+    'MAG Flat': ArcanaOption('Base', 3, 1),
+    'MAG Chara. Lv': ArcanaOption('Base', 3, 3),
+    'STA Flat': ArcanaOption('Base', 4, 1),
+    'STA Chara. Lv': ArcanaOption('Base', 4, 3),
+    'HP Percent': ArcanaOption('Battle', 1, 2),
+    'ATK Flat': ArcanaOption('Battle', 2, 1),
+    'ATK Percent': ArcanaOption('Battle', 2, 2),
+    'P.DEF Flat': ArcanaOption('Battle', 3, 1),
+    'P.DEF Percent': ArcanaOption('Battle', 3, 2),
+    'M.DEF Flat': ArcanaOption('Battle', 4, 1),
+    'M.DEF Percent': ArcanaOption('Battle', 4, 2),
+    'ACC Flat': ArcanaOption('Battle', 5, 1),
+    'ACC Percent': ArcanaOption('Battle', 5, 2),
+    'ACC Chara. Lv': ArcanaOption('Battle', 5, 3),
+    'EVD Flat': ArcanaOption('Battle', 6, 1),
+    'EVD Chara. Lv': ArcanaOption('Battle', 6, 3),
+    'CRIT Chara. Lv': ArcanaOption('Battle', 7, 3),
+    'CRIT RES Flat': ArcanaOption('Battle', 8, 1),
+    'CRIT RES Chara. Lv': ArcanaOption('Battle', 8, 3),
+    'CRIT DMG Boost Flat': ArcanaOption('Battle', 9, 1),
+    'P.CRIT DMG Cut Flat': ArcanaOption('Battle', 10, 1),
+    'M.CRIT DMG Cut Flat': ArcanaOption('Battle', 11, 1),
+    'DEF Break Flat': ArcanaOption('Battle', 12, 1),
+    'DEF Percent': ArcanaOption('Battle', 13, 2),
+    'DEF Chara. Lv': ArcanaOption('Battle', 13, 3),
+    'PM.DEF Break Flat': ArcanaOption('Battle', 14, 1),
+    'Debuff ACC Percent': ArcanaOption('Battle', 15, 2),
+    'Debuff ACC Chara. Lv': ArcanaOption('Battle', 15, 3),
+    'Debuff RES Flat': ArcanaOption('Battle', 16, 1),
+    'Debuff RES Chara. Lv': ArcanaOption('Battle', 16, 3),
+    'Counter Flat': ArcanaOption('Battle', 17, 1),
+    'HP Drain Flat': ArcanaOption('Battle', 18, 1),
+    'Level Bonus': ArcanaOption(None, None, None, True)
+}
+
+async def arcana_autocomplete(interaction: Interaction, current: str):
+    choices = [
+        app_commands.Choice(name=opt, value=opt)
+        for opt in ArcanaOptions
+        if current.lower() in opt.lower()
+    ]
+    return choices[:25]
+
 
 class CharacterCommands(commands.Cog, name='Character Commands'):
     '''Commands related to characters'''
@@ -110,7 +162,7 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         except BotError as e:
             skill_data = None  # Case where skill data is not avaliable when basic info is
         
-        embed = char_page.char_info_embed(char_data, skill_data, self.bot.common_strings[language])
+        embed = await char_page.char_info_embed(char_data, skill_data, self.bot.common_strings[language])
 
         await interaction.response.send_message(embed=embed)
 
@@ -252,6 +304,51 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
 
         view = await char_page.memory_view(interaction, memory_data, language)
         await show_view(interaction, view)
-        
+
+    @app_commands.command()
+    @app_commands.describe(
+        character='Character filter option',
+        filter_option='Filter options for arcana bonus',
+        language='Text language. Defaults to English.'
+    )
+    @app_commands.autocomplete(filter_option=arcana_autocomplete)
+    @apply_user_preferences()
+    async def arcana(
+        self,
+        interaction: Interaction,
+        character: app_commands.Transform[int, IdTransformer]|None=None,
+        filter_option: str|None=None,
+        language: LanguageOptions|None=None
+    ):  
+        '''Shows arcana data'''
+        if filter_option is not None:
+            if filter_option not in ArcanaOptions:
+                await interaction.response.send_message(
+                    f"Invalid filter option: {filter_option}. Please choose from a given option.",
+                    ephemeral=True
+                )
+                return
+
+            options = ArcanaOptions[filter_option]
+        else:
+            options = ArcanaOption()
+
+        arcana_data = await api.fetch_api(
+            api.ARCANA_PATH,
+            response_model=list[schemas.Arcana],
+            query_params={
+                'character': character,
+                'param_category': options.category,
+                'param_type': options.type,
+                'param_change_type': options.change_type,
+                'level_bonus': options.level_bonus,
+                'language': language
+            }
+        )
+
+        view = await char_page.arcana_view(interaction, arcana_data, self.bot.common_strings[language], language)
+        await show_view(interaction, view)
+
+
 async def setup(bot: AABot):
 	await bot.add_cog(CharacterCommands(bot))
