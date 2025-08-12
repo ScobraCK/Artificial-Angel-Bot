@@ -61,7 +61,7 @@ async def arcana_autocomplete(interaction: Interaction, current: str):
     choices = [
         app_commands.Choice(name=opt, value=opt)
         for opt in ArcanaOptions
-        if current.lower() in opt.lower()
+        if current.replace('.', '').lower() in opt.replace('.', '').lower()
     ]
     return choices[:25]
 
