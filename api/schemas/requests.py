@@ -22,7 +22,7 @@ class ArcanaRequest(BaseModel):
             )
         )
     )
-    param_change_type: int|None = Field(
+    param_change_type: enums.ParameterChangeType|None = Field(
         Query(None, description='Parameter change type filter: 1-Addition, 2-AdditionPercent, 3-CharacterLevelConstantMultiplicationAddition'))
     level_bonus: bool|None = Field(Query(None, description='Level bonus filter. Set true to only show arcana giving bonus party level. Set false to hide. Defaults to None (no filter)'))
 
