@@ -145,12 +145,14 @@ class CharacterDBRequest(BaseModel):
     @model_validator(mode='after')
     def validate(self):
         if self.option == 'base_rarity':
-            assert isinstance(self.value, str), '"base_rarity" only takes "N", "R", or "SR"'
+            if not isinstance(self.value, str):
+                raise APIError('base_rarity only takes N, R, or SR')
         else:
             if self.value is not None:
-                assert isinstance(self.value, int), '"N", "R", or "SR" should only be used for "base_rarity"'
+                if not isinstance(self.value, int):
+                    raise APIError('N, R, or SR should only be used for base_rarity')
 
         if self.value is not None:
-            assert self.minvalue is None and self.maxvalue is None, \
-                'If "value" is provided, "minvalue" and "maxvalue" cannot be given'
+            if self.minvalue is not None or self.maxvalue is not None:
+                raise APIError('If value is provided, minvalue and maxvalue cannot be given')
         return self

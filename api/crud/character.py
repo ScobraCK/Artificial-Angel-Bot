@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.utils.masterdata import MasterData
+from api.utils.error import APIError
 from common.enums import CharacterRarity
 from common.models import CharacterORM, CharacterColumns
 from common.schemas import CharacterDBModel
@@ -63,7 +64,7 @@ async def get_filtered_chars(session: AsyncSession, filter_by: CharacterColumns,
     stmt = select(CharacterORM)
     if value is not None:
         if minvalue is not None or maxvalue is not None:
-            raise ValueError('Cannot have a min/max value when value is given')
+            raise APIError('Cannot have a min/max value when value is given')
         stmt = stmt.where(col==value)
     elif minvalue is not None and maxvalue is not None:
         stmt = stmt.where(col.between(minvalue, maxvalue))
