@@ -49,11 +49,11 @@ async def to_emoji(
     emoji = await get_emoji(session, name)
 
     if emoji:
+        _emoji_cache[name] = f'<:{emoji.name}:{emoji.id}>'
         if isinstance(obj, QuickTicket):
-            _emoji_cache[name] = f'<:{emoji.name}:{emoji.id}>({obj.hours}h)'
+            return f'{_emoji_cache[name]}({obj.hours}h)'
         else:
-            _emoji_cache[name] = f'<:{emoji.name}:{emoji.id}>'
-        return _emoji_cache[name]
+            return _emoji_cache[name]
     elif name.startswith(':') and name.endswith(':'):  # default emoji
         _emoji_cache[name] = name
         return name
