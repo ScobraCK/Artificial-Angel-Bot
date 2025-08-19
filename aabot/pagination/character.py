@@ -183,16 +183,16 @@ async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse
     embeds = []
     for memory in memories.memories:
         description = f'**{memory.title}**\n{h.handle(memory.text)}'
-        jp_url = MOONHEART_ASSET_MEMORY.format(
-            region='JP',
-            char_id=memories.char_id,
-            episode_id=memory.episode_id
-        )
-        us_url = MOONHEART_ASSET_MEMORY.format(
-            region='US',
-            char_id=memories.char_id,
-            episode_id=memory.episode_id
-        )
+        # jp_url = MOONHEART_ASSET_MEMORY.format(
+        #     region='JP',
+        #     char_id=memories.char_id,
+        #     episode_id=memory.episode_id
+        # )
+        # us_url = MOONHEART_ASSET_MEMORY.format(
+        #     region='US',
+        #     char_id=memories.char_id,
+        #     episode_id=memory.episode_id
+        # )
         
         embeds.append(
             BaseEmbed(
@@ -200,8 +200,8 @@ async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse
                 title=title,
                 description=description,
                 color=Color.orange()
-            ).add_field(
-                name='Voice',value=f'[JP]({jp_url})|[US]({us_url})', inline=False
+            # ).add_field(
+            #     name='Voice',value=f'[JP]({jp_url})|[US]({us_url})', inline=False
             ).set_thumbnail(url=CHARACTER_THUMBNAIL.format(char_id=memories.char_id, qlipha=False))
         )
     return ButtonView(interaction.user, {'default': embeds})
