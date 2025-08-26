@@ -7,6 +7,7 @@ from discord import Color, Embed, Interaction
 from aabot.pagination.views import ButtonView
 from aabot.utils import api
 from aabot.utils.emoji import to_emoji
+from aabot.utils.itemcounter import ItemCounter
 from aabot.utils.utils import character_title, from_quest_id, from_world_id, make_table
 from common import schemas
 from common.database import SessionAA
@@ -36,24 +37,32 @@ temple_type = {
 
 async def temple_embed(data, server: Server, world: int):
     description = StringIO()
-    quest_ids = data['data']['quest_ids']
+    quests = data['data']['quests']
     # world_id = data['data']['world_id']
-    
-    if len(str(quest_ids[0])) != 6:
+
+    if len(str(quests[0]['Id'])) != 6:
         description.write(f"Temple event is ongoing")
     else:
-        description.write(f'Lv. {int(str(quest_ids[0])[1:4])}\n\n')
+        description.write(f'Lv. {int(str(quests[0]["Id"])[1:4])}\n')
         async with SessionAA() as session:
-            for quest in quest_ids[::-1]:
-                quest_id_str = str(quest)
-                description.write(f'{await to_emoji(session, f"{temple_type.get(int(quest_id_str[0]))}")}: ')
+            ic = ItemCounter()
+            for quest in quests[::-1]:
+                quest_id_str = str(quest['Id'])
+                # description.write(f'{await to_emoji(session, f"{temple_type.get(int(quest_id_str[0]))}")}: ')
                 stars = int(quest_id_str[-2:])
                 for i in range(stars):
                     if i < 5:
                         description.write(f'{await to_emoji(session, f"star1")} ')
                     else:
                         description.write(f'{await to_emoji(session, f"star2")} ')
-                if quest != quest_ids[0]:
+                description.write(f'\n**Rewards:** ')
+                ic.add_items([schemas.ItemCount(**item) for item in quest['FixedBattleRewards']])
+                description.write(f'{', '.join(await ic.get_total_strings())}\n')
+                ic.clear()
+                ic.add_items([schemas.ItemCount(**item) for item in quest['FirstBattleRewards']])
+                description.write(f'**First Time Rewards:** {', '.join(await ic.get_total_strings())}\n')
+                ic.clear()
+                if quest['Id'] != quests[0]['Id']:
                     description.write('\n')
     time = str(data["timestamp"])
     description.write(f'\nLast Update: <t:{time}:R>')
@@ -62,7 +71,7 @@ async def temple_embed(data, server: Server, world: int):
         title=f'Temple {server.name} W{world}',
         description=description.getvalue(),
         color=Color.yellow()
-    ).set_footer(text='Reward details cannot be provided since they have been removed from the client data.')
+    )
 
 def group_embed(group_data):
     description = StringIO()
@@ -87,6 +96,7 @@ def group_embed(group_data):
 def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIResponse[list[schemas.GuildRankInfo]], server: Server, group: int):
     embed_dict = {'default': []}
     rank = 1
+    updated = ranking_data.data[0].timestamp
     for batch in batched(ranking_data.data, 50):
         rankings = []
         for guild in batch:
@@ -97,7 +107,7 @@ def group_ranking_view(interaction: Interaction, ranking_data: schemas.APIRespon
         embed_dict['default'].append(
             Embed(
                 title=f'Group Rankings [Group {group} | {server.name}]',
-                description=f'```{table}```',
+                description=f'```{table}```Last Update: <t:{updated}:R>',
                 color=Color.orange()
             ).set_footer(text='Updates every hour')
         )
@@ -111,6 +121,7 @@ def guild_ranking_view(
     ) -> ButtonView:
     embed_dict = {'default': []}
     rank = 1
+    updated = ranking_data.data[0].timestamp
     for batch in batched(ranking_data.data, 50):
         rankings = []
         for guild in batch:
@@ -121,7 +132,7 @@ def guild_ranking_view(
         embed_dict['default'].append(
             Embed(
                 title=f'Guild Rankings [{filter_text}]',
-                description=f'```{table}```',
+                description=f'```{table}```Last Update: <t:{updated}:R>',
                 color=Color.orange()
             ).set_footer(text='Updates every hour')
         )
@@ -142,6 +153,7 @@ def player_ranking_view(
     ) -> ButtonView:
     embed_dict = {'default': []}
     rank = 1
+    updated = ranking_data.data[0].timestamp
     for batch in batched(ranking_data.data, 50):
         rankings = []
         for player in batch:
@@ -165,7 +177,7 @@ def player_ranking_view(
         embed_dict['default'].append(
             Embed(
                 title=f'Player Rankings by {category.name} [{filter_text}]',
-                description=f'```{table}```',
+                description=f'```{table}```Last Update: <t:{updated}:R>',
                 color=Color.orange()
             ).set_footer(text='Updates every hour')
         )
@@ -187,6 +199,7 @@ def tower_ranking_view(
 ):
     embed_dict = {'default': []}
     rank = 1
+    updated = ranking_data.data[0].timestamp
     for batch in batched(ranking_data.data, 50):
         rankings = []
         for player in batch:
@@ -196,7 +209,7 @@ def tower_ranking_view(
         
         embed = Embed(
             title=f'{category.name} Tower Rankings [{filter_text}]',
-            description=f'```{table}```',
+            description=f'```{table}```Last Update: <t:{updated}:R>',
             color=Color.orange()
         ).set_footer(text='Updates every hour')
         if category != TowerCategory.Infinity:
