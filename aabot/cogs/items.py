@@ -10,6 +10,12 @@ from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
 from common import enums
 from common.database import SessionAA
 
+async def itemtype_autocomplete(interaction: Interaction, current: int):
+    choices = [
+        app_commands.Choice(name=opt.name, value=opt.value) for opt in enums.ItemType
+    ]
+    return choices[:25]
+
 class ItemCommands(commands.Cog, name='Item Commands'):
     '''Commands related to items'''
 
@@ -22,16 +28,20 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         item_type="Item type",
         language="Text language. Defaults to English."
     )
+    @app_commands.autocomplete(item_type=itemtype_autocomplete)
     @apply_user_preferences()
     async def finditem(
         self, interaction: Interaction, 
         item_id: int, 
-        item_type: enums.ItemType,
+        item_type: int,
         language: LanguageOptions|None=None):
         '''
         Command for quick searching from ItemId and ItemType
         '''
-        
+        if item_type not in enums.ItemType:
+            await interaction.response.send_message(f"Invalid item type. See below:\n{'\n'.join([f'{item.value} - {item.name}' for item in enums.ItemType])}", ephemeral=True)
+            return
+
         item_data = await api.fetch_item(item_id, item_type, language)  # directly use fetch item
         embed = item_response.item_embed(item_data, self.bot.common_strings[language])
         
