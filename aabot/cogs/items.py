@@ -26,7 +26,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
     async def finditem(
         self, interaction: Interaction, 
         item_id: int, 
-        item_type: int,
+        item_type: enums.ItemType,
         language: LanguageOptions|None=None):
         '''
         Command for quick searching from ItemId and ItemType

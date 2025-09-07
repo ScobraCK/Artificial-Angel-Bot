@@ -81,7 +81,7 @@ async def fetch_api(
                     error = response.json()  # TODO fix in case of 500
                 else:
                     error = {"detail": "Internal Server Error"}
-                raise BotError(f"Error in API: {response.status_code} - {html2text.HTML2Text().handle(error.get('detail', 'No details'))}")
+                raise BotError(f"Error in API: {response.status_code} - {html2text.HTML2Text().handle(str(error.get('detail', 'No details')))}")
             else:
                 raise BotError(f"Error in API: Details unknown.")
         except httpx.RequestError as e:

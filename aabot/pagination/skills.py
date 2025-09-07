@@ -51,7 +51,7 @@ async def uw_skill_description(uw: schemas.UWDescriptions, session: AsyncSession
     if uw_name:
         description.write(f'__{uw_name}__\n')  # Given for skills
     for rarity in ('SSR', 'UR', 'LR'):
-        description.write(f"__**{rarity} Weapon**__{await to_emoji(session, rarity)}\n{getattr(uw,(rarity))}\n")
+        description.write(f"__**{rarity} Weapon**__{await to_emoji(session, rarity)}\n{remove_linebreaks(getattr(uw, rarity))}\n")
 
     return description.getvalue()
 
