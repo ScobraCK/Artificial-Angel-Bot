@@ -10,16 +10,16 @@ class RunCounter:
     def __init__(self):
         self.run_counts: dict[int, list] = {}
 
-    def get_run_count(self, char_id: int, run: tuple) -> int:
+    def get_run_count(self, char_id: int, run: str) -> int:
         if char_id not in self.run_counts:
             self.run_counts[char_id] = []  # initialize char counter
         if run not in self.run_counts[char_id]:  # check if run exists
-            self.run_counts[char_id].append(run)
+            self.run_counts[char_id].append(run)  # TODO: sort by date for futureproofing?
         return self.run_counts[char_id].index(run) + 1
     
-def parse_run(start, end) -> tuple[str, str]:
+def parse_run(start, end) -> str: # tuple[str, str]:
     '''Remove hour and second data for run counting'''
-    return start[:10], end[:10]
+    return start[:10]#, end[:10]  # start from start date only
 
 def filter_append_gacha(
     gacha_list: list,
