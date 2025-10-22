@@ -491,7 +491,7 @@ class PassiveSkill(APIBaseModel):
     skill_infos: list['SkillInfo'] = Field(..., validation_alias='PassiveSkillInfos')
 
 class PassiveSubSkill(APIBaseModel):
-    trigger: enums.PassiveTrigger = Field(..., validation_alias='PassiveTrigger')
+    trigger: int = Field(..., validation_alias='PassiveTrigger')
     init_cooltime: int = Field(..., validation_alias='SkillCoolTime')
     max_cooltime: int = Field(..., validation_alias='SkillMaxCoolTime')
     group_id: int = Field(..., validation_alias='PassiveGroupId')

@@ -294,7 +294,9 @@ class PassiveTrigger(IntEnum):
     NextCheckReceiveDamageSelf = 43
     NextCheckReceiveDamage = 44
     AlwaysEnemyDead = 45
+    EnemyAttack = 50
     RecoveryFromInstantDeathDamage = 52
+    InstantDeathDamageIgnoreFixDamage = 53
     SpecialDamageDead = 62
     MissingData = -1
 
