@@ -98,6 +98,10 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             query_params={'count': 200, 'world_id': worlds}
         )
 
+        if len(ranking_data.data) == 0:
+            await interaction.response.send_message("No ranking data found.", ephemeral=True)
+            return
+
         view = mentemori_page.group_ranking_view(interaction, ranking_data, server, group_id)
         await show_view(interaction, view)
             
@@ -153,6 +157,10 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             response_model=list[schemas.GuildRankInfo],
             query_params=query_params
         )
+        
+        if len(ranking_data.data) == 0:
+            await interaction.response.send_message("No ranking data found.", ephemeral=True)
+            return
                 
         view = mentemori_page.guild_ranking_view(interaction, ranking_data, filter_text)
         await show_view(interaction, view)
@@ -215,7 +223,11 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             response_model=list[schemas.PlayerRankInfo],
             query_params=query_params
         )
-                
+
+        if len(ranking_data.data) == 0:
+            await interaction.response.send_message("No ranking data found.", ephemeral=True)
+            return
+
         view = mentemori_page.player_ranking_view(interaction, ranking_data, category, filter_text, show_all)
         await show_view(interaction, view)
         
@@ -275,8 +287,12 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
             response_model=list[schemas.PlayerRankInfo],
             query_params=query_params
         )
-                
-        view = mentemori_page.tower_ranking_view(interaction, ranking_data, category,filter_text)
+        
+        if len(ranking_data.data) == 0:
+            await interaction.response.send_message("No ranking data found.", ephemeral=True)
+            return
+
+        view = mentemori_page.tower_ranking_view(interaction, ranking_data, category, filter_text)
 
         await show_view(interaction, view)
         
