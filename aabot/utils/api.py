@@ -54,7 +54,6 @@ MENTEMORI_GACHA_PATH = '{server_id}/{gacha}/latest'
 MENTEMORI_RAID_EVENT_PATH = '{world_id}/guild_raid/latest'
 
 T = TypeVar('T')
-transport = httpx.AsyncHTTPTransport(retries=3)
 
 def parse_response(data: dict, data_type: type[T]) -> APIResponse[T]:
     return APIResponse.parse(data, data_type)
@@ -96,10 +95,10 @@ async def fetch(
     params: dict = None,
     headers: dict = None,
     base_url: str = '',
-    timeout: int=5):
-    async with httpx.AsyncClient(headers=headers, base_url=base_url, transport=transport) as client:
+    timeout: int=10):
+    async with httpx.AsyncClient(headers=headers, base_url=base_url, timeout=timeout) as client:
         try:
-            response = await client.get(url, params=params, timeout=timeout)
+            response = await client.get(url, params=params)
             response.raise_for_status()
             return response
             

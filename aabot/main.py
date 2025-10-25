@@ -37,7 +37,11 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
             await interaction.response.send_message(embed=embed, ephemeral=True)
     elif isinstance(error, discord.app_commands.errors.CheckFailure):  # Pass check failures
         logger.error(f'{error} - {interaction.data}')
-        await interaction.response.send_message('You do not have permission to use this command.', ephemeral=True)
+        msg = 'You do not have permission to use this command.'
+        if interaction.response.is_done():
+            await interaction.followup.send(msg, ephemeral=True)
+        else:   
+            await interaction.response.send_message(msg, ephemeral=True)
     else:
         logger.error(f'{error} - {interaction.data}', exc_info=True)
         trace = "".join(traceback.format_exception(type(error), error, error.__traceback__))
@@ -49,7 +53,11 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
             color=discord.Color.red()
         )
         await err_channel.send(embed=embed)
-        await interaction.response.send_message(f'An unexpected error occured. This error has been logged for fixing. Message @habenyan if this persists.', ephemeral=True)
+        msg = f'An unexpected error occured. This error has been logged for fixing. Message @habenyan if this persists.'
+        if interaction.response.is_done():
+            await interaction.followup.send(msg, ephemeral=True)
+        else:
+            await interaction.response.send_message(msg, ephemeral=True)
 
 class AABot(commands.Bot):  # include masterdata in the class
     def __init__(self, command_prefix, intents: discord.Intents, owner_id: int, activity: discord.Activity, log_channel, api_key, common_strings):

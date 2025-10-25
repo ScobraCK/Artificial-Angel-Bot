@@ -5,15 +5,13 @@ from api.utils.error import MentemoriError
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
 
-transport = httpx.AsyncHTTPTransport(retries=3)
-
 API_BASE = 'https://api.mentemori.icu/'
 GROUP = 'wgroup'
 PLAYER = '0/player_ranking/latest'
 GUILD = '0/guild_ranking/latest'
 
 async def fetch_mentemori(path: str):
-    async with httpx.AsyncClient(base_url=API_BASE) as client:
+    async with httpx.AsyncClient(base_url=API_BASE, timeout=10) as client:
         try:
             response = await client.get(path)
             response.raise_for_status()
