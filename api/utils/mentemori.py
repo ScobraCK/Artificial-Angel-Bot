@@ -13,7 +13,7 @@ PLAYER = '0/player_ranking/latest'
 GUILD = '0/guild_ranking/latest'
 
 async def fetch_mentemori(path: str):
-    async with httpx.AsyncClient(base_url=API_BASE, transport=transport) as client:
+    async with httpx.AsyncClient(base_url=API_BASE) as client:
         try:
             response = await client.get(path)
             response.raise_for_status()

@@ -65,7 +65,7 @@ async def fetch_api(
     path_params: dict = None,
     query_params: dict = None,
     headers: dict = None):
-    async with httpx.AsyncClient(base_url=API_BASE_PATH, headers=headers, transport=transport) as client:
+    async with httpx.AsyncClient(base_url=API_BASE_PATH, headers=headers) as client:
         if path_params:
             path = path.format(**path_params)
             
