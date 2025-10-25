@@ -8,6 +8,9 @@ from aabot.utils.error import BotError
 from common.enums import Language
 from common.schemas import APIResponse, CommonStrings, Item, Name, StringKey
 
+from aabot.utils.logger import get_logger
+logger = get_logger(__name__)
+
 API_BASE_PATH = 'http://api:8000/'
 STRING_PATH = 'strings/{key}'
 STRING_COMMON_PATH = 'strings/common'
@@ -51,6 +54,7 @@ MENTEMORI_GACHA_PATH = '{server_id}/{gacha}/latest'
 MENTEMORI_RAID_EVENT_PATH = '{world_id}/guild_raid/latest'
 
 T = TypeVar('T')
+transport = httpx.AsyncHTTPTransport(retries=3)
 
 def parse_response(data: dict, data_type: type[T]) -> APIResponse[T]:
     return APIResponse.parse(data, data_type)
@@ -61,7 +65,7 @@ async def fetch_api(
     path_params: dict = None,
     query_params: dict = None,
     headers: dict = None):
-    async with httpx.AsyncClient(base_url=API_BASE_PATH, headers=headers) as client:
+    async with httpx.AsyncClient(base_url=API_BASE_PATH, headers=headers, transport=transport) as client:
         if path_params:
             path = path.format(**path_params)
             
@@ -93,7 +97,7 @@ async def fetch(
     headers: dict = None,
     base_url: str = '',
     timeout: int=5):
-    async with httpx.AsyncClient(headers=headers, base_url=base_url) as client:
+    async with httpx.AsyncClient(headers=headers, base_url=base_url, transport=transport) as client:
         try:
             response = await client.get(url, params=params, timeout=timeout)
             response.raise_for_status()
@@ -101,6 +105,10 @@ async def fetch(
             
         except httpx.HTTPStatusError as e:
             raise BotError(f"Error in external API: {url} - {response.status_code}")
+        except httpx.TimeoutException as e:
+            logger.error(f'Timeout fetching {url}: {e}')
+            raise e  # Want to get notifications for now
+            # raise BotError(f'Request has timed out too many times. Please try again later.')
         except httpx.RequestError as e:
             raise e
 

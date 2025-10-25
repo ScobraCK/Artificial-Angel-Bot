@@ -32,6 +32,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         world: int|None = None
     ):
         '''View Temple'''
+        await interaction.response.defer()
         world_id = to_world_id(server, world)
         resp = await api.fetch(
             url=api.MENTEMORI_TEMPLE_PATH.format(world_id=world_id),
@@ -40,22 +41,20 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         data = resp.json()
 
         embed = await mentemori_page.temple_embed(data, server, world)
-        await interaction.response.send_message(
-            embed=embed
-        )
+        await interaction.followup.send(embed=embed)
 
     @app_commands.command()
     async def groups(self, interaction: Interaction):
         """Show world groups"""
-
+        await interaction.response.defer()
         resp = await api.fetch(
             api.MENTEMORI_GROUP_PATH,
             base_url=api.MENTEMORI_BASE_PATH
         )
         group_data = resp.json()
         embed = mentemori_page.group_embed(group_data)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await interaction.followup.send(embed=embed)
 
     @app_commands.command()
     @app_commands.describe(
@@ -70,6 +69,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         world: int|None = None
     ):             
         '''Guild rankings by group'''
+        await interaction.response.defer()
         world_id = to_world_id(server, world)
         worlds = None
         group_id = None
