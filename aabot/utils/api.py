@@ -107,7 +107,6 @@ async def fetch(
         except httpx.TimeoutException as e:
             logger.error(f'Timeout fetching {url}: {e}')
             raise e  # Want to get notifications for now
-            # raise BotError(f'Request has timed out too many times. Please try again later.')
         except httpx.RequestError as e:
             raise e
 

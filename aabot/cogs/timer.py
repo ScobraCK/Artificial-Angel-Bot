@@ -25,8 +25,8 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         ch = self.bot.get_channel(self.bot.log_channel)
         msg = f'**Auto Update**\n<t:{get_current()}:f>\n'
         try:
-            await api.fetch(api.UPDATE_API_GUILD_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=60)
-            await api.fetch(api.UPDATE_API_PLAYERS_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=60)
+            await api.fetch(api.UPDATE_API_GUILD_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=120)
+            await api.fetch(api.UPDATE_API_PLAYERS_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=120)
             
         except Exception as e:
             msg += f'Failed to update player and guild rankings\n<@{self.bot.owner_id}>\n{e}'
