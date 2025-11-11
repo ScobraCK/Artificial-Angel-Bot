@@ -1,39 +1,133 @@
-from asyncio import gather
+from functools import partial
 from io import StringIO
 from itertools import batched
 
-from discord import Color, Interaction
+from discord import ui, Color, Interaction, SeparatorSpacing
 from html2text import HTML2Text
 
+from aabot.crud.character import get_character
 from aabot.pagination.embeds import BaseEmbed
-from aabot.pagination.views import ButtonView, MixedView
-from aabot.utils.api import fetch_name
+from aabot.pagination.view import to_content, create_content_button, BaseView
+from aabot.pagination.views import ButtonView
+from aabot.utils import api
 from aabot.utils.assets import RAW_ASSET_BASE, CHARACTER_THUMBNAIL, MOONHEART_ASSET_MEMORY
-from aabot.utils.command_utils import LanguageOptions
-from aabot.utils.emoji import to_emoji, character_string
-from aabot.utils.itemcounter import ItemCounter
-from aabot.utils.utils import character_title, calc_buff, param_string, possessive_form
+from aabot.utils.emoji import to_emoji
+from aabot.utils.error import BotError
+from aabot.utils.utils import character_title, possessive_form
 from common import enums, schemas
 from common.database import SessionAA
 
-def id_list_view(interaction: Interaction, name_data: schemas.APIResponse[dict[int, schemas.Name]]):
-    names = name_data.data.values()
-    
-    embeds = []
-    for batch in batched(names, 50):
-        description = StringIO()
-        for name in batch:
-            description.write(f"{name.char_id}: {character_title(name.title, name.name)}\n")
-        embeds.append(
-            BaseEmbed(
-                name_data.version,
-                title='Character Id',
-                color=Color.green(),
-                description=description.getvalue()
+from aabot.utils.logger import get_logger
+logger = get_logger(__name__)
+
+async def fetch_alt_chars():
+    return [48, 117]
+
+async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: schemas.CommonStrings) -> ui.Container:
+    container = ui.Container()
+    async with SessionAA() as session:
+        for char_id in chars:
+            name = await api.fetch_name(char_id, language)
+            char_info = await get_character(session, char_id)
+            element_emoji = await to_emoji(session, enums.Element(char_info.element))
+            job_emoji = await to_emoji(session, enums.Job(char_info.job))
+            container.add_item(
+                ui.Section(
+                    ui.TextDisplay(f'**{character_title(name.title, name.name)}**'),
+                    ui.TextDisplay(
+                        f'**Id:** {char_id}\n'
+                        f'**Element:** {element_emoji}{cs.element[char_info.element]}\n'
+                        f'**Base Rarity:** {char_info.base_rarity}\n'
+                        f'**Class:** {job_emoji}{cs.job[char_info.job]}\n'
+                    ),
+                    accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=char_id, qlipha=False)),
+                ),
+            ).add_item(
+                ui.ActionRow(
+                    create_content_button(
+                        partial(character_info_ui, char_id),
+                        'Select',
+                        load_state=True
+                    )
+                )
             )
+            if char_id != chars[-1]:
+                container.add_item(ui.Separator())
+
+    return container
+
+async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings) -> ui.Container:
+    char_resp = await api.fetch_api(
+        api.CHARACTER_PATH,
+        path_params={'char_id': char_id},
+        query_params={'language': language},
+        response_model=schemas.Character
+    )
+    char_data = char_resp.data
+    try:
+        skills_resp = await api.fetch_api(
+            api.CHARACTER_SKILL_PATH,
+            path_params={'char_id': char_id},
+            query_params={'language': language},
+            response_model=schemas.Skills
         )
+        skills_data = skills_resp.data
+    except BotError:
+        skills_data = None
+
+    async with SessionAA() as session:
+        element_emoji = await to_emoji(session, char_data.element)
+        job_emoji = await to_emoji(session, char_data.job)
+
+    container = ui.Container()
+    # Basic info
+    container.add_item(
+        ui.Section(
+            ui.TextDisplay(f'### {character_title(char_data.title, char_data.name)}'),
+            ui.TextDisplay(
+                (
+                    f'**Id:** {char_data.char_id}\n'
+                    f'**Element:** {element_emoji}{cs.element[char_data.element]}\n'
+                    f'**Base Rarity:** {enums.CharacterRarity(char_data.rarity).name}\n'
+                    f'**Class:** {job_emoji}{cs.job[char_data.job]}\n'
+                    f'**Base Speed:** {char_data.speed}\n'
+                    f'**UW:** {char_data.uw}\n'
+                )
+            ),
+            accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=char_data.char_id, qlipha=False))
+        )
+    ).add_item(ui.Separator(visible=False))
+
+    # Skills
+    if skills_data:
+        skill_text = StringIO()
+        skill_text.write('**__Active Skills__**\n')
+        for skill in skills_data.actives:
+            skill_text.write(f'{skill.name} | **CD:** {skill.max_cooltime}\n')
+        container.add_item(ui.TextDisplay(skill_text.getvalue()))
+
+        if skills_data.passives:
+            skill_text = StringIO()
+            skill_text.write('**__Passive Skills__**\n')
+            for skill in skills_data.passives:
+                if skill.name and skill.name != '*':
+                    skill_text.write(f'{skill.name}\n')
+            container.add_item(ui.TextDisplay(skill_text.getvalue()))
+    else:
+        container.add_item(ui.TextDisplay('*Skill data currently unavailable*'))
+
+    # Alt button
+    if (alt_chars := await fetch_alt_chars()):
+        container.add_item(ui.Separator(spacing=SeparatorSpacing.large))
+        container.add_item(ui.Section(
+            ui.TextDisplay('Alternate versions exist for this character'),
+            accessory=create_content_button(await switch_char_ui(alt_chars, language, cs), 'Switch', save_state=True)
+        ))
+
+    # Version
+    container.add_item(ui.TextDisplay(f'-# Master Version - {char_resp.version}'))
     
-    return ButtonView(interaction.user, {'default': embeds})
+    return container
 
 async def char_info_embed(char_data: schemas.APIResponse[schemas.Character], skill_data: schemas.APIResponse[schemas.Skills], cs: schemas.CommonStrings):
     embed = BaseEmbed(char_data.version, color=Color.green())
@@ -108,54 +202,16 @@ def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name: sche
         color=Color.green()
     ).set_thumbnail(url=CHARACTER_THUMBNAIL.format(char_id=profile.char_id, qlipha=False))
 
-def speed_view(
-    interaction: Interaction,
-    char_data: schemas.APIResponse[list[schemas.CharacterDBModel]],
-    name_data: schemas.APIResponse[dict[int, schemas.Name]],
-    add: int, buffs: list[int]=None):
-    speed_list = reversed(char_data.data)
-    
-    if add or buffs:
-        header = '__No.__ __Character__ __Speed__ __(Base)__\n'
-    else:
-        header = '__No.__ __Character__ __Speed__\n'
-
-    embeds = []
-    i = 1
-    for batch in batched(speed_list, 50):
-        description = StringIO()
-        for char in batch:
-            name = name_data.data.get(char.id)
-            char_name = character_title(name.title, name.name) if name else '[Undefined]'
-            if add or buffs:
-                speed = calc_buff(char.speed+add, buffs) if buffs else (char.speed+add)
-                description.write(f'**{i}.** {char_name} {speed} ({char.speed})\n')
-            else:
-                description.write(f'**{i}.** {char_name} {char.speed}\n')
-            i += 1
-
-        embed = BaseEmbed(char_data.version, title='Character Speeds', description=f'{header}{description.getvalue()}')
-        embed.add_field(
-            name='Bonus Parameters',
-            value=f'Rune Bonus: {add}\nBuffs: {buffs}',
-            inline=False
-        )
-
-        embeds.append(embed)
-    
-    view = ButtonView(interaction.user, {'default': embeds})
-    return view
-
 async def voiceline_view(
     interaction: Interaction,
     voiceline_data: schemas.APIResponse[schemas.CharacterVoicelines],
     profile_data: schemas.APIResponse[schemas.Profile],
-    language: LanguageOptions):
+    language: enums.LanguageOptions):
     h = HTML2Text()
     voicelines = voiceline_data.data
     profile = profile_data.data
     
-    name = await fetch_name(voicelines.char_id, language)
+    name = await api.fetch_name(voicelines.char_id, language)
 
     title = f'{possessive_form(character_title(name.title, name.name))} Voicelines'
     embeds = []
@@ -174,10 +230,10 @@ async def voiceline_view(
     
     return ButtonView(interaction.user, {'default': embeds})
 
-async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse[schemas.CharacterMemories], language: LanguageOptions):
+async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse[schemas.CharacterMemories], language: enums.LanguageOptions):
     h = HTML2Text()
     memories = memory_data.data
-    name = await fetch_name(memories.char_id, language)
+    name = await api.fetch_name(memories.char_id, language)
     
     title = f'{possessive_form(character_title(name.title, name.name))} Memories'
     embeds = []
@@ -206,111 +262,3 @@ async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse
         )
     return ButtonView(interaction.user, {'default': embeds})
 
-async def arcana_basic_text(arcana: schemas.Arcana, cs: schemas.CommonStrings, language: LanguageOptions):
-    text = StringIO()
-
-    text.write(f'**{arcana.name}**')
-    if arcana.required_level > 0:
-        text.write(f' ({cs.common.get('arcana level limit', 'Unlocked at Party Lv 300.')})')
-    text.write('\n')
-    text.write(f'{cs.common.get('characters', 'Characters')}: ')
-
-    names = []
-    for char in arcana.characters:
-        char_str = await character_string(char, language)
-        names.append(char_str)
-    text.write(', '.join(names))
-
-    bonus = []
-    text.write('\n```\n')
-    lr_level = next(filter(lambda x: x.rarity == enums.CharacterRarity.LR, arcana.levels))
-    if lr_level.level_bonus:
-        bonus.append(f'{cs.common.get('arcana bonus level', 'Max Party Lv')}: {lr_level.level_bonus}')
-    for param in lr_level.parameters:
-        bonus.append(param_string(param, cs))
-    text.write('\n'.join(bonus))
-    text.write('```\n')
-
-    return text.getvalue()
-
-async def arcana_detail_text(arcana: schemas.Arcana, cs: schemas.CommonStrings, language: LanguageOptions):
-    text = StringIO()
-    text.write(f'**Required party level:** {arcana.required_level}\n')
-    text.write(f'**{cs.common.get('characters', 'Characters')}:**\n')
-    names = []
-    for char in arcana.characters:
-        char_str = await character_string(char, language)
-        names.append(f'- {char_str}')
-    text.write('\n'.join(names))
-    text.write('\n\n')
-
-    async def level_text(level: schemas.ArcanaLevel):
-        text_ = StringIO()
-        ic = ItemCounter(language)
-        text_.write(f'**{cs.common.get('arcana', 'Arcana')} Lv {level.level}**\n')
-        text_.write(f'**Rarity:** {level.rarity.name.replace('Plus', '+')}\n')
-        ic.add_items(level.reward)
-        items = await ic.get_total_strings()
-        text_.write(f'**Reward:** {', '.join(items)}\n')
-
-        bonus = []
-        text_.write('```\n')
-        if level.awaken_bonus:
-            bonus.append(f'{cs.common.get('arcana awaken', 'Arcana Group Max Awaken.')}  {level.awaken_bonus}')
-
-        if level.rarity >= enums.CharacterRarity.LR and level.parameters:
-            bonus.append(f'{cs.common.get('arcana target', 'Enhanced Targets')}: {cs.common.get('arcana target all', 'All Characters')}')
-        else:
-            bonus.append(f'{cs.common.get('arcana target', 'Enhanced Targets')}: {cs.common.get('arcana target group', 'Arcana Group')}')
-        
-        if level.level_bonus:
-            bonus.append(f'{cs.common.get('arcana bonus level', 'Max Party Lv')}: {level.level_bonus}')
-
-        for param in level.parameters:
-            bonus.append(param_string(param, cs))
-        text_.write('\n'.join(bonus))
-        text_.write('```')
-        return text_.getvalue()
-
-    text.write('\n'.join(await gather(*[level_text(level) for level in arcana.levels])))
-
-    return text.getvalue()
-    
-async def arcana_view(
-    interaction: Interaction,
-    arcana_data: schemas.APIResponse[list[schemas.Arcana]],
-    cs: schemas.CommonStrings,
-    language: LanguageOptions
-):
-    arcanas = arcana_data.data
-
-    if len(arcanas) > 10:
-        await interaction.response.defer(thinking=True)
-
-    embed_dict = {
-        'Basic': [],
-        'Detailed': []
-    }
-    for arcana_batch in batched(arcanas, 5):
-        basic_text = StringIO()
-        for arcana in arcana_batch:
-            basic_text.write(await arcana_basic_text(arcana, cs, language))
-            embed_dict['Detailed'].append(
-                BaseEmbed(
-                    arcana_data.version,
-                    title=arcana.name,
-                    description=await arcana_detail_text(arcana, cs, language),
-                    color=Color.purple()
-                )
-            )
-
-        embed_dict['Basic'].append(
-            BaseEmbed(
-                arcana_data.version,
-                title=cs.common.get('arcana', 'Arcana'),
-                description=basic_text.getvalue(),
-                color=Color.purple()
-            ).set_footer(text='Arcana values shown for LR')
-        )
-    
-    return MixedView(interaction.user, embed_dict, 'Basic')

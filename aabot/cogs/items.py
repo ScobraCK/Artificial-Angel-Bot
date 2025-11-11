@@ -6,7 +6,7 @@ from aabot.pagination.items import equipment_help_description
 from aabot.pagination import items as item_response
 from aabot.pagination.views import show_view
 from aabot.utils import api
-from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
+from aabot.utils.command_utils import apply_user_preferences
 from common import enums
 from common.database import SessionAA
 
@@ -34,7 +34,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         self, interaction: Interaction, 
         item_id: int, 
         item_type: int,
-        language: LanguageOptions|None=None):
+        language: enums.LanguageOptions|None=None):
         '''
         Command for quick searching from ItemId and ItemType
         '''
@@ -58,7 +58,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
     async def equipment(
         self, interaction: Interaction, 
         string: str,
-        language: LanguageOptions|None=None):
+        language: enums.LanguageOptions|None=None):
         '''Shows equipment information'''
         await interaction.response.defer()
         async with SessionAA() as session:
@@ -74,7 +74,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
     async def rune(
         self, interaction: Interaction,
         rune: enums.RuneType,
-        language: LanguageOptions|None=None):
+        language: enums.LanguageOptions|None=None):
         '''Shows rune information'''
         view = await item_response.rune_view(interaction, rune, self.bot.common_strings[language], language)
         await show_view(interaction, view)

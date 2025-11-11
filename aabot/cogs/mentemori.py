@@ -7,10 +7,10 @@ from aabot.main import AABot
 from aabot.pagination import mentemori as mentemori_page
 from aabot.pagination.views import show_view
 from aabot.utils import api
-from aabot.utils.command_utils import apply_user_preferences, LanguageOptions
+from aabot.utils.command_utils import apply_user_preferences
 from aabot.utils.utils import to_world_id
 from common import schemas
-from common.enums import Server
+from common.enums import LanguageOptions, Server
 
 
 class MentemoriCommands(commands.Cog, name='Mentemori Commands'):

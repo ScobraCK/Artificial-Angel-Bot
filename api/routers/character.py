@@ -97,10 +97,6 @@ async def skill(
     language: Language = Depends(language_parameter)
 ):
     md: MasterData = request.app.state.md
-    # Prevents pve only character skill text showing up in bot
-    check = await md.search_id(char_id, 'CharacterProfileMB')
-    if check is None:
-        raise HTTPException(status_code=404, detail=f'Could not find character id {char_id}')
     skills = await get_skills_char(md, char_id)
     await translate_keys(skills, session, language)
     return APIResponse[schemas.Skills].create(request, skills)

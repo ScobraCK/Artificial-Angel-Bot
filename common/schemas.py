@@ -72,11 +72,13 @@ class Character(APIBaseModel):
     element: enums.Element = Field(..., validation_alias='ElementType')
     rarity: enums.CharacterRarity = Field(..., validation_alias='RarityFlags')
     job: enums.Job = Field(..., validation_alias='JobFlags')
+    character_type: enums.CharacterType = Field(..., validation_alias='CharacterType')
     speed: int = Field(..., validation_alias=AliasPath('InitialBattleParameter', 'Speed'))
     uw: str|None = Field(...)
     attack_type: enums.NormalSkill = Field(..., validation_alias='NormalSkillId')
     actives: list[int] = Field(..., validation_alias='ActiveSkillIds')
     passives: list[int] = Field(..., validation_alias='PassiveSkillIds')
+    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST (Added to check release status)')
 
 class Profile(APIBaseModel):
     char_id: int = Field(..., validation_alias='Id')
@@ -604,6 +606,13 @@ class CharacterDBModel(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+
+class AltCharacter(BaseModel):
+    id: int
+    base_id: int
+
+    class Config:
+        from_attributes = True
 
 # Common Enum Strings
 class CommonStrings(BaseModel):

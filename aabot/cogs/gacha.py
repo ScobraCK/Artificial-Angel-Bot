@@ -5,8 +5,9 @@ from aabot.main import AABot
 from aabot.pagination import gacha as event_page
 from aabot.utils import api, assets
 from aabot.utils.alias import IdTransformer
-from aabot.utils.command_utils import LanguageOptions
 from common import schemas
+from common.enums import LanguageOptions
+
 
 class EventCommands(commands.Cog, name='Event Commands'):
     '''Commands for game events'''

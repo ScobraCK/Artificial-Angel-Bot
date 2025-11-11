@@ -1,29 +1,12 @@
+from collections import namedtuple
 from collections.abc import Callable
-from enum import StrEnum
 from functools import wraps
 
-from discord import Interaction
+from discord import Interaction, app_commands
 
 from aabot.crud.user import get_user
 from common.database import SessionAA
-# from common.enums import Language
-
-# limit language options to officially supported languages
-class LanguageOptions(StrEnum):  
-    jajp = 'jajp'
-    kokr = 'kokr'
-    enus = 'enus'
-    zhtw = 'zhtw'
-    # dede = 'dede'
-    # esmx = 'esmx'
-    # frfr = 'frfr'
-    # idid = 'idid'
-    # ptbr = 'ptbr'
-    # ruru = 'ruru'
-    # thth = 'thth'
-    # vivn = 'vivn'
-    zhcn = 'zhcn'
-
+from common.enums import LanguageOptions
 
 def apply_user_preferences():
     """
@@ -57,6 +40,57 @@ def apply_user_preferences():
 
         return wrapper
     return decorator
+
+
+ArcanaOption = namedtuple('ArcanaOption', ['category', 'type', 'change_type', 'level_bonus'], defaults=(None, None, None, None))
+ArcanaOptions = {
+    'STR Flat': ArcanaOption('Base', 1, 1),
+    'STR Chara. Lv': ArcanaOption('Base', 1, 3),
+    'DEX Flat': ArcanaOption('Base', 2, 1),
+    'DEX Chara. Lv': ArcanaOption('Base', 2, 3),
+    'MAG Flat': ArcanaOption('Base', 3, 1),
+    'MAG Chara. Lv': ArcanaOption('Base', 3, 3),
+    'STA Flat': ArcanaOption('Base', 4, 1),
+    'STA Chara. Lv': ArcanaOption('Base', 4, 3),
+    'HP Percent': ArcanaOption('Battle', 1, 2),
+    'ATK Flat': ArcanaOption('Battle', 2, 1),
+    'ATK Percent': ArcanaOption('Battle', 2, 2),
+    'P.DEF Flat': ArcanaOption('Battle', 3, 1),
+    'P.DEF Percent': ArcanaOption('Battle', 3, 2),
+    'M.DEF Flat': ArcanaOption('Battle', 4, 1),
+    'M.DEF Percent': ArcanaOption('Battle', 4, 2),
+    'ACC Flat': ArcanaOption('Battle', 5, 1),
+    'ACC Percent': ArcanaOption('Battle', 5, 2),
+    'ACC Chara. Lv': ArcanaOption('Battle', 5, 3),
+    'EVD Flat': ArcanaOption('Battle', 6, 1),
+    'EVD Chara. Lv': ArcanaOption('Battle', 6, 3),
+    'CRIT Chara. Lv': ArcanaOption('Battle', 7, 3),
+    'CRIT RES Flat': ArcanaOption('Battle', 8, 1),
+    'CRIT RES Chara. Lv': ArcanaOption('Battle', 8, 3),
+    'CRIT DMG Boost Flat': ArcanaOption('Battle', 9, 1),
+    'P.CRIT DMG Cut Flat': ArcanaOption('Battle', 10, 1),
+    'M.CRIT DMG Cut Flat': ArcanaOption('Battle', 11, 1),
+    'DEF Break Flat': ArcanaOption('Battle', 12, 1),
+    'DEF Percent': ArcanaOption('Battle', 13, 2),
+    'DEF Chara. Lv': ArcanaOption('Battle', 13, 3),
+    'PM.DEF Break Flat': ArcanaOption('Battle', 14, 1),
+    'Debuff ACC Percent': ArcanaOption('Battle', 15, 2),
+    'Debuff ACC Chara. Lv': ArcanaOption('Battle', 15, 3),
+    'Debuff RES Flat': ArcanaOption('Battle', 16, 1),
+    'Debuff RES Chara. Lv': ArcanaOption('Battle', 16, 3),
+    'Counter Flat': ArcanaOption('Battle', 17, 1),
+    'HP Drain Flat': ArcanaOption('Battle', 18, 1),
+    'Level Bonus': ArcanaOption(None, None, None, True)
+}
+
+
+async def arcana_autocomplete(interaction: Interaction, current: str):
+    choices = [
+        app_commands.Choice(name=opt, value=opt)
+        for opt in ArcanaOptions
+        if current.replace('.', '').lower() in opt.replace('.', '').lower()
+    ]
+    return choices[:25]
 
 # decorator for char id check
 # def check_id():

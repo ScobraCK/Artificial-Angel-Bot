@@ -1,12 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.crud.character import get_char_ids
-from api.crud.string_keys import read_string_key_language_bulk, read_string_key_language
+from api.crud.string_keys import read_string_key_language_bulk, read_string_key_language, CHARACTER_NAME_KEY, CHARACTER_TITLE_KEY
 from api.utils.error import APIError
 from common import enums, schemas
-
-CHARACTER_NAME_KEY = '[CharacterName{}]'
-CHARACTER_TITLE_KEY = '[CharacterSubName{}]'
 
 async def get_char_name(session: AsyncSession, char_id: int, language: enums.Language) -> schemas.Name:
     name_string = await read_string_key_language(session, CHARACTER_NAME_KEY.format(char_id), language)

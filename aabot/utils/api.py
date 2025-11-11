@@ -45,6 +45,7 @@ UPDATE_STR_PATH = 'admin/update/strings'
 UPDATE_CHAR_PATH = 'admin/update/characters'
 UPDATE_API_GUILD_PATH = 'admin/mentemori/guilds'
 UPDATE_API_PLAYERS_PATH = 'admin/mentemori/players'
+RESET_ALT_PATH = 'admin/update/reset_alt'
 
 MENTEMORI_BASE_PATH = 'https://api.mentemori.icu/'
 MENTEMORI_WORLD_PATH = 'worlds'

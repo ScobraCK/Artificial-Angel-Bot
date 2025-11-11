@@ -7,3 +7,6 @@ class BotError(AppCommandError):
 
     def to_dict(self):
         return {"detail": self.message}
+
+class ContentError(ValueError):
+    pass

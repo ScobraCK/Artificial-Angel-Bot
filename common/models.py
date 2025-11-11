@@ -20,6 +20,12 @@ class CharacterORM(Base):
     base_rarity: Mapped[Literal['N', 'R', 'SR']]
     # xmax: Mapped[str] = mapped_column(system=True)  # to find changes during upsert, instead using column() during crud
 
+class AltCharacterORM(Base):
+    __tablename__ = 'alt_characters'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    base_id: Mapped[int] = mapped_column(Integer)
+
 class PlayerORM(Base):
     __tablename__ = "players"
 

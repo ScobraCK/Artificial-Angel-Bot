@@ -14,6 +14,9 @@ from common.models import StringORM
 from api.utils.logger import get_logger, log_text_changes
 logger = get_logger(__name__)
     
+CHARACTER_NAME_KEY = '[CharacterName{}]'
+CHARACTER_TITLE_KEY = '[CharacterSubName{}]'
+
 async def upsert_string_keys(session: AsyncSession, md: MasterData, update_list=None):
     languages = {
         'JaJp': 'jajp', 
@@ -78,7 +81,7 @@ async def update_and_log_strings(session: AsyncSession, md: MasterData, update_l
     new_text = await read_all_enus(session)
     return log_text_changes(old_text, new_text, md.version)
 
-async def read_string_key(session: AsyncSession, key: str) -> StringORM:
+async def read_string_key(session: AsyncSession, key: str) -> StringORM|None:
     stmt = select(StringORM).where(StringORM.key==key)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()

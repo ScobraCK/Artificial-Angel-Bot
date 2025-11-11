@@ -11,7 +11,6 @@ from aabot.utils.emoji import to_emoji
 from aabot.utils.utils import character_title, possessive_form, remove_linebreaks
 from common import enums, schemas
 
-
 async def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkill], uw_desc: schemas.UWDescriptions, uw_name: str, session: AsyncSession, include_name=True) -> str:
     if not skills:
         return None

@@ -4,9 +4,8 @@ from discord.ext import commands
 from aabot.crud.user import update_user, get_user, delete_user
 from aabot.main import AABot
 from aabot.utils.utils import possessive_form
-from aabot.utils.command_utils import LanguageOptions
 from common.database import SessionAA
-from common.enums import Server
+from common.enums import LanguageOptions, Server
 from common.models import UserPreference
 
 def user_embed(user: UserPreference, name: str):
