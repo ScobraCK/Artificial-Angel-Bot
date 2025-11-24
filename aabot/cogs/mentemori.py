@@ -86,7 +86,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
                 break
         
         if not worlds:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Group for `{server.name} W{world}` was not found",
                 ephemeral=True
             )
@@ -99,7 +99,7 @@ class MentemoriCommands(commands.Cog, name='Mentemori Commands'):
         )
 
         if len(ranking_data.data) == 0:
-            await interaction.response.send_message("No ranking data found.", ephemeral=True)
+            await interaction.followup.send("No ranking data found.", ephemeral=True)
             return
 
         view = mentemori_page.group_ranking_view(interaction, ranking_data, server, group_id)
