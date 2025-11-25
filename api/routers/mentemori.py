@@ -5,7 +5,7 @@ from common.schemas import APIResponse
 from api.schemas.requests import PlayerRankingRequest, GuildRankingRequest
 from api.utils.deps import SessionDep
 from api.utils.error import APIError
-from common import schemas
+from common import routes, schemas
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/player/ranking',
+    routes.PLAYER_RANKING_PATH,
     summary='Player Rankings',
     description='Returns player ranking data. Data is collected from mentemori.icu rankings.',
     response_model=APIResponse[list[schemas.PlayerRankInfo]]
@@ -27,7 +27,7 @@ async def player_ranking(
     return APIResponse[list[schemas.PlayerRankInfo]].create(request, players)
 
 @router.get(
-    '/player/{player_id}',
+    routes.PLAYER_PATH,
     summary='Player',
     description='Returns player data. Data is collected from mentemori.icu rankings and may have missing or outdated data for players not in the rankings.',
     response_model=APIResponse[schemas.Player]
@@ -43,7 +43,7 @@ async def player(
     return APIResponse[schemas.Player].create(request, player)
 
 @router.get(
-    '/guild/ranking',
+    routes.GUILD_RANKING_PATH,
     summary='Guild Rankings',
     description='Returns guild ranking data. Data is collected from mentemori.icu rankings.',
     response_model=APIResponse[list[schemas.GuildRankInfo]]
@@ -57,7 +57,7 @@ async def guild_ranking(
     return APIResponse[list[schemas.GuildRankInfo]].create(request, guilds)
 
 @router.get(
-    '/guild/{guild_id}',
+    routes.GUILD_PATH,
     summary='Guild',
     description='Returns guild data. Data is collected from mentemori.icu rankings and may have missing or outdated data for players not in the rankings.',
     response_model=APIResponse[list[schemas.Player]]
@@ -73,7 +73,7 @@ async def guild(
     return APIResponse[schemas.Guild].create(request, guild)
 
 @router.get(
-    '/guild/{guild_id}/members',
+    routes.GUILD_MEMBERS_PATH,
     summary='Guild Members',
     description='Returns guild member data. Only returns player data existing in the database. Data is collected from mentemori.icu rankings and may have missing or outdated data for players not in the rankings.',
     response_model=APIResponse[list[schemas.Player]]

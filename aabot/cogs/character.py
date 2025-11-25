@@ -2,23 +2,20 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.pagination.views import show_view
+from aabot.pagination.view import BaseView
 from aabot.pagination import character as char_page
-from aabot.pagination.skills import skill_view
 from aabot.utils import api
 from aabot.utils.alias import IdTransformer
 from aabot.utils.command_utils import apply_user_preferences
 from aabot.utils.error import BotError
 from common import schemas
-from common.database import SessionAA
 from common.enums import LanguageOptions
 
 class CharacterCommands(commands.Cog, name='Character Commands'):
-    '''Commands for charactere information.'''
+    '''Commands for charactere information. All other commands can be selected as an option menu once a response is sent.'''
 
     def __init__(self, bot):
         self.bot: AABot = bot
-
 
     @app_commands.command()
     @app_commands.describe(
@@ -32,26 +29,15 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):  
         '''Shows a character's basic info'''
-
-        char_data = await api.fetch_api(
-            api.CHARACTER_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Character
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.INFO.value
         )
-        try:
-            skill_data = await api.fetch_api(
-                api.CHARACTER_SKILL_PATH,
-                path_params={'char_id': character},
-                query_params={'language': language},
-                response_model=schemas.Skills
-            )
-        except BotError as e:
-            skill_data = None  # Case where skill data is not avaliable when basic info is
-        
-        embed = await char_page.char_info_embed(char_data, skill_data, self.bot.common_strings[language])
-
-        await interaction.response.send_message(embed=embed)
+        await view.update_view(interaction)
 
     @app_commands.command()
     @app_commands.describe(
@@ -65,18 +51,15 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):  
         '''Shows a character's profile info'''
-
-        profile_data = await api.fetch_api(
-            api.CHARACTER_PROFILE_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Profile
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.PROFILE.value
         )
-        name = await api.fetch_name(character, language)
-        
-        embed = char_page.profile_embed(profile_data, name)
-
-        await interaction.response.send_message(embed=embed)
+        await view.update_view(interaction)
 
     @app_commands.command()
     @app_commands.describe(
@@ -90,26 +73,16 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):
         '''Shows character skills including unique weapon upgrade effects'''
-
-        skill_data = await api.fetch_api(
-            api.CHARACTER_SKILL_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Skills
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.SKILL.value
         )
+        await view.update_view(interaction)
 
-        char_data = await api.fetch_api(
-            api.CHARACTER_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Character
-        )
-        async with SessionAA() as session:
-            view = await skill_view(interaction, skill_data, char_data, session)
-        await show_view(interaction, view)
-
-
-            
     @app_commands.command()
     @app_commands.describe(
         character='The name or id of the character',
@@ -122,25 +95,15 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):
         '''Shows character voicelines'''
-
-        # f'{moonheart_assets}/AddressableConvertAssets/Voice/JP/Character/CHR_{}'
-
-        voice_data = await api.fetch_api(
-            api.CHARACTER_VOICE_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.CharacterVoicelines
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.VOICELINES.value
         )
-
-        profile_data = await api.fetch_api(
-            api.CHARACTER_PROFILE_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Profile
-        )
-
-        view = await char_page.voiceline_view(interaction, voice_data, profile_data, language)
-        await show_view(interaction, view)
+        await view.update_view(interaction)
         
     @app_commands.command()
     @app_commands.describe(
@@ -154,15 +117,37 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):
         '''Shows character memories'''
-        memory_data = await api.fetch_api(
-            api.CHARACTER_MEMORY_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.CharacterMemories
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.MEMORIES.value
         )
+        await view.update_view(interaction)
 
-        view = await char_page.memory_view(interaction, memory_data, language)
-        await show_view(interaction, view)
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        language='Text language. Defaults to English.'
+    )
+    @apply_user_preferences()
+    async def uniqueweapon(
+        self,
+        interaction: Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: LanguageOptions|None=None):
+        '''Shows unique weapon data'''
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.UW.value
+        )
+        await view.update_view(interaction)
 
     @app_commands.command()
     @app_commands.describe(
@@ -173,43 +158,19 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
     async def arcana(
         self,
         interaction: Interaction,
-        character: app_commands.Transform[int, IdTransformer]|None=None,
+        character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None
     ):  
-        '''Shows arcana data'''
-        pass
-        # arcana_data = await api.fetch_api(
-        #     api.ARCANA_PATH,
-        #     response_model=list[schemas.Arcana],
-        #     query_params={
-        #         'character': character,
-        #         'param_category': options.category,
-        #         'param_type': options.type,
-        #         'param_change_type': options.change_type,
-        #         'level_bonus': options.level_bonus,
-        #         'language': language
-        #     }
-        # )
-
-        # view = await char_page.arcana_view(interaction, arcana_data, self.bot.common_strings[language], language)
-        # await show_view(interaction, view)
-
-    @app_commands.command()
-    async def test(self, interaction: Interaction):
-        from aabot.pagination.view import BaseView, to_content
-        try:
-            container = await char_page.character_info_ui(117, LanguageOptions.enus, self.bot.common_strings[LanguageOptions.enus])
-            view = BaseView(
-                to_content(container),
-                user=interaction.user,
-                language=LanguageOptions.enus,
-                cs=self.bot.common_strings[LanguageOptions.enus]
-            )
-            await view.update_view(interaction)
-        except Exception as e:
-            # raise BotError(str(e))
-            raise e
-
+        '''Shows character arcana data'''
+        content = await char_page.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_page.CharacterOptions.ARCANA.value
+        )
+        await view.update_view(interaction)
 
 async def setup(bot: AABot):
 	await bot.add_cog(CharacterCommands(bot))

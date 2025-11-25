@@ -1,30 +1,71 @@
+from enum import Enum
 from functools import partial
 from io import StringIO
 from itertools import batched
 
-from discord import ui, Color, Interaction, SeparatorSpacing
+from discord import ui, SeparatorSpacing
 from html2text import HTML2Text
 
 from aabot.crud.character import get_character
-from aabot.pagination.embeds import BaseEmbed
-from aabot.pagination.view import to_content, create_content_button, BaseView
-from aabot.pagination.views import ButtonView
+from aabot.pagination.equipment import get_uw, equipment_detail_ui
+from aabot.pagination.index import arcana_basic_text
+from aabot.pagination.skills import get_skill_name, get_skill_text
+from aabot.pagination.view import create_content_button, to_content, BaseContainer, ContentMap
 from aabot.utils import api
-from aabot.utils.assets import RAW_ASSET_BASE, CHARACTER_THUMBNAIL, MOONHEART_ASSET_MEMORY
+from aabot.utils.assets import CHARACTER_THUMBNAIL, SKILL_THUMBNAIL
 from aabot.utils.emoji import to_emoji
 from aabot.utils.error import BotError
 from aabot.utils.utils import character_title, possessive_form
-from common import enums, schemas
+from common import enums, schemas, timezones
 from common.database import SessionAA
 
 from aabot.utils.logger import get_logger
 logger = get_logger(__name__)
 
-async def fetch_alt_chars():
-    return [48, 117]
+class CharacterOptions(Enum):
+    INFO = 'Basic Information'
+    PROFILE = 'Profile'
+    SKILL = 'Skills'
+    VOICELINES = 'Voicelines'
+    MEMORIES = 'Memories'
+    UW = 'Unique Weapon'
+    ARCANA = 'Arcana'
+
+class CharacterContainer(BaseContainer):
+    def add_release_warning(self):
+        self.add_item(
+            ui.TextDisplay('>>> **WARNING: This character has not yet been released as a playable character. Some information may not be available and all details are subject to change.**')
+        ).add_item(ui.Separator(visible=False))
+        return self
+
+    async def add_alt_section(self, char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings):
+        if (alt_chars := await fetch_alt_chars(char_id)) and len(alt_chars) > 1:
+            self.add_item(ui.Separator(spacing=SeparatorSpacing.large))
+            self.add_item(
+                ui.Section(
+                    ui.TextDisplay('Alternate versions exist for this character'),
+                    accessory=create_content_button(await switch_char_ui(alt_chars, language, cs), 'Switch', save_state=True)
+                )
+            )
+        return self
+
+
+async def fetch_alt_chars(char_id: int) -> list[int]:
+    resp = await api.fetch_api(
+        api.CHARACTER_ALTS_ID_PATH.format(char_id=char_id),
+        response_model=dict[int, list[int]]
+    )
+    return next(iter(resp.data.values()))
+
+async def get_release_status(char_id: int) -> bool:
+    resp = await api.fetch_api(
+        api.CHARACTER_INFO_PATH.format(char_id=char_id),
+        response_model=schemas.Character
+    )
+    return timezones.check_active(resp.data.start, timezones.END_TIME, enums.Server.Japan)
 
 async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: schemas.CommonStrings) -> ui.Container:
-    container = ui.Container()
+    container = BaseContainer()
     async with SessionAA() as session:
         for char_id in chars:
             name = await api.fetch_name(char_id, language)
@@ -45,7 +86,7 @@ async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: 
             ).add_item(
                 ui.ActionRow(
                     create_content_button(
-                        partial(character_info_ui, char_id),
+                        await character_option_map(char_id),
                         'Select',
                         load_state=True
                     )
@@ -56,30 +97,45 @@ async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: 
 
     return container
 
-async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings) -> ui.Container:
+async def character_option_map(char_id: int) -> ContentMap:
+    released = await get_release_status(char_id)
+    content = {
+        CharacterOptions.INFO.value: partial(character_info_ui, char_id, released=released),
+        CharacterOptions.PROFILE.value: partial(character_profile_ui, char_id, released=released),
+        CharacterOptions.SKILL.value: partial(character_skill_ui, char_id, released=released),
+        CharacterOptions.VOICELINES.value: partial(character_voiceline_ui, char_id, released=released),
+        CharacterOptions.MEMORIES.value: partial(character_memory_ui, char_id, released=released),
+        CharacterOptions.UW.value: partial(character_uw_ui, char_id, released=released),
+        CharacterOptions.ARCANA.value: partial(character_arcana_ui, char_id, released=released),
+    }
+
+    return to_content(content)
+
+async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+    container = CharacterContainer()
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        container.add_release_warning()
+    
     char_resp = await api.fetch_api(
-        api.CHARACTER_PATH,
-        path_params={'char_id': char_id},
+        api.CHARACTER_INFO_PATH.format(char_id=char_id),
         query_params={'language': language},
         response_model=schemas.Character
     )
     char_data = char_resp.data
-    try:
-        skills_resp = await api.fetch_api(
-            api.CHARACTER_SKILL_PATH,
-            path_params={'char_id': char_id},
-            query_params={'language': language},
-            response_model=schemas.Skills
-        )
-        skills_data = skills_resp.data
-    except BotError:
-        skills_data = None
+    skills_resp = await api.fetch_api(
+        api.CHARACTER_SKILL_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Skills
+    )
+    skills_data = skills_resp.data
 
     async with SessionAA() as session:
         element_emoji = await to_emoji(session, char_data.element)
         job_emoji = await to_emoji(session, char_data.job)
 
-    container = ui.Container()
     # Basic info
     container.add_item(
         ui.Section(
@@ -116,149 +172,238 @@ async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: s
     else:
         container.add_item(ui.TextDisplay('*Skill data currently unavailable*'))
 
-    # Alt button
-    if (alt_chars := await fetch_alt_chars()):
-        container.add_item(ui.Separator(spacing=SeparatorSpacing.large))
-        container.add_item(ui.Section(
-            ui.TextDisplay('Alternate versions exist for this character'),
-            accessory=create_content_button(await switch_char_ui(alt_chars, language, cs), 'Switch', save_state=True)
-        ))
-
-    # Version
-    container.add_item(ui.TextDisplay(f'-# Master Version - {char_resp.version}'))
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(char_resp.version)
     
     return container
 
-async def char_info_embed(char_data: schemas.APIResponse[schemas.Character], skill_data: schemas.APIResponse[schemas.Skills], cs: schemas.CommonStrings):
-    embed = BaseEmbed(char_data.version, color=Color.green())
-    char = char_data.data
+async def character_profile_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+    container = CharacterContainer()
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        container.add_item(ui.TextDisplay('Profile data is unavailable for unreleased characters.'))
+        return container
+
+    profile_resp = await api.fetch_api(
+        api.CHARACTER_PROFILE_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Profile
+    )
+    profile_data = profile_resp.data
+    name = await api.fetch_name(char_id, language)
+
+    container.add_item(
+        ui.Section(
+            ui.TextDisplay(f'### {character_title(name.title, name.name)}'),
+            ui.TextDisplay(
+                (
+                    f'**Id:** {profile_data.char_id}\n'
+                    f'**Birthday:** {profile_data.birthday//100}/{profile_data.birthday%100}\n'
+                    f'**Blood Type:** {profile_data.blood_type.name}\n'
+                    f'**Height:** {profile_data.height}cm\n'
+                    f'**Weight:** {profile_data.weight}kg\n\n'
+                    f'**Song by:** {profile_data.vocalJP}\n'
+                    # f'**Vocal (US):** {profile_data.vocalUS}\n'
+                    f'**CV (JP):** {profile_data.voiceJP}\n'
+                    f'**CV (US):** {profile_data.voiceUS}\n'
+                )
+            ),
+            accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=profile_data.char_id, qlipha=False))
+        )
+    )
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(profile_resp.version)
+
+    return container
+
+async def character_skill_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container|list[ui.Container]:
+    container = CharacterContainer()
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        container.add_release_warning()
+    
+    skill_resp = await api.fetch_api(
+        api.CHARACTER_SKILL_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Skills
+    )
+    skill_data = skill_resp.data
+    char_resp = await api.fetch_api(
+        api.CHARACTER_INFO_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Character
+    )
+    char_data = char_resp.data
+
     async with SessionAA() as session:
-        element_emoji = await to_emoji(session, char.element)
-        job_emoji = await to_emoji(session, char.job)
-
-    embed.title=character_title(char.title, char.name)
-    embed.description=(
-        f'**Id:** {char.char_id}\n'
-        f'**Element:** {element_emoji}{cs.element[char.element]}\n'
-        f'**Base Rarity:** {enums.CharacterRarity(char.rarity).name}\n'
-        f'**Class:** {job_emoji}{cs.job[char.job]}\n'
-        f'**Base Speed:** {char.speed}\n'
-        f'**UW:** {char.uw}\n'
-    )
-
-    if skill_data:
-        skills = skill_data.data
-
-        skill_text = ''
-        for skill in skills.actives:
-            skill_text += f'{skill.name} | **CD:** {skill.max_cooltime}\n'
-        embed.add_field(
-            name='__Active Skills__',
-            value=skill_text,
-            inline=False
-        )
-
-        skill_text = ''
-        for skill in skills.passives:
-            if skill.name and skill.name != '*':
-                skill_text += f'{skill.name}\n'
-        embed.add_field(
-            name='__Passive Skills__',
-            value=skill_text,
-            inline=False
-        )
-    else:  # Case where skill data is not avaliable when basic info is
-        embed.add_field(
-            name ='__Skill Data__',
-            value='*Currently unavaliable*',
-            inline=False
-        )
-
-    image_link = RAW_ASSET_BASE + f'Characters/Sprites/CHR_{char.char_id:06}_00_s.png'
-    embed.set_thumbnail(url=image_link)
-
-    return embed
-
-def profile_embed(profile_data: schemas.APIResponse[schemas.Profile], name: schemas.Name):
-    profile = profile_data.data
-    name = character_title(name.title, name.name)
-
-    description = (
-        f'**Id:** {profile.char_id}\n'
-        f'**Birthday:** {profile.birthday//100}/{profile.birthday%100}\n'
-        f'**Blood Type:** {profile.blood_type.name}\n'
-        f'**Height:** {profile.height}cm\n'
-        f'**Weight:** {profile.weight}kg\n\n'
-        f'**Song by:** {profile.vocalJP}\n'
-        # f'**Vocal (US):** {profile.vocalUS}\n'
-        f'**CV (JP):** {profile.voiceJP}\n'
-        f'**CV (US):** {profile.voiceUS}\n'
-    )
-
-    return BaseEmbed(
-        profile_data.version,
-        title=name,
-        description=description,
-        color=Color.green()
-    ).set_thumbnail(url=CHARACTER_THUMBNAIL.format(char_id=profile.char_id, qlipha=False))
-
-async def voiceline_view(
-    interaction: Interaction,
-    voiceline_data: schemas.APIResponse[schemas.CharacterVoicelines],
-    profile_data: schemas.APIResponse[schemas.Profile],
-    language: enums.LanguageOptions):
-    h = HTML2Text()
-    voicelines = voiceline_data.data
-    profile = profile_data.data
-    
-    name = await api.fetch_name(voicelines.char_id, language)
-
-    title = f'{possessive_form(character_title(name.title, name.name))} Voicelines'
-    embeds = []
-    for batch in batched((voiceline for voiceline in voicelines.voicelines if voiceline.subtitle), 10):
-        description = StringIO()
-        for voiceline in batch:
-            description.write(f'**{voiceline.button_text}**\n{h.handle(voiceline.subtitle)}')
-        embeds.append(BaseEmbed(
-            voiceline_data.version,
-            title=title,
-            description=description.getvalue(),
-            color=Color.gold()
-        ))
-    if profile.gacha_message:
-        embeds[-1].description += f'**Gacha Message 1**\n{h.handle(profile.gacha_message)}'
-    
-    return ButtonView(interaction.user, {'default': embeds})
-
-async def memory_view(interaction: Interaction, memory_data: schemas.APIResponse[schemas.CharacterMemories], language: enums.LanguageOptions):
-    h = HTML2Text()
-    memories = memory_data.data
-    name = await api.fetch_name(memories.char_id, language)
-    
-    title = f'{possessive_form(character_title(name.title, name.name))} Memories'
-    embeds = []
-    for memory in memories.memories:
-        description = f'**{memory.title}**\n{h.handle(memory.text)}'
-        # jp_url = MOONHEART_ASSET_MEMORY.format(
-        #     region='JP',
-        #     char_id=memories.char_id,
-        #     episode_id=memory.episode_id
-        # )
-        # us_url = MOONHEART_ASSET_MEMORY.format(
-        #     region='US',
-        #     char_id=memories.char_id,
-        #     episode_id=memory.episode_id
-        # )
+        container.add_item(ui.TextDisplay(f'## {possessive_form(character_title(char_data.title, char_data.name))} Skills'))
+        container.add_item(ui.TextDisplay('### __Active Skills__'))
+        for skill in skill_data.actives:
+            name = await get_skill_name(skill, char_data.uw)
+            description = await get_skill_text(skill, skill_data.uw_descriptions, session)
+            container.add_item(
+                ui.Section(
+                    ui.TextDisplay(f'### {name}'),
+                    ui.TextDisplay(description),
+                    accessory=ui.Thumbnail(SKILL_THUMBNAIL.format(skill_id=skill.id))
+                )
+            )
         
-        embeds.append(
-            BaseEmbed(
-                memory_data.version,
-                title=title,
-                description=description,
-                color=Color.orange()
-            # ).add_field(
-            #     name='Voice',value=f'[JP]({jp_url})|[US]({us_url})', inline=False
-            ).set_thumbnail(url=CHARACTER_THUMBNAIL.format(char_id=memories.char_id, qlipha=False))
-        )
-    return ButtonView(interaction.user, {'default': embeds})
+        temp_container = ui.Container()
+        for skill in skill_data.passives:
+            name = await get_skill_name(skill, char_data.uw)
+            description = await get_skill_text(skill, skill_data.uw_descriptions, session)
+            if name is None:
+                continue
+            if name == char_data.uw:
+                temp_container.add_item(ui.TextDisplay(f'### {name}'))
+                temp_container.add_item(ui.TextDisplay(description))
+            else:
+                temp_container.add_item(
+                    ui.Section(
+                        ui.TextDisplay(f'### {name}'),
+                        ui.TextDisplay(description),
+                        accessory=ui.Thumbnail(SKILL_THUMBNAIL.format(skill_id=skill.id))
+                    )
+                )
 
+    if temp_container.content_length() > 0:  # Has passive skills
+        if container.content_length() + temp_container.content_length() > 3900:  # Split into two containers
+            passive_container = CharacterContainer()
+            if not released:
+                passive_container.add_release_warning()
+            passive_container.add_item(ui.TextDisplay(f'### {possessive_form(character_title(char_data.title, char_data.name))} Skills'))
+            passive_container.add_item(ui.TextDisplay('### __Passive Skills__'))
+            for item in temp_container.children:
+                passive_container.add_item(item)
+            
+            await container.add_alt_section(char_id, language, cs)
+            container.add_version(skill_resp.version)
+            await passive_container.add_alt_section(char_id, language, cs)
+            passive_container.add_version(skill_resp.version)
+
+            return [container, passive_container]
+        else:  # Single Container
+            container.add_item(ui.Separator())
+            container.add_item(ui.TextDisplay('### __Passive Skills__'))
+            for item in temp_container.children:
+                container.add_item(item)
+
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(skill_resp.version)
+
+    return container
+
+async def character_voiceline_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> list[ui.Container]:
+    containers = []
+    h = HTML2Text()
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        return BaseContainer('Voiceline data is unavailable for unreleased characters.')
+
+    voiceline_resp = await api.fetch_api(
+        api.CHARACTER_VOICE_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.CharacterVoicelines
+    )
+    voice_data = voiceline_resp.data
+    profile_resp = await api.fetch_api(
+        api.CHARACTER_PROFILE_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Profile
+    )
+    profile_data = profile_resp.data
+    name = await api.fetch_name(char_id, language)
+
+    batches = list(batched((voiceline for voiceline in voice_data.voicelines if voiceline.subtitle), 10))
+    for i, batch in enumerate(batches):
+        container = CharacterContainer()
+        container.add_item(ui.TextDisplay(f'### {possessive_form(character_title(name.title, name.name))} Voicelines'))
+        for voiceline in batch:
+            container.add_item(ui.TextDisplay(f'**{voiceline.button_text}**\n{h.handle(voiceline.subtitle)}'))
+        if i == len(batches) - 1 and profile_data.gacha_message:
+            container.add_item(ui.TextDisplay(f'**Gacha Message 1**\n{h.handle(profile_data.gacha_message)}'))
+
+        await container.add_alt_section(char_id, language, cs)
+        container.add_version(voiceline_resp.version)
+        containers.append(container)
+
+    return containers
+
+async def character_memory_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> list[ui.Container]:
+    containers = []
+    h = HTML2Text()
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        return BaseContainer('Memory data is unavailable for unreleased characters.')
+
+    memory_resp = await api.fetch_api(
+        api.CHARACTER_MEMORY_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.CharacterMemories
+    )
+    memory_data = memory_resp.data
+    name = await api.fetch_name(char_id, language)
+    for memory in memory_data.memories:
+        container = CharacterContainer()
+        container.add_item(ui.TextDisplay(f'### {possessive_form(character_title(name.title, name.name))} Memories'))
+        container.add_item(ui.TextDisplay(f'**{memory.title}**\n{h.handle(memory.text)}'))
+
+        await container.add_alt_section(char_id, language, cs)
+        container.add_version(memory_resp.version)
+        containers.append(container)
+    return containers
+
+async def character_uw_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+    container = CharacterContainer()
+
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        return BaseContainer('Unique Weapon data is unavailable for unreleased characters.')
+
+    uw_resp = await get_uw(char_id, language)
+    if uw_resp is None:
+        return BaseContainer('This character does not have a Unique Weapon.')
+    uw_container = await equipment_detail_ui(uw_resp.data, cs)
+    for item in uw_container.children:  # For add_alt_section function
+        container.add_item(item)
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(uw_resp.version)
+    return container
+
+async def character_arcana_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+    container = CharacterContainer()
+
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        return BaseContainer('Arcana data is unavailable for unreleased characters.')
+
+    arcana_resp = await api.fetch_api(
+        api.CHARACTER_ARCANA_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=list[schemas.Arcana]
+    )
+    arcana_data = arcana_resp.data
+    name = await api.fetch_name(char_id, language)
+
+    container.add_item(ui.TextDisplay(f'### {possessive_form(character_title(name.title, name.name))} Arcana'))
+    for arcana in arcana_data:
+        arcana_text = await arcana_basic_text(arcana, cs, language)
+        container.add_item(ui.TextDisplay(arcana_text))
+
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(arcana_resp.version)
+
+    return container

@@ -59,7 +59,7 @@ async def autoalias_all(session: AsyncSession) -> list[str]:
     aliases = []
     name_count = {}
     resp = await api.fetch_api(
-        api.STRING_CHARACTER_PATH_ALL,
+        api.STRING_CHARACTER_PATH,
         response_model=dict[int, Name]
     )
     ids = resp.data.keys()

@@ -5,7 +5,7 @@ from api.schemas.items import get_item, get_runes
 from api.schemas.requests import ItemRequest
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.masterdata import MasterData
-from common import enums, schemas
+from common import enums, routes, schemas
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/item',
+    routes.ITEM_PATH,
     summary='Item',
     description='Returns item data',
     response_model=schemas.APIResponse[schemas.Item]
@@ -30,7 +30,7 @@ async def item(
     return schemas.APIResponse[schemas.Item].create(request, item)
 
 @router.get(
-    '/item/rune',
+    routes.ITEM_RUNE_PATH,
     summary='Rune',
     description='Returns all rune data',
     response_model=schemas.APIResponse[list[schemas.Rune]]
@@ -46,7 +46,7 @@ async def rune(
     return schemas.APIResponse[list[schemas.Rune]].create(request, runes)
 
 @router.get(
-    '/item/rune/{category}',
+    routes.ITEM_RUNE_CATEGORY_PATH,
     summary='Rune Category',
     description=(
         'Returns rune data for rune types(category)<br>'

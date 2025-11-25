@@ -54,7 +54,7 @@ async def to_emoji(
             return f'{_emoji_cache[name]}({obj.hours}h)'
         else:
             return _emoji_cache[name]
-    elif name.startswith(':') and name.endswith(':'):  # default emoji
+    elif isinstance(name, str) and name.startswith(':') and name.endswith(':'):  # default emoji
         _emoji_cache[name] = name
         return name
     else:
@@ -138,6 +138,9 @@ emoji_list = {
     'helmet': 'equipment_helmet_01',
     'armor': 'equipment_armor_01',
     'shoes': 'equipment_shoes_01',
+    'weapon_1': 'equipment_weapon_warrior_01',
+    'weapon_2': 'equipment_weapon_sniper_01',
+    'weapon_4': 'equipment_weapon_sorcerer_01',
     'sword': 'equipment_weapon_warrior_01',
     'pistol': 'equipment_weapon_sniper_01',
     'tome': 'equipment_weapon_sorcerer_01',

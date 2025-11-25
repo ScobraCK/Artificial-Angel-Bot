@@ -12,6 +12,10 @@ timeserver2timezone = {
     Server.Global: ZoneInfo('Etc/GMT-1'),
 }
 
+# default start and end times for events without specified times
+START_TIME = "2020-01-01 00:00:00"
+END_TIME = '2100-12-31 23:59:59'
+
 def convert_date(date: str) -> datetime:
     '''Converts date string to datetime object'''
     return datetime.strptime(date, '%Y-%m-%d %H:%M:%S')

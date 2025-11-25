@@ -1,6 +1,6 @@
 import re
 
-from sqlalchemy import select, column
+from sqlalchemy import select, column, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -103,14 +103,29 @@ async def get_alts(session: AsyncSession, base_id: int) -> list[AltCharacterORM]
     result = await session.execute(stmt)
     return result.scalars().all()
 
-async def find_alts(session: AsyncSession, char_id: int) -> list[int]:
+async def find_alts(session: AsyncSession, char_id: int) -> dict[int, list[int]]:
+    '''
+    Returns a list of alt character ids for the given character id, including itself.
+    '''
     base = await get_base(session, char_id)
     if base:
         base_id = base.base_id
     else:
-        base_id = char_id
+        raise APIError(f'Could not find character with id {char_id}')
     alts = await get_alts(session, base_id)
-    return [alt.id for alt in alts]
+    return {base_id: [alt.id for alt in alts]}
+
+async def get_all_alts(session: AsyncSession) -> dict[int, list[int]]:
+    '''
+    Returns a dict of all alt character ids for each base character id.
+    '''
+    stmt = select(
+        AltCharacterORM.base_id,
+        func.array_agg(AltCharacterORM.id).label("alt_ids")
+    ).group_by(AltCharacterORM.base_id).order_by(AltCharacterORM.base_id)
+
+    result = await session.execute(stmt)
+    return {row.base_id: row.alt_ids for row in result}
 
 async def update_alt(session: AsyncSession, char_id: int):
     char_ids = await get_char_ids(session)

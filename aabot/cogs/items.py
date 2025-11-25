@@ -2,7 +2,8 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.pagination.items import equipment_help_description
+import aabot.pagination.equipment
+from aabot.pagination.equipment import equipment_help_description
 from aabot.pagination import items as item_response
 from aabot.pagination.views import show_view
 from aabot.utils import api
@@ -62,7 +63,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         '''Shows equipment information'''
         await interaction.response.defer()
         async with SessionAA() as session:
-            view = await item_response.equipment_view(interaction, string, session, self.bot.common_strings[language], language)
+            view = await aabot.pagination.equipment.equipment_view(interaction, string, session, self.bot.common_strings[language], language)
         await show_view(interaction, view)
 
     @app_commands.command()

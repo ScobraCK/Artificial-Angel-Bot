@@ -5,7 +5,7 @@ from api.schemas.pve import get_quest, get_tower
 from api.schemas.requests import TowerRequest
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.masterdata import MasterData
-from common import schemas
+from common import routes, schemas
 from common.enums import Language
 
 from api.utils.logger import get_logger
@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/quest/{quest_id}',
+    routes.QUEST_PATH,
     summary='Quest search',
     description='Returns main quest data',
     response_model=schemas.APIResponse[schemas.Quest]
@@ -31,7 +31,7 @@ async def quest(
     return schemas.APIResponse[schemas.Quest].create(request, quest)
 
 @router.get(
-    '/tower',
+    routes.TOWER_PATH,
     summary='tower search',
     description='Returns tower data',
     response_model=schemas.APIResponse[schemas.Tower]

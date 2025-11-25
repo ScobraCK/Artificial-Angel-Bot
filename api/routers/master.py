@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 
+from common import routes
 from common.schemas import APIResponse
 from api.utils.masterdata import MasterData
 
@@ -9,7 +10,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/master/{mb}',
+    routes.MASTER_PATH,
     summary='MasterData',
     description='Returns masterdata json',
     response_model=APIResponse[list[dict]]

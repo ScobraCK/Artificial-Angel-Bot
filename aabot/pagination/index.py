@@ -11,7 +11,6 @@ from discord import Color, Interaction
 from io import StringIO
 from itertools import batched
 
-
 def id_list_view(interaction: Interaction, name_data: schemas.APIResponse[dict[int, schemas.Name]]):
     names = name_data.data.values()
 
@@ -30,7 +29,6 @@ def id_list_view(interaction: Interaction, name_data: schemas.APIResponse[dict[i
         )
 
     return ButtonView(interaction.user, {'default': embeds})
-
 
 async def arcana_basic_text(arcana: schemas.Arcana, cs: schemas.CommonStrings, language: enums.LanguageOptions):
     text = StringIO()

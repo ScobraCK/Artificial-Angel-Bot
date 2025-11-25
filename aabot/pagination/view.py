@@ -108,6 +108,8 @@ def _to_content_page(
 
 def to_content(raw: dict[str, list] | list | ui.Container | Callable[..., ui.Container | Awaitable[ui.Container]]) -> ContentMap:
     """Convert raw contents (or factories) into a ContentMap."""
+    if isinstance(raw, ContentMap):
+        return raw
     if isinstance(raw, dict):
         options: dict[str, ContentPage | Callable[..., ContentPage | Awaitable[ContentPage]]] = {}
         for key, value in raw.items():
@@ -350,10 +352,15 @@ class OptionNavigation(ui.ActionRow):
         self.view.page = 0  # Reset page to first when changing option
         await self.view.update_view(interaction)
 
-class EmptyContent(ui.Container):
-    def __init__(self, message: str = 'Selected content is currently unavailable.'):
+class BaseContainer(ui.Container):
+    def __init__(self, message: str|None = None):
         super().__init__()
-        self.add_item(ui.TextDisplay(message))
+        if message:
+            self.add_item(ui.TextDisplay(message))
+
+    def add_version(self, version: str):
+        self.add_item(ui.TextDisplay(f'-# Master Version - {version}'))
+        return self
 
 def create_content_button(content, label: str, page: int = 0, option: str|None = None, save_state: bool = False, load_state: bool = False) -> ui.Button:
     button = ui.Button(label=label)

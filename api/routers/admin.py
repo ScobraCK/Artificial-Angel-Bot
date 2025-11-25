@@ -12,6 +12,7 @@ from api.utils import mentemori
 from api.utils.deps import SessionDep
 from api.utils.error import MentemoriError
 from api.utils.masterdata import MasterData
+from common import routes
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -20,7 +21,7 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 router = APIRouter(include_in_schema=False)
 
-@router.get('/admin/update')
+@router.get(routes.UPDATE_PATH)
 async def update_master(key: str, session: SessionDep, request: Request):
     '''Call only if master data had an update'''
     if key != os.getenv('API_KEY'):
@@ -65,7 +66,7 @@ async def update_master(key: str, session: SessionDep, request: Request):
         logger.error(f"Error updating master data: {str(e)}")
         raise HTTPException(status_code=500, detail='Failed to update master data.')
 
-@router.get('/admin/update/strings')
+@router.get(routes.UPDATE_STR_PATH)
 async def update_strings(key: str, session: SessionDep, request: Request):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -82,7 +83,7 @@ async def update_strings(key: str, session: SessionDep, request: Request):
 
     return Response(status_code=204)
 
-@router.get('/admin/update/characters')
+@router.get(routes.UPDATE_CHAR_PATH)
 async def update_chars(key: str, session: SessionDep, request: Request):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -105,7 +106,7 @@ async def update_chars(key: str, session: SessionDep, request: Request):
     
     return {'new': inserted_ids}
 
-@router.get('/admin/update/reset_alt')
+@router.get(routes.RESET_ALT_PATH)
 async def reset_alt(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -115,7 +116,7 @@ async def reset_alt(key: str, session: SessionDep):
         await update_alt(session, char_id)
     return Response(status_code=204)
 
-@router.get('/admin/mentemori')
+@router.get(routes.UPDATE_MENTEMORI_PATH)
 async def update_mentemori(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -131,7 +132,7 @@ async def update_mentemori(key: str, session: SessionDep):
         logger.error(str(e))
         raise e
 
-@router.get('/admin/mentemori/players')
+@router.get(routes.UPDATE_API_PLAYERS_PATH)
 async def update_mentemori_players(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -145,7 +146,7 @@ async def update_mentemori_players(key: str, session: SessionDep):
         logger.error(str(e))
         raise e
     
-@router.get('/admin/mentemori/guilds')
+@router.get(routes.UPDATE_API_GUILD_PATH)
 async def update_mentemori_guilds(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")

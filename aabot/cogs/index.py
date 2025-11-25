@@ -77,7 +77,7 @@ class IndexCommands(commands.Cog, name='Index Commands'):
         Shows character ids
         '''
         name_data = await api.fetch_api(
-            api.STRING_CHARACTER_PATH_ALL,
+            api.STRING_CHARACTER_PATH,
             query_params={'language': language},
             response_model=dict[int, schemas.Name]
         )
@@ -98,7 +98,7 @@ class IndexCommands(commands.Cog, name='Index Commands'):
         language: LanguageOptions|None=None):
         '''List character speeds in decreasing order'''
         name_data = await api.fetch_api(
-            api.STRING_CHARACTER_PATH_ALL,
+            api.STRING_CHARACTER_PATH,
             response_model=dict[int, schemas.Name],
             query_params={'language': language}
         )

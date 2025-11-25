@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request, Depends
 from api.schemas.gacha import get_gacha
 from api.schemas.requests import GachaRequest
 from api.utils.masterdata import MasterData
-from common import schemas
+from common import routes, schemas
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/gacha',
+    routes.GACHA_PATH,
     summary='Gacha Banner Info',
     description='Returns gacha banner information',
     response_model=schemas.APIResponse[schemas.GachaPickupBanners],
