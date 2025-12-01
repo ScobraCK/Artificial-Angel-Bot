@@ -106,3 +106,24 @@ async def get_arcana(
 
         arcanas.append(schemas.Arcana(**arcana, levels=levels))
     return arcanas
+
+async def get_potential(
+    md: MasterData,
+) -> schemas.CharacterPotential:
+    potential_data = await md.get_MB('CharacterPotentialMB')
+    coefficients_data = await md.get_MB('CharacterPotentialCoefficientMB')
+
+    levels = {}
+    for potential in potential_data:
+        key = f"{potential['CharacterLevel']}.{potential['CharacterSubLevel']}"
+        levels[key] = potential['TotalBaseParameter']
+
+    coefficients = {1: {}, 2: {}, 8: {}}
+    for coeff in coefficients_data:
+        coefficients[coeff['InitialRarityFlags']][coeff['RarityFlags']] = coeff['RarityCoefficientInfo']
+
+    return schemas.CharacterPotential(
+        levels=levels,
+        coefficients=coefficients
+    )
+

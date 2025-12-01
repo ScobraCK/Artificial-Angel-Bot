@@ -83,7 +83,6 @@ ArcanaOptions = {
     'Level Bonus': ArcanaOption(None, None, None, True)
 }
 
-
 async def arcana_autocomplete(interaction: Interaction, current: str):
     choices = [
         app_commands.Choice(name=opt, value=opt)
@@ -91,6 +90,8 @@ async def arcana_autocomplete(interaction: Interaction, current: str):
         if current.replace('.', '').lower() in opt.replace('.', '').lower()
     ]
     return choices[:25]
+
+
 
 # decorator for char id check
 # def check_id():

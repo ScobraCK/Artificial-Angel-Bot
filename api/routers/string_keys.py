@@ -28,7 +28,7 @@ async def string_lookup(key: str, session: SessionDep, request: Request):
 @router.get(
     routes.STRING_CHARACTER_PATH,
     summary='Character Name List',
-    description='Returns a dict[char_id, Name] of charcter names and titles . Direct key([ChracterName<ID>]) text search.',
+    description='Returns a dict[char_id, Name] of charcter names and titles.',
     response_model=APIResponse[dict[int, Name]]
 )
 async def string_names(session: SessionDep, request: Request, language=Depends(language_parameter)):
@@ -38,7 +38,7 @@ async def string_names(session: SessionDep, request: Request, language=Depends(l
 @router.get(
     routes.STRING_CHARACTER_ID_PATH,
     summary='Character Name',
-    description='Returns charcter name and title. Direct key([ChracterName<ID>]) text search.',
+    description='Returns charcter name and title.',
     response_model=APIResponse[Name]
 )
 async def string_name(session: SessionDep, request: Request, char_id: int, language=Depends(language_parameter)):

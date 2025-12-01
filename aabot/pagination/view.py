@@ -166,6 +166,7 @@ class BaseView(ui.LayoutView):
         self.main_content = MainContent(id=MAIN_CONTAINER_ID)
         self.page_nav = PageNavigation(id=PAGE_ROW_ID)
         self.option_nav = OptionNavigation(id=SELECT_ROW_ID)
+        self.extra = {}  # to hold additional information from containers
 
         self.add_item(self.main_content)
         self.add_item(self.page_nav)
@@ -224,6 +225,10 @@ class BaseView(ui.LayoutView):
             self.page = 0
 
         content = await content_page.pages[self.page].get_content(language=self.language, cs=self.cs)
+        if isinstance(content, BaseContainer):
+            self.extra.update(content.extra)
+            content.extra.clear()  # Prevent replacing once transferred
+            
         self.main_content.update_content(content)
         self.update_navigation()
 
@@ -355,6 +360,7 @@ class OptionNavigation(ui.ActionRow):
 class BaseContainer(ui.Container):
     def __init__(self, message: str|None = None):
         super().__init__()
+        self.extra = {}
         if message:
             self.add_item(ui.TextDisplay(message))
 

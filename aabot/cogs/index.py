@@ -183,7 +183,7 @@ class IndexCommands(commands.Cog, name='Index Commands'):
             options = ArcanaOption()
 
         arcana_data = await api.fetch_api(
-            api.ARCANA_PATH,
+            api.CHARACTER_ARCANA_SEARCH_PATH,
             response_model=list[schemas.Arcana],
             query_params={
                 'character': character,

@@ -4,18 +4,29 @@ from discord.ext import commands
 from aabot.main import AABot
 import aabot.pagination.equipment
 from aabot.pagination.equipment import equipment_help_description
-from aabot.pagination import items as item_response
+from aabot.pagination import items as item_ui
+from aabot.pagination.view import BaseView, to_content
 from aabot.pagination.views import show_view
 from aabot.utils import api
 from aabot.utils.command_utils import apply_user_preferences
 from common import enums
 from common.database import SessionAA
 
+
 async def itemtype_autocomplete(interaction: Interaction, current: int):
-    choices = [
-        app_commands.Choice(name=opt.name, value=opt.value) for opt in enums.ItemType
-    ]
-    return choices[:25]
+    if not current:
+        choices = [
+            app_commands.Choice(name=f'{opt.name}({opt.value})', value=opt.value)
+            for opt in list(enums.ItemType)[:25]
+        ]
+    else:
+        current_str = str(current)
+        choices = [
+            app_commands.Choice(name=f'{opt.name}({opt.value})', value=opt.value)
+            for opt in enums.ItemType
+            if str(opt.value).startswith(current_str)
+        ]
+    return choices
 
 class ItemCommands(commands.Cog, name='Item Commands'):
     '''Commands related to items'''
@@ -43,10 +54,12 @@ class ItemCommands(commands.Cog, name='Item Commands'):
             await interaction.response.send_message(f"Invalid item type. See below:\n{'\n'.join([f'{item.value} - {item.name}' for item in enums.ItemType])}", ephemeral=True)
             return
 
-        item_data = await api.fetch_item(item_id, item_type, language)  # directly use fetch item
-        embed = item_response.item_embed(item_data, self.bot.common_strings[language])
-        
-        await interaction.response.send_message(embed=embed)
+        content = to_content(await item_ui.item_ui(item_id, enums.ItemType(item_type), language, self.bot.common_strings[language]))
+        view = BaseView(
+            content,
+            interaction.user
+        )
+        await view.update_view(interaction)
         
     @app_commands.command(
         extras={'help': equipment_help_description}
@@ -77,7 +90,7 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         rune: enums.RuneType,
         language: enums.LanguageOptions|None=None):
         '''Shows rune information'''
-        view = await item_response.rune_view(interaction, rune, self.bot.common_strings[language], language)
+        view = await item_ui.rune_view(interaction, rune, self.bot.common_strings[language], language)
         await show_view(interaction, view)
 
 

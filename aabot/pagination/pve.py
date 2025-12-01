@@ -10,7 +10,7 @@ from aabot.utils import api
 from aabot.utils.assets import RAW_ASSET_BASE, SOUL_BONUS
 from aabot.utils.emoji import to_emoji
 from aabot.utils.itemcounter import ItemCounter
-from aabot.utils.utils import decimal_format, from_quest_id, human_format as hf
+from aabot.utils.utils import base_param_text, battle_param_text, from_quest_id, human_format as hf
 from common import enums, schemas
 
 def get_bonus_url(soul_list):
@@ -56,41 +56,9 @@ async def basic_enemy_field(enemy: schemas.Enemy, session: AsyncSession)->dict:
     
     return {'name': name, 'value': value, 'inline': False}
 
-def base_param_text(params: schemas.BaseParameters, cs: schemas.CommonStrings)->str:
-    text = (
-        f'```json\n'
-        f'{cs.base_param[enums.BaseParameter.STR]}: {params.str:,}\n'
-        f'{cs.base_param[enums.BaseParameter.DEX]}: {params.dex:,}\n'
-        f'{cs.base_param[enums.BaseParameter.MAG]}: {params.mag:,}\n'
-        f'{cs.base_param[enums.BaseParameter.STA]}: {params.sta:,}```'
-    )
-    return text
-
-def battle_param_text(params: schemas.BattleParameters, cs: schemas.CommonStrings)->str:
-    text = (
-        f'```json\n'
-        f'{cs.battle_param[enums.BattleParameter.HP]}: {params.hp:,}\n'
-        f'{cs.battle_param[enums.BattleParameter.ATK]}: {params.attack:,}\n'
-        f'{cs.battle_param[enums.BattleParameter.DEF]}: {params.defense:,}\n'
-        f'{cs.battle_param[enums.BattleParameter.DEF_BREAK]}: {params.def_break:,}\n'
-        f'{cs.battle_param[enums.BattleParameter.SPD]}: {params.speed:,}\n'
-        f'```'
-        f'```json\n'
-        f'{f"{cs.battle_param[enums.BattleParameter.PM_DEF_BREAK]}: {params.pmdb:,}":<24}{f"{cs.battle_param[enums.BattleParameter.P_DEF]}: {params.pdef:,}":<22}\n'
-        f'{"":<24}{f"{cs.battle_param[enums.BattleParameter.M_DEF]}: {params.mdef:,}":<22}\n'
-        f'{f"{cs.battle_param[enums.BattleParameter.ACC]}: {params.acc:,}":<24}{f"{cs.battle_param[enums.BattleParameter.EVD]}: {params.evade:,}":<22}\n'
-        f'{f"{cs.battle_param[enums.BattleParameter.CRIT]}: {params.crit:,}":<24}{f"{cs.battle_param[enums.BattleParameter.CRIT_RES]}: {params.crit_res:,}":<22}\n'
-        f'{f"{cs.battle_param[enums.BattleParameter.CRIT_DMG_BOOST]}: {decimal_format(params.crit_dmg)}%":<24}{f"{cs.battle_param[enums.BattleParameter.P_CRIT_DMG_CUT]}: {decimal_format(params.pcut)}%":<22}\n'
-        f'{"":<24}{f"{cs.battle_param[enums.BattleParameter.M_CRIT_DMG_CUT]}: {decimal_format(params.mcut)}%":<22}\n'
-        f'{f"{cs.battle_param[enums.BattleParameter.DEBUFF_ACC]}: {params.debuff_acc:,}":<24}{f"{cs.battle_param[enums.BattleParameter.DEBUFF_RES]}: {params.debuff_res:,}":<22}\n'
-        f'{f"{cs.battle_param[enums.BattleParameter.COUNTER]}: {decimal_format(params.counter)}%":<24}{f"{cs.battle_param[enums.BattleParameter.HP_DRAIN]}: {decimal_format(params.hp_drain)}%":<22}\n'
-        f'```'
-    )
-    return text
-
 async def detailed_enemy_embed(enemy: schemas.Enemy, session: AsyncSession, cs: schemas.CommonStrings, version: str)->Embed:
     soul_emj = await to_emoji(session, enemy.element)
-    name = f"[{enemy.rarity}] Lv.{enemy.level} {enemy.name} {soul_emj}"
+    name = f"[{enemy.rarity.name.replace('Plus', '+')}] Lv.{enemy.level} {enemy.name} {soul_emj}"
 
     embed = BaseEmbed(
         version,

@@ -6,7 +6,7 @@ from api.crud.string_keys import translate_keys
 from api.schemas.requests import CharacterDBRequest
 from common.schemas import APIResponse
 from api.schemas.character import (
-    get_character, get_profile, get_lament, get_voicelines, get_memories, get_arcana
+    get_character, get_profile, get_lament, get_voicelines, get_memories, get_arcana, get_potential
 )
 from api.schemas.requests import ArcanaRequest
 from api.schemas.skills import get_skills_char
@@ -165,7 +165,7 @@ async def alts_by_id(
     return APIResponse[dict[int, list[int]]].create(request, alts)
 
 @router.get(
-    routes.ARCANA_PATH,
+    routes.CHARACTER_ARCANA_SEARCH_PATH,
     summary='Arcana data',
     description='Returns arcana data. Can filter by character, parameter category, type and change type.',
     response_model=APIResponse[list[schemas.Arcana]]
@@ -196,7 +196,7 @@ async def arcana(
 @router.get(
     routes.CHARACTER_ARCANA_PATH,
     summary='Arcana data by character ID',
-    description=f'Same as {routes.ARCANA_PATH} with character specified.',
+    description=f'Same as {routes.CHARACTER_ARCANA_SEARCH_PATH} with character specified.',
     response_model=APIResponse[list[schemas.Arcana]]
 )
 async def character_arcana(
@@ -215,6 +215,31 @@ async def character_arcana(
 
     return APIResponse[list[schemas.Arcana]].create(request, arcana_data)
 
+@router.get(
+    routes.CHARACTER_POTENTIAL_PATH,
+    summary='Character base stat potential(coefficient) data',
+    description=(
+        '**Formula:**\n'
+        '`Final stat` = (`Total base parameter` * `m` + `b`) * `Base coefficient` / `Gross Coefficient`\n\n'
+        'Base and gross coefficients found in character info.\n\n'
+        '**Return values:**\n\n'
+        '**levels:** Dict[*Level*, *TotalBaseParameter*]\n'
+        '- **Level:** str in the format "*Level*.*SubLevel*". Sublevels can be 0 to 9 and all levels before 240 will have sublevel of 0. (e.g. "1.0", "2.0", ..., "239.0", "240.0", "240.1", ...")\n'
+        '- **TotalBaseParameter:** int\n\n'
+        '**coefficients:** Dict[*InitialRarity*, Dict[*Rarity*, *CoefficientInfo*]]\n'
+        '- **InitialRarity:** 1 (N), 2 (R), 8 (SR)\n'
+        '- **Rarity:** 1 (N), 2 (R), 4 (R+), ..., 524288 (LR+10) (powers of two)\n'
+        '- **CoefficientInfo:** { m: float, b: int }'
+    ),
+    response_model=APIResponse[schemas.CharacterPotential]
+)
+async def character_potential(
+    request: Request,
+):
+    md: MasterData = request.app.state.md
+    potential = await get_potential(md)
+    return APIResponse[schemas.CharacterPotential].create(request, potential)
+    
 # Redirects for old routes
 @router.get('/character/list', include_in_schema=False)
 async def redirect_character_search():
@@ -246,4 +271,4 @@ async def redirect_character_memory(char_id: int):
 
 @router.get('/arcana', include_in_schema=False)
 async def redirect_arcana_search():
-    return RedirectResponse(url=routes.ARCANA_PATH)
+    return RedirectResponse(url=routes.CHARACTER_ARCANA_SEARCH_PATH)

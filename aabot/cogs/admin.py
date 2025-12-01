@@ -62,18 +62,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         '''
         await interaction.response.defer()
         await api.fetch(api.UPDATE_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=60)
-        # data = response.json()
-        # updated = data.get('data')
-        # chars = data.get('new_chars')
-
-        # aliases = []
-        # async with SessionAA() as session:
-        #     for char in chars:
-        #         aliases.extend(await auto_alias(session, char))
-
-        await interaction.followup.send(
-            'Successfully updated masterdata.'
-        )
+        await interaction.followup.send('Successfully updated masterdata.')
 
     @app_commands.command()
     async def updatestrings(
@@ -116,9 +105,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         await interaction.response.defer()
         await api.fetch(f'{api.API_BASE_PATH}{api.RESET_ALT_PATH}', params={'key': self.bot.api_key}, timeout=60)
 
-        await interaction.followup.send(
-            'Successfully reset alts.\n'
-        )
+        await interaction.followup.send('Successfully reset alts.')
     
     @app_commands.command()
     async def addalias(

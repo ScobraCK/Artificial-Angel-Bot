@@ -3,19 +3,19 @@ from functools import partial
 from io import StringIO
 from itertools import batched
 
-from discord import ui, SeparatorSpacing
+from discord import ui, ButtonStyle, SeparatorSpacing
 from html2text import HTML2Text
 
 from aabot.crud.character import get_character
 from aabot.pagination.equipment import get_uw, equipment_detail_ui
 from aabot.pagination.index import arcana_basic_text
 from aabot.pagination.skills import get_skill_name, get_skill_text
-from aabot.pagination.view import create_content_button, to_content, BaseContainer, ContentMap
+from aabot.pagination.view import create_content_button, to_content, BaseContainer, BaseView, ContentMap
 from aabot.utils import api
 from aabot.utils.assets import CHARACTER_THUMBNAIL, SKILL_THUMBNAIL
 from aabot.utils.emoji import to_emoji
 from aabot.utils.error import BotError
-from aabot.utils.utils import character_title, possessive_form
+from aabot.utils.utils import base_param_text, battle_param_text, calculate_base_stat, character_title, possessive_form
 from common import enums, schemas, timezones
 from common.database import SessionAA
 
@@ -26,10 +26,12 @@ class CharacterOptions(Enum):
     INFO = 'Basic Information'
     PROFILE = 'Profile'
     SKILL = 'Skills'
-    VOICELINES = 'Voicelines'
-    MEMORIES = 'Memories'
     UW = 'Unique Weapon'
     ARCANA = 'Arcana'
+    VOICELINES = 'Voicelines'
+    MEMORIES = 'Memories'
+    LAMENT = 'Lament'
+    STATS = 'Stats'
 
 class CharacterContainer(BaseContainer):
     def add_release_warning(self):
@@ -64,7 +66,32 @@ async def get_release_status(char_id: int) -> bool:
     )
     return timezones.check_active(resp.data.start, timezones.END_TIME, enums.Server.Japan)
 
-async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: schemas.CommonStrings) -> ui.Container:
+async def get_base_stats(level: str, rarity: enums.CharacterRarity, character: schemas.Character|int, potential: schemas.CharacterPotential|None = None) -> schemas.BaseParameters:
+    if isinstance(character, int):
+        character = (await api.fetch_api(
+            api.CHARACTER_INFO_PATH.format(char_id=character),
+            response_model=schemas.Character
+        )).data
+    if not potential:
+        potential = (await api.fetch_api(
+            api.CHARACTER_POTENTIAL_PATH,
+            response_model=schemas.CharacterPotential
+        )).data
+        
+    total_stats = potential.levels.get(level)
+    if not total_stats:
+        raise BotError(f'No data for level {level}.')
+    base_rarity = character.rarity
+    coeffs = potential.coefficients[base_rarity][rarity]
+
+    return schemas.BaseParameters(
+        str=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.str, character.gross_coefficient),
+        dex=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.dex, character.gross_coefficient),
+        mag=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.mag, character.gross_coefficient),
+        sta=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.sta, character.gross_coefficient)
+    )
+
+async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: schemas.CommonStrings) -> BaseContainer:
     container = BaseContainer()
     async with SessionAA() as session:
         for char_id in chars:
@@ -103,15 +130,17 @@ async def character_option_map(char_id: int) -> ContentMap:
         CharacterOptions.INFO.value: partial(character_info_ui, char_id, released=released),
         CharacterOptions.PROFILE.value: partial(character_profile_ui, char_id, released=released),
         CharacterOptions.SKILL.value: partial(character_skill_ui, char_id, released=released),
-        CharacterOptions.VOICELINES.value: partial(character_voiceline_ui, char_id, released=released),
-        CharacterOptions.MEMORIES.value: partial(character_memory_ui, char_id, released=released),
         CharacterOptions.UW.value: partial(character_uw_ui, char_id, released=released),
         CharacterOptions.ARCANA.value: partial(character_arcana_ui, char_id, released=released),
+        CharacterOptions.VOICELINES.value: partial(character_voiceline_ui, char_id, released=released),
+        CharacterOptions.MEMORIES.value: partial(character_memory_ui, char_id, released=released),
+        CharacterOptions.LAMENT.value: partial(character_lament_ui, char_id, released=released),
+        CharacterOptions.STATS.value: partial(character_stats_ui, char_id, released=released),
     }
 
     return to_content(content)
 
-async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> BaseContainer:
     container = CharacterContainer()
     # Released check
     if released is None:
@@ -135,6 +164,10 @@ async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: s
     async with SessionAA() as session:
         element_emoji = await to_emoji(session, char_data.element)
         job_emoji = await to_emoji(session, char_data.job)
+        str_emoji = await to_emoji(session, 'str')
+        dex_emoji = await to_emoji(session, 'dex')
+        mag_emoji = await to_emoji(session, 'mag')
+        sta_emoji = await to_emoji(session, 'sta')
 
     # Basic info
     container.add_item(
@@ -151,6 +184,27 @@ async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: s
                 )
             ),
             accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=char_data.char_id, qlipha=False))
+        )
+    )
+    
+    # Base stats
+    if (base_rarity := char_data.rarity) == enums.CharacterBaseRarity.N:
+        rarity = enums.CharacterRarity.N
+        level = '100.0'
+    elif base_rarity == enums.CharacterBaseRarity.R:
+        rarity = enums.CharacterRarity.SSRPlus
+        level = '160.0'
+    else:
+        rarity = enums.CharacterRarity.LR
+        level = '240.0'
+    base_stats = await get_base_stats(level, rarity, char_data)
+    container.add_item(
+        ui.TextDisplay(
+            f'**Stats** (Lv {level.removesuffix('.0')})\n'
+            f'{str_emoji} {base_stats.str:,} '
+            f'{dex_emoji} {base_stats.dex:,}\n'
+            f'{mag_emoji} {base_stats.mag:,} '
+            f'{sta_emoji} {base_stats.sta:,}\n'
         )
     ).add_item(ui.Separator(visible=False))
 
@@ -177,7 +231,7 @@ async def character_info_ui(char_id: int, language: enums.LanguageOptions, cs: s
     
     return container
 
-async def character_profile_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+async def character_profile_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> BaseContainer:
     container = CharacterContainer()
     # Released check
     if released is None:
@@ -212,13 +266,16 @@ async def character_profile_ui(char_id: int, language: enums.LanguageOptions, cs
             ),
             accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=profile_data.char_id, qlipha=False))
         )
-    )
+    ).add_item(
+        ui.Separator()
+    ).add_item(ui.TextDisplay(profile_data.description))
+
     await container.add_alt_section(char_id, language, cs)
     container.add_version(profile_resp.version)
 
     return container
 
-async def character_skill_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container|list[ui.Container]:
+async def character_skill_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> BaseContainer|list[ui.Container]:
     container = CharacterContainer()
     # Released check
     if released is None:
@@ -362,7 +419,7 @@ async def character_memory_ui(char_id: int, language: enums.LanguageOptions, cs:
         containers.append(container)
     return containers
 
-async def character_uw_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+async def character_uw_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> BaseContainer:
     container = CharacterContainer()
 
     # Released check
@@ -381,7 +438,7 @@ async def character_uw_ui(char_id: int, language: enums.LanguageOptions, cs: sch
     container.add_version(uw_resp.version)
     return container
 
-async def character_arcana_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> ui.Container:
+async def character_arcana_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> BaseContainer:
     container = CharacterContainer()
 
     # Released check
@@ -406,4 +463,106 @@ async def character_arcana_ui(char_id: int, language: enums.LanguageOptions, cs:
     await container.add_alt_section(char_id, language, cs)
     container.add_version(arcana_resp.version)
 
+    return container
+
+async def character_lament_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, show_jp: bool = True, released: bool|None = None) -> BaseContainer:
+    h = HTML2Text()
+    LYRIC_TEXT_ID = 1
+    TOGGLE_BUTTON_ID = 2
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        return BaseContainer('Lament data is unavailable for unreleased characters.')
+
+    container = CharacterContainer()
+
+    lament_resp = await api.fetch_api(
+        api.CHARACTER_LAMENT_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Lament
+    )
+    lament_data = lament_resp.data
+    name = await api.fetch_name(char_id, language)
+
+    if lament_data.youtubeJP and lament_data.youtubeUS:
+        youtube_str = f'YouTube: [JP]({lament_data.youtubeJP}) | [EN]({lament_data.youtubeUS})'
+    elif lament_data.youtubeJP:
+        youtube_str = f'YouTube: [JP]({lament_data.youtubeJP})'
+    elif lament_data.youtubeUS:
+        youtube_str = f'YouTube: [EN]({lament_data.youtubeUS})'
+    else:
+        youtube_str = 'YouTube: N/A'
+
+    jp_lyrics = h.handle(lament_data.lyricsJP)
+    en_lyrics = h.handle(lament_data.lyricsUS)
+
+    container.add_item(
+        ui.Section(
+            ui.TextDisplay(f'### {possessive_form(character_title(name.title, name.name))} Lament'),
+            ui.TextDisplay(youtube_str),
+            accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=char_id, qlipha=False))
+        )
+    ).add_item(ui.TextDisplay(jp_lyrics if show_jp else en_lyrics, id=LYRIC_TEXT_ID))
+    
+    # Add toggle button
+    container.extra['show_jp'] = show_jp
+    container.extra['JP'] = jp_lyrics
+    container.extra['EN'] = en_lyrics
+
+    button = ui.Button(
+        style=ButtonStyle.primary,
+        label='Toggle Lyrics',
+        emoji='🇯🇵' if show_jp else '🇺🇸',
+        id=TOGGLE_BUTTON_ID
+    )
+    async def callback(interaction):
+        view: BaseView = button.view
+        current = view.extra.get('show_jp', True)
+        if current:
+            lyrics = view.extra['EN']  # swaps to opposite
+        else:
+            lyrics = view.extra['JP']
+        view.extra['show_jp'] = not current
+        view.find_item(LYRIC_TEXT_ID).content = lyrics
+        view.find_item(TOGGLE_BUTTON_ID).emoji = '🇺🇸' if current else '🇯🇵'
+        await view.update_view(interaction)
+    button.callback = callback
+
+    container.add_item(ui.ActionRow(button))
+        
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(lament_resp.version)
+
+    return container
+
+async def character_stats_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings, released: bool|None = None) -> BaseContainer:
+    container = CharacterContainer()
+    # Released check
+    if released is None:
+        released = await get_release_status(char_id)
+    if not released:
+        container.add_release_warning()
+
+    char_resp = await api.fetch_api(
+        api.CHARACTER_INFO_PATH.format(char_id=char_id),
+        query_params={'language': language},
+        response_model=schemas.Character
+    )
+    char_data = char_resp.data
+
+    container.add_item(
+        ui.Section(
+            ui.TextDisplay(f'### {possessive_form(character_title(char_data.title, char_data.name))} Stats'),
+            ui.TextDisplay(f'**Base Parameter Coefficients** (Total: {char_data.gross_coefficient})\n{base_param_text(char_data.base_coefficients, cs)}'),
+            accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=char_data.char_id, qlipha=False))
+        )
+    ).add_item(
+        ui.TextDisplay(f'**Battle Parameters**\n{battle_param_text(char_data.init_battle_paramters, cs)}')
+    ).add_item(
+        ui.TextDisplay('*Stats shown are initial stats applied to the character. Use `/calcstat` for ingame stat calculations.')
+    )
+
+    await container.add_alt_section(char_id, language, cs)
+    container.add_version(char_resp.version)
     return container
