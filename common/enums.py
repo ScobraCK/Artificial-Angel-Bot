@@ -337,5 +337,3 @@ class GachaType(IntEnum):
     IoSG = 3
     Chosen = 4
     Eminence = 5
-
-

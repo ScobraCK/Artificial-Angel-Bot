@@ -101,13 +101,13 @@ def _to_content_page(
     """Convert a list of page definitions (each page is a container or a factory) into a ContentPage."""
     pages: list[BaseContent] = []
     if isinstance(raw_pages, ui.Container) or callable(raw_pages):
-        return ContentPage(pages=[BaseContent(content=raw_pages)])  # Single container (lazy check)
+        return ContentPage(pages=[BaseContent(content=raw_pages)])  # Single container (lazy check), breaks on cases where callable is a single ContentPage
     for page in raw_pages:
         pages.append(BaseContent(content=page))
     return ContentPage(pages=pages)
 
 def to_content(raw: dict[str, list] | list | ui.Container | Callable[..., ui.Container | Awaitable[ui.Container]]) -> ContentMap:
-    """Convert raw contents (or factories) into a ContentMap."""
+    """Convert raw contents (or factories) into a ContentMap. WARNING: Content cannot be a callable that returns a ContentPage or list"""
     if isinstance(raw, ContentMap):
         return raw
     if isinstance(raw, dict):
@@ -211,6 +211,7 @@ class BaseView(ui.LayoutView):
             await self.original_response.edit(view=self)
 
     async def get_content(self, page: int = 0, option: str|None = None) -> ui.Container:
+        '''Useable outside of view to get current content'''
         content_page = await self._get_content_page(option)
         base_content = content_page.pages[page]
         return await base_content.get_content(language=self.language, cs=self.cs)
@@ -225,7 +226,8 @@ class BaseView(ui.LayoutView):
             self.page = 0
 
         content = await content_page.pages[self.page].get_content(language=self.language, cs=self.cs)
-        if isinstance(content, BaseContainer):
+
+        if isinstance(content, BaseContainer) and content.extra:
             self.extra.update(content.extra)
             content.extra.clear()  # Prevent replacing once transferred
             
@@ -290,6 +292,8 @@ class BaseView(ui.LayoutView):
             right.disabled = (self.page >= page_count - 1)
             right2.disabled = (self.page >= page_count - 1)
             mid.label = f'{self.page + 1}/{page_count}'
+            if page_count == 1:
+                mid.disabled = True
 
             if self.page_nav not in self.children:
                 if self.option_nav in self.children:
@@ -325,6 +329,34 @@ class MainContent(ui.Container):
         for item in content.children:
             self.add_item(item)
 
+class PageSelect(discord.ui.Modal):
+    def __init__(self, view: BaseView):
+        super().__init__(title="Select Page")
+        self.view = view
+        self.max_page = self.view._get_page_count()
+        self.page = ui.Label(
+            text='Page',
+            component=ui.TextInput(placeholder="Enter a page number", required=True, min_length=1, max_length=3),
+            description=f'Max: {self.max_page}'
+        )
+        self.add_item(self.page)
+        
+    async def on_submit(self, interaction: discord.Interaction):
+        if not self.page.component.value.isdigit():
+            await interaction.response.send_message(
+                "Input must be a valid page number.",
+                ephemeral=True
+            )
+            return
+        if int(self.page.component.value) < 1 or int(self.page.component.value) > self.max_page:
+            await interaction.response.send_message(
+                f"Page number must be between 1 and {self.max_page}.",
+                ephemeral=True
+            )
+            return
+        self.view.page = int(self.page.component.value) - 1
+        await self.view.update_view(interaction)
+
 class PageNavigation(ui.ActionRow):
     @ui.button(label='<<', id=BUTTON1_ID)
     async def left2_btn(self, interaction: discord.Interaction, button: ui.Button):
@@ -336,9 +368,10 @@ class PageNavigation(ui.ActionRow):
         self.view.page = max(0, self.view.page - 1)
         await self.view.update_view(interaction)
 
-    @ui.button(label='1/1', disabled=True, id=BUTTON3_ID)
+    @ui.button(label='1/1', id=BUTTON3_ID)
     async def mid_btn(self, interaction: discord.Interaction, button: ui.Button):
-        pass  # TODO add page navigator
+        modal = PageSelect(self.view)
+        await interaction.response.send_modal(modal)
 
     @ui.button(label='>', id=BUTTON4_ID)
     async def right_btn(self, interaction: discord.Interaction, button: ui.Button):

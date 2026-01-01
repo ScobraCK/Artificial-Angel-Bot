@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 
-from api.schemas.gacha import get_gacha
+from api.schemas.events import get_gacha
 from api.schemas.requests import GachaRequest
 from api.utils.masterdata import MasterData
 from common import routes, schemas

@@ -8,25 +8,10 @@ from aabot.pagination import items as item_ui
 from aabot.pagination.view import BaseView, to_content
 from aabot.pagination.views import show_view
 from aabot.utils import api
-from aabot.utils.command_utils import apply_user_preferences
+from aabot.utils.command_utils import apply_user_preferences, itemtype_autocomplete
 from common import enums
 from common.database import SessionAA
 
-
-async def itemtype_autocomplete(interaction: Interaction, current: int):
-    if not current:
-        choices = [
-            app_commands.Choice(name=f'{opt.name}({opt.value})', value=opt.value)
-            for opt in list(enums.ItemType)[:25]
-        ]
-    else:
-        current_str = str(current)
-        choices = [
-            app_commands.Choice(name=f'{opt.name}({opt.value})', value=opt.value)
-            for opt in enums.ItemType
-            if str(opt.value).startswith(current_str)
-        ]
-    return choices
 
 class ItemCommands(commands.Cog, name='Item Commands'):
     '''Commands related to items'''

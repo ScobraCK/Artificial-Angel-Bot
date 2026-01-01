@@ -16,6 +16,7 @@ logger = get_logger(__name__)
     
 CHARACTER_NAME_KEY = '[CharacterName{}]'
 CHARACTER_TITLE_KEY = '[CharacterSubName{}]'
+UW_DESCRIPTION_KEY = '[EquipmentExclusiveSkill{}Description{}]'
 
 async def upsert_string_keys(session: AsyncSession, md: MasterData, update_list=None):
     languages = {
@@ -115,7 +116,7 @@ async def translate_keys(
 
     def collect(obj: Any):
         if isinstance(obj, BaseModel):
-            for field_name in obj.model_fields:
+            for field_name in obj.__class__.model_fields:
                 value = getattr(obj, field_name)
                 if isinstance(value, str) and value.startswith('[') and value.endswith(']'):
                     key_references.append((obj, field_name, value))

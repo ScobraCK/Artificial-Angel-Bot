@@ -8,7 +8,7 @@ from html2text import HTML2Text
 
 from aabot.crud.character import get_character
 from aabot.pagination.equipment import get_uw, equipment_detail_ui
-from aabot.pagination.index import arcana_basic_text
+from aabot.pagination.info import arcana_basic_text
 from aabot.pagination.skills import get_skill_name, get_skill_text
 from aabot.pagination.view import create_content_button, to_content, BaseContainer, BaseView, ContentMap
 from aabot.utils import api
@@ -304,7 +304,7 @@ async def character_skill_ui(char_id: int, language: enums.LanguageOptions, cs: 
             description = await get_skill_text(skill, skill_data.uw_descriptions, session)
             container.add_item(
                 ui.Section(
-                    ui.TextDisplay(f'### {name}'),
+                    ui.TextDisplay(f'### {name} | CD: {skill.max_cooltime}'),
                     ui.TextDisplay(description),
                     accessory=ui.Thumbnail(SKILL_THUMBNAIL.format(skill_id=skill.id))
                 )
@@ -448,7 +448,7 @@ async def character_arcana_ui(char_id: int, language: enums.LanguageOptions, cs:
         return BaseContainer('Arcana data is unavailable for unreleased characters.')
 
     arcana_resp = await api.fetch_api(
-        api.CHARACTER_ARCANA_PATH.format(char_id=char_id),
+        api.ARCANA_PATH.format(char_id=char_id),
         query_params={'language': language},
         response_model=list[schemas.Arcana]
     )

@@ -6,19 +6,15 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
+from aabot.pagination import info as info_ui
 from aabot.pagination.embeds import BaseEmbed
-import aabot.pagination.index
-from aabot.pagination.views import ButtonView, show_view
-from aabot.pagination.skills import skill_detail_view
-from aabot.utils import api
+from aabot.pagination.views import ButtonView
+from aabot.pagination.view import BaseView, to_content
 from aabot.utils.alias import IdTransformer
 from aabot.utils.command_utils import apply_user_preferences, arcana_autocomplete, ArcanaOption, ArcanaOptions
-# from aabot.utils.error import BotError
 from aabot.utils.utils import calc_buff, character_title
 from common import schemas
-from common.database import SessionAA
 from common.enums import LanguageOptions
-
 
 def speed_view(
     interaction: Interaction,
@@ -58,71 +54,52 @@ def speed_view(
     view = ButtonView(interaction.user, {'default': embeds})
     return view
 
-class IndexCommands(commands.Cog, name='Index Commands'):
-    '''Commands for indexing characters and other data.'''
-
+class InfoCommands(commands.Cog, name='Info Commands'):
+    '''Commands for uncategorized information about characters and game data'''
     def __init__(self, bot):
         self.bot: AABot = bot
 
     @app_commands.command()
     @app_commands.describe(
-    language='Text Language. Defaults to English.'
+        language='Text language. Defaults to English.',
+        page_limit='Number of entries per page. Range:10-50. Defaults to 20.'
     )
     @apply_user_preferences()
     async def idlist(
         self, 
         interaction: Interaction,
+        page_limit: app_commands.Range[int, 10, 50]=20,
         language: LanguageOptions|None=None):
         '''
         Shows character ids
         '''
-        name_data = await api.fetch_api(
-            api.STRING_CHARACTER_PATH,
-            query_params={'language': language},
-            response_model=dict[int, schemas.Name]
+        view = BaseView(
+            to_content(await info_ui.id_list_ui(language, page_limit)), 
+            interaction.user
         )
-        view = aabot.pagination.index.id_list_view(interaction, name_data)
-        await show_view(interaction, view)
+        await view.update_view(interaction)
     
     @app_commands.command()
     @app_commands.describe(
-        add='Additional speed from speed runes',
-        buffs='List of speed buff percentages',
+        flat='Flat speed as such from speed runes',
+        mult='Speed buff multiplier percentage',
+        page_limit='Number of entries per page. Range:10-50. Defaults to 20.'
     )
     @apply_user_preferences()
     async def speed(
         self, 
         interaction: Interaction, 
-        add: int|None=0, 
-        buffs: str|None=None,
+        flat: int|None=0,
+        mult: int|None=0,
+        page_limit: app_commands.Range[int, 10, 50]=20,
         language: LanguageOptions|None=None):
         '''List character speeds in decreasing order'''
-        name_data = await api.fetch_api(
-            api.STRING_CHARACTER_PATH,
-            response_model=dict[int, schemas.Name],
-            query_params={'language': language}
+        view = BaseView(
+            to_content(await info_ui.speed_ui(language, flat=flat, mult=mult, page_limit=page_limit)), 
+            interaction.user,
+            language=language
         )
-        
-        speed_data = await api.fetch_api(
-            api.CHARACTER_LIST_PATH,
-            response_model=list[schemas.CharacterDBModel],
-            query_params={'option': 'speed'}
-        )
-        
-        if buffs is None:
-            buff_list = None
-        else:
-            try:
-                buff_list = [int(buff) for buff in split(r'[,\s]+', buffs) if buff]
-            except ValueError:
-                await interaction.response.send_message(
-                    "Invalid input for buffs. Please enter a list of integers separated by commas or spaces. Example /speed `-15 15 30`", 
-                    ephemeral=True
-                    )
-                return
-
-        view = speed_view(interaction, speed_data, name_data, add, buff_list)
-        await show_view(interaction, view)
+        await view.update_view(interaction)
 
     @app_commands.command()
     @app_commands.describe(
@@ -137,22 +114,12 @@ class IndexCommands(commands.Cog, name='Index Commands'):
         language: LanguageOptions|None=None):
         '''Shows character skills and details'''
 
-        skill_data = await api.fetch_api(
-            api.CHARACTER_SKILL_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Skills
+        view = BaseView(
+            to_content(await info_ui.skill_detail_ui(character, language)),
+            interaction.user,
+            language=language
         )
-
-        char_data = await api.fetch_api(
-            api.CHARACTER_PATH,
-            path_params={'char_id': character},
-            query_params={'language': language},
-            response_model=schemas.Character
-        )
-        async with SessionAA() as session:
-            view = await skill_detail_view(interaction, skill_data, char_data, session)
-        await show_view(interaction, view)
+        await view.update_view(interaction)
 
     @app_commands.command()
     @app_commands.describe(
@@ -178,28 +145,20 @@ class IndexCommands(commands.Cog, name='Index Commands'):
                 )
                 return
 
-            options = ArcanaOptions[filter_option]
+            option = ArcanaOptions[filter_option]
         else:
-            options = ArcanaOption()
+            option = ArcanaOption()
 
-        arcana_data = await api.fetch_api(
-            api.CHARACTER_ARCANA_SEARCH_PATH,
-            response_model=list[schemas.Arcana],
-            query_params={
-                'character': character,
-                'param_category': options.category,
-                'param_type': options.type,
-                'param_change_type': options.change_type,
-                'level_bonus': options.level_bonus,
-                'language': language
-            }
+        await interaction.response.defer()
+
+        view = BaseView(
+            to_content(await info_ui.arcana_search_ui(character, option, self.bot.common_strings[language], language)),
+            interaction.user,
+            language=language,
+            cs=self.bot.common_strings[language]
         )
-
-        view = await aabot.pagination.index.arcana_view(interaction, arcana_data, self.bot.common_strings[language], language)
-        await show_view(interaction, view)
-
-
-
+        
+        await view.update_view(interaction)
 
 async def setup(bot: AABot):
-	await bot.add_cog(IndexCommands(bot))
+	await bot.add_cog(InfoCommands(bot))

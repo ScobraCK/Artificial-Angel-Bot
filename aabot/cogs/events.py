@@ -2,15 +2,14 @@ from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
-from aabot.pagination import gacha as event_page
-from aabot.utils import api, assets
+from aabot.pagination import events as event_page
+from aabot.pagination.view import BaseView, to_content
 from aabot.utils.alias import IdTransformer
-from common import schemas
 from common.enums import LanguageOptions
 
 
 class EventCommands(commands.Cog, name='Event Commands'):
-    '''Commands for game events'''
+    '''Commands for ingame events and gacha'''
 
     def __init__(self, bot):
         self.bot: AABot = bot
@@ -24,16 +23,8 @@ class EventCommands(commands.Cog, name='Event Commands'):
         interaction: Interaction,
         language: LanguageOptions|None=None):
         '''Shows gacha banners'''
-        gacha_data = await api.fetch_api(
-            api.GACHA_PATH,
-            response_model=schemas.GachaPickupBanners,
-            query_params={
-                'include_future': True
-            }
-        )
-        embed = await event_page.gacha_banner_embed(gacha_data, language)
-        
-        await interaction.response.send_message(embed=embed)
+        view = BaseView(to_content(await event_page.gacha_banner_ui(language)), interaction.user)
+        await view.update_view(interaction)
     
     @app_commands.command()
     @app_commands.describe(
@@ -46,17 +37,8 @@ class EventCommands(commands.Cog, name='Event Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):
         '''Shows gacha history of a character'''
-        gacha_data = await api.fetch_api(
-            api.GACHA_PATH,
-            response_model=schemas.GachaPickupBanners,
-            query_params={
-                'char_id': character,
-                'is_active': False
-            }
-        )
-        embed = await event_page.gacha_banner_embed(gacha_data, language)
-        embed.set_thumbnail(url=assets.CHARACTER_THUMBNAIL.format(char_id=character, qlipha=False))
-        await interaction.response.send_message(embed=embed)
+        view = BaseView(to_content(await event_page.gacha_banner_ui(language, character)), interaction.user)
+        await view.update_view(interaction)
 
 async def setup(bot: AABot):
 	await bot.add_cog(EventCommands(bot))

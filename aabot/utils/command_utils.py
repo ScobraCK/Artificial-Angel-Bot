@@ -5,8 +5,8 @@ from functools import wraps
 from discord import Interaction, app_commands
 
 from aabot.crud.user import get_user
+from common import enums
 from common.database import SessionAA
-from common.enums import LanguageOptions
 
 def apply_user_preferences():
     """
@@ -20,7 +20,7 @@ def apply_user_preferences():
                 user_pref = await get_user(session, user_id)
 
                 if "language" in kwargs and kwargs["language"] is None:
-                    kwargs["language"] = user_pref.language if user_pref and user_pref.language else LanguageOptions.enus
+                    kwargs["language"] = user_pref.language if user_pref and user_pref.language else enums.LanguageOptions.enus
 
                 if "server" in kwargs and kwargs["server"] is None:
                     if user_pref and user_pref.server:
@@ -91,6 +91,20 @@ async def arcana_autocomplete(interaction: Interaction, current: str):
     ]
     return choices[:25]
 
+async def itemtype_autocomplete(interaction: Interaction, current: int):
+    if not current:
+        choices = [
+            app_commands.Choice(name=f'{opt.name}({opt.value})', value=opt.value)
+            for opt in list(enums.ItemType)[:25]
+        ]
+    else:
+        current_str = str(current)
+        choices = [
+            app_commands.Choice(name=f'{opt.name}({opt.value})', value=opt.value)
+            for opt in enums.ItemType
+            if str(opt.value).startswith(current_str)
+        ]
+    return choices
 
 
 # decorator for char id check

@@ -1,7 +1,7 @@
 from io import StringIO
 from itertools import chain
 
-from discord import Color, Interaction
+from discord import Color, Interaction, ui
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.pagination.embeds import BaseEmbed
@@ -77,51 +77,6 @@ async def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkil
 
     return description.getvalue()
 
-
-
-async def skill_view(
-    interaction: Interaction,
-    skill_data: schemas.APIResponse[schemas.Skills],
-    char_data: schemas.APIResponse[schemas.Character],
-    session: AsyncSession
-):
-    skills = skill_data.data
-    char = char_data.data
-    embed_dict = {}
-
-    title_text = f'{possessive_form(character_title(char.title, char.name))}'
-    icon_url = f'{RAW_ASSET_BASE}Characters/Sprites/CHR_{char.char_id:06}_00_s.png'
-
-    embed_dict['Active'] = [
-        BaseEmbed(
-            skill_data.version,
-            title=f'{title_text} Active Skills',
-            description=await skill_description(skills.actives, skills.uw_descriptions, char.uw, session),
-            color=Color.blue()
-        ).set_thumbnail(url=icon_url)
-    ]
-
-    if skills.passives:
-        embed_dict['Passive'] = [
-            BaseEmbed(
-                skill_data.version,
-                title=f'{title_text} Passive Skills',
-                description=await skill_description(skills.passives, skills.uw_descriptions, char.uw, session),
-                color=Color.blue()
-            ).set_thumbnail(url=icon_url)
-        ]
-    
-    if skills.uw_descriptions:
-        embed_dict['Unique Weapon'] = [
-            BaseEmbed(
-                skill_data.version,
-                title=f'{title_text} Unique Weapon',
-                description=await get_uw_skill_text(skills.uw_descriptions, session, char.uw),
-                color=Color.blue()
-            ).set_thumbnail(url=icon_url)
-        ]
-
-    return DropdownView(interaction.user, embed_dict, 'Active')
 
 
 async def skill_detail_view(

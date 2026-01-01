@@ -10,6 +10,7 @@ from api.schemas.character import (
 )
 from api.schemas.requests import ArcanaRequest
 from api.schemas.skills import get_skills_char
+from api.schemas.string_keys import get_uw_desc_strings
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.error import APIError
 from api.utils.masterdata import MasterData
@@ -89,7 +90,7 @@ async def lament(
 @router.get(
     routes.CHARACTER_SKILL_PATH,
     summary='Character skill data',
-    description='Returns character skill information',
+    description=f'Returns character skill information.',
     response_model=APIResponse[schemas.Skills]
 )
 async def skill(
@@ -100,6 +101,8 @@ async def skill(
 ):
     md: MasterData = request.app.state.md
     skills = await get_skills_char(md, char_id)
+    if skills.uw_descriptions is None:  # override in case of unreleased character
+        skills.uw_descriptions = await get_uw_desc_strings(session, char_id, language)
     await translate_keys(skills, session, language)
     return APIResponse[schemas.Skills].create(request, skills)
 
@@ -165,7 +168,7 @@ async def alts_by_id(
     return APIResponse[dict[int, list[int]]].create(request, alts)
 
 @router.get(
-    routes.CHARACTER_ARCANA_SEARCH_PATH,
+    routes.ARCANA_SEARCH_PATH,
     summary='Arcana data',
     description='Returns arcana data. Can filter by character, parameter category, type and change type.',
     response_model=APIResponse[list[schemas.Arcana]]
@@ -194,9 +197,9 @@ async def arcana(
     return APIResponse[list[schemas.Arcana]].create(request, arcana_data)
 
 @router.get(
-    routes.CHARACTER_ARCANA_PATH,
+    routes.ARCANA_PATH,
     summary='Arcana data by character ID',
-    description=f'Same as {routes.CHARACTER_ARCANA_SEARCH_PATH} with character specified.',
+    description=f'Same as {routes.ARCANA_SEARCH_PATH} with character specified.',
     response_model=APIResponse[list[schemas.Arcana]]
 )
 async def character_arcana(
@@ -271,4 +274,4 @@ async def redirect_character_memory(char_id: int):
 
 @router.get('/arcana', include_in_schema=False)
 async def redirect_arcana_search():
-    return RedirectResponse(url=routes.CHARACTER_ARCANA_SEARCH_PATH)
+    return RedirectResponse(url=routes.ARCANA_SEARCH_PATH)

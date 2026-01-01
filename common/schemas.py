@@ -314,6 +314,7 @@ class EquipmentCosts(APIBaseModel):
 
 # Gacha
 class GachaPickup(APIBaseModel):
+    gacha_case_id: int|None = Field(..., validation_alias='Id', description='IoC and IoSG will be null due to data limitations and optimization purposes. Refer to following instead. IoC normal soul(7), IoC radiant/chaos (8), IoSG normal soul (10000), IoSG radiant/chaos (20000) ')
     start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     gacha_type: enums.GachaType = Field(..., validation_alias='GachaSelectListType')
@@ -321,18 +322,14 @@ class GachaPickup(APIBaseModel):
     char_id: int
 
 class GachaChosenGroup(APIBaseModel):
-    banner_id: int = Field(..., validation_alias='Id', description='Discriminator for grouping of chosen banners')
+    select_list_id: int = Field(..., validation_alias='Id')
     start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     banners: list[GachaPickup]
     
-class GachaEminenceGroup(APIBaseModel):
-    banner_id: int = Field(..., validation_alias='Id', description='Discriminator for grouping of eminence banners')
-    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
-    end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+class GachaEminenceGroup(GachaChosenGroup):
     limit_days: int = Field(..., validation_alias='GachaLimitDay', description='Number of days the banner will be active')
     open_day: int = Field(..., validation_alias='GachaOpenDayFromCreatePlayer', description='Days from player creation the banner becomes available')
-    banners: list[GachaPickup]
 
 class GachaPickupBanners(APIBaseModel):
     fleeting: list[GachaPickup]
@@ -342,7 +339,7 @@ class GachaPickupBanners(APIBaseModel):
     eminence: list[GachaEminenceGroup]
     
 class GachaBanner(APIBaseModel):
-    # TODO for actual banners
+    # TODO for actual banners. (GachaCase/GachaCaseUI + char ids)
     pass
 
 # Groups
