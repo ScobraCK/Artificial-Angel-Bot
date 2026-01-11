@@ -100,6 +100,13 @@ def parse_equip_string(string: str) -> tuple[str|EquipType, list[EquipArgs]]:
         else:
             level = int(level)
 
+        if 1 < level < 240:
+            if level % 20 != 0:
+                raise BotError(f'Level `{level}` is invalid.')
+        if 240 < level:
+            if level % 10 != 0:
+                raise BotError(f'Level `{level}` is invalid.')
+
         results.append(
             EquipArgs(
                 rarity=rarity,
@@ -184,7 +191,8 @@ async def get_upgrade_costs(equip_id: int, upgrade: int, language: enums.Languag
     )
     return upgrade_resp
 
-async def get_equipment_str(equipment: schemas.Equipment, session: AsyncSession|None = None):
+async def get_equipment_str(equipment: schemas.Equipment, session: AsyncSession|None = None) -> str:
+    '''For title generation'''
     if not session:
         async with SessionAA() as session:
             return await get_equipment_str(equipment, session)
@@ -323,9 +331,8 @@ async def equipment_detail_ui(equipment: schemas.Equipment|schemas.UniqueWeapon,
     return container
 
 async def cost_ui(
-        upgrade_data: schemas.APIResponse[schemas.EquipmentCosts],
-        session: AsyncSession,
-        start_level=0, start_upgrade=0, start_rarity=0
+    upgrade_data: schemas.APIResponse[schemas.EquipmentCosts],
+    start_level=0, start_upgrade=0, start_rarity=0
 ):
     container = BaseContainer()
     costs = upgrade_data.data
@@ -333,7 +340,7 @@ async def cost_ui(
     
     container.add_item(
         ui.Section(
-            ui.TextDisplay(await get_equipment_str(equipment, session)),
+            ui.TextDisplay(await get_equipment_str(equipment)),
             ui.TextDisplay(await get_cost_text(costs, start_level, start_upgrade, start_rarity)),
             accessory=ui.Thumbnail(EQUIPMENT_THUMBNAIL.format(equip_id=equipment.icon_id))
         )
@@ -341,9 +348,57 @@ async def cost_ui(
 
     return container
 
-async def equipment_option_map(equip_string: str, language: enums.Language, cs: schemas.CommonStrings) -> dict[str, ui.Container]:
-    pass
+async def equipment_option_map(equip_string: str, language: enums.Language, cs: schemas.CommonStrings) -> dict[str, list[ui.Container]]:
+    content_map = {}
+    content_map['Equipment Details'] = []
+    content_map['Costs'] = []
+    equip_type, results = parse_equip_string(equip_string)
 
+    if len(results) > 5:
+        raise BotError('Too many equipment strings. Maximum of 5 allowed.')
+
+    # Fetch parsed equipments
+    equipments: list[schemas.APIResponse[schemas.Equipment]]|list[schemas.APIResponse[schemas.UniqueWeapon]] = []
+    upgrades: list[schemas.APIResponse[schemas.EquipmentCosts]] = []
+    for eqp_args in results:
+        if eqp_args.upgrade < results[0].upgrade:
+            raise BotError(
+                'Upgrade level cannot be lower than the first equipment. Was given:\n'
+                f'{'\n'.join(f'{i}. `{equip.rarity} {equip.level}+{equip.upgrade}`' for i, equip in enumerate(results))}'
+                )
+        if eqp_args.level < results[0].level:
+            raise BotError(
+                'Equipment level cannot be lower than the first equipment. Was given:\n'
+                f'{'\n'.join(f'{i}. `{equip.rarity} {equip.level}+{equip.upgrade}`' for i, equip in enumerate(results))}'
+            )
+        if enums.ItemRarity[eqp_args.rarity].value < enums.ItemRarity[results[0].rarity].value:
+            raise BotError(
+                'Equipment rarity cannot be lower than the first equipment. Was given:\n'
+                f'{'\n'.join(f'{i}. `{equip.rarity} {equip.level}+{equip.upgrade}`' for i, equip in enumerate(results))}'
+            )
+        equipment_data = await find_equipment(equip_type, eqp_args, language)
+        upgrade_data = await get_upgrade_costs(equipment_data.data.equip_id, eqp_args.upgrade, language)
+        equipments.append(equipment_data)
+        upgrades.append(upgrade_data)
+
+    # Detail pages
+    for equipment_data, upgrade_data in zip(equipments, upgrades):
+        if upgrade_costs := upgrade_data.data.upgrade_costs.upgrades:  # upgrade > 0
+            upgrade_level = upgrade_costs[-1].upgrade_level
+            coefficient = upgrade_costs[-1].coefficient
+            container = await equipment_detail_ui(equipment_data.data, cs, upgrade_level, coefficient)
+        else:
+            container = await equipment_detail_ui(equipment_data.data, cs)
+        content_map['Equipment Details'].append(container.add_version(equipment_data.version))
+    
+    # Cost pages
+    if len(equipments) == 1:
+        content_map['Costs'].append(await cost_ui(upgrade_data))
+    else:
+        for upgrade_data in upgrades[1:]:  # First equipment is base
+            content_map['Costs'].append(await cost_ui(upgrade_data, results[0].level, results[0].upgrade, enums.ItemRarity[results[0].rarity].value))
+
+    return content_map
 
 async def equipment_view(interaction: Interaction, equip_string: str, session: AsyncSession, cs: schemas.CommonStrings, language: enums.Language):
     embed_dict = {}
