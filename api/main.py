@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title='AABot API',
-    version = '1.0.3',
+    version = '1.1.0',
     swagger_ui_parameters={"defaultModelsExpandDepth": -1})
 
 @app.exception_handler(APIError)

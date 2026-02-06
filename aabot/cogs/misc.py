@@ -1,11 +1,10 @@
-from discord import Color, Embed, Interaction, MediaGalleryItem, app_commands, ui
+from discord import Interaction, MediaGalleryItem, app_commands, ui
 from discord.ext import commands
 
 
 from aabot.main import AABot
 from aabot.pagination import misc as misc_ui
 from aabot.pagination.view import BaseView, BaseContainer
-from aabot.utils import api
 from aabot.utils.alias import IdTransformer
 from aabot.utils.assets import RAW_ASSET_BASE
 from aabot.utils.command_utils import apply_user_preferences

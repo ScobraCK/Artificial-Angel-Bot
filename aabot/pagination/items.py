@@ -1,7 +1,6 @@
 from discord import Color, ui
 
 from aabot.utils import api
-from aabot.pagination.embeds import BaseEmbed
 from aabot.pagination.view import BaseContainer
 from aabot.utils.itemcounter import ItemCounter
 from aabot.utils.emoji import to_emoji
@@ -88,43 +87,3 @@ async def rune_ui(rune_type: enums.RuneType, language: enums.Language, cs: schem
 
     container.add_version(rune_resp.version)
     return container
-
-async def rune_callable(rune_type: enums.RuneType, cs: schemas.CommonStrings, language: enums.Language)->dict[str, list[BaseEmbed]]:
-    ic = ItemCounter(language)
-    rune_data = await api.fetch_api(
-        path=api.ITEM_RUNE_CATEGORY_PATH,
-        path_params={'category': rune_type},
-        query_params={'language': language},
-        response_model=list[schemas.Rune]
-    )
-    detail_embeds = []
-    level_data = []
-    for rune in rune_data.data:
-        # Basic info
-        level_data.append([rune.level, f'{rune.parameter.value:,}', f'{2**rune.level:,}'])
-        # Detailed info
-        ic.add_items(rune.combine_cost)
-        detail_embeds.append(
-            BaseEmbed(
-                rune_data.version,
-                title=f'{rune.name} Lv.{rune.level}',
-                description=(
-                    f'**Id:** {rune.id}\n'
-                    f'**Type:** {cs.rune_type[rune.category]}\n'
-                    f'**Level:** {rune.level}\n'
-                    f'**Value:** {rune.parameter.value}\n'
-                    f'**Description:**\n```\n{remove_html(rune.description)}```'
-                    f'**Combine Costs:**\n```\n{'\n'.join(await ic.get_total_strings())}```\n'
-                ),
-                color=Color.blurple()
-            )
-        )
-        ic.clear()
-
-    basic_embed = BaseEmbed(
-        rune_data.version,
-        title=f'{rune.name}',
-        description=f'```prolog\n{make_table(level_data, header=['Level', 'Value', 'Cost(Tickets)'], style='ascii_simple')}```',
-        color=Color.blurple()
-    )
-    return {'Basic Info': [basic_embed], f'Details': detail_embeds}
