@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, Request, Depends
+from fastapi.responses import RedirectResponse
 
 from api.crud.string_keys import translate_keys
 from api.schemas.pve import get_quest, get_tower
@@ -32,7 +33,7 @@ async def quest(
 
 @router.get(
     routes.TOWER_PATH,
-    summary='tower search',
+    summary='Tower search',
     description='Returns tower data',
     response_model=schemas.APIResponse[schemas.Tower]
 )
@@ -46,3 +47,8 @@ async def tower(
     tower = await get_tower(md, payload)
     await translate_keys(tower, session, language)
     return schemas.APIResponse[schemas.Tower].create(request, tower)
+
+# Redirects for old routes
+@router.get('/tower', include_in_schema=False)
+async def redirect_tower_search():
+    return RedirectResponse(url=routes.TOWER_PATH)

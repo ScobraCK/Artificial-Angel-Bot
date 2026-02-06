@@ -28,7 +28,7 @@ STRING_CHARACTER_PATH = "/strings/character"
 STRING_CHARACTER_ID_PATH = "/strings/character/{char_id}"
 STRING_UW_DESC_PATH = '/strings/uw_descriptions/{char_id}'
 STRING_COMMON_PATH = "/strings/common"
-TOWER_PATH = "/tower"
+TOWER_PATH = "/tower/search"
 
 # Admin
 UPDATE_PATH = "/admin/update"
