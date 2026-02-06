@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, Request, Depends
+from fastapi.responses import RedirectResponse
 
 from api.crud.string_keys import translate_keys
 from api.schemas.pve import get_quest, get_tower
 from api.schemas.requests import TowerRequest
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.masterdata import MasterData
-from common import schemas
+from common import routes, schemas
 from common.enums import Language
 
 from api.utils.logger import get_logger
@@ -14,9 +15,9 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/quest/{quest_id}',
+    routes.QUEST_PATH,
     summary='Quest search',
-    description='Returns main quest data',
+    description='Returns main quest data. While green orb, player exp, and BP is included as is from the data, the numbers may not reflect ingame values accurately.',
     response_model=schemas.APIResponse[schemas.Quest]
 )
 async def quest(
@@ -31,8 +32,8 @@ async def quest(
     return schemas.APIResponse[schemas.Quest].create(request, quest)
 
 @router.get(
-    '/tower',
-    summary='tower search',
+    routes.TOWER_PATH,
+    summary='Tower search',
     description='Returns tower data',
     response_model=schemas.APIResponse[schemas.Tower]
 )
@@ -46,3 +47,8 @@ async def tower(
     tower = await get_tower(md, payload)
     await translate_keys(tower, session, language)
     return schemas.APIResponse[schemas.Tower].create(request, tower)
+
+# Redirects for old routes
+@router.get('/tower', include_in_schema=False)
+async def redirect_tower_search():
+    return RedirectResponse(url=routes.TOWER_PATH)

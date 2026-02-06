@@ -15,18 +15,17 @@ logger = get_logger(__name__)
 
 # manually import all routers (maybe change to dynamic)
 from api.routers import (
-    admin, master, string_keys,
+    admin, events, master, string_keys,
     character, skills,
     items, equipment,
-    pve, gacha,
-    mentemori,
+    pve, mentemori,
 )
 
 ROUTERS = [
     admin.router, string_keys.router,
     character.router, skills.router,
     items.router, equipment.router,
-    pve.router, gacha.router,
+    pve.router, events.router,
     mentemori.router, master.router,
 ]
 
@@ -46,7 +45,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title='AABot API',
-    version = '1.0.3',
+    version = '1.1.0',
     swagger_ui_parameters={"defaultModelsExpandDepth": -1})
 
 @app.exception_handler(APIError)

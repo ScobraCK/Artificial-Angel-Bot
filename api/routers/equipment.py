@@ -5,7 +5,7 @@ from api.schemas import requests
 from api.schemas.equipment import get_equipment, get_upgrade_costs
 from api.utils.deps import SessionDep, language_parameter
 from api.utils.masterdata import MasterData
-from common import schemas
+from common import routes, schemas
 from common.enums import Language
 
 from api.utils.logger import get_logger
@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 @router.get(
-    '/equipment/search',
+    routes.EQUIPMENT_SEARCH_PATH,
     summary='Equipment Search',
     description='Search equipment info.',
     response_model=schemas.APIResponse[schemas.Equipment]
@@ -31,7 +31,7 @@ async def search_equipment(
     return schemas.APIResponse[schemas.Equipment].create(request, eq)
 
 @router.get(
-    '/equipment/unique/search',
+    routes.EQUIPMENT_UW_SEARCH_PATH,
     summary='Unique Equipment Search',
     description='Search unique equipment info.',
     response_model=schemas.APIResponse[schemas.UniqueWeapon],
@@ -48,7 +48,7 @@ async def search_uw(
     return schemas.APIResponse[schemas.UniqueWeapon].create(request, eq)
 
 @router.get(
-    '/equipment/upgrade',
+    routes.EQUIPMENT_UPGRADE_PATH,
     summary='Equipment Upgrade Costs',
     description='Get upgrade costs for schemas. Use /equipment/search or equipment/unique/search for equip_id.',
     response_model=schemas.APIResponse[schemas.EquipmentCosts]
@@ -65,7 +65,7 @@ async def upgrade_cost(
     return schemas.APIResponse[schemas.EquipmentCosts].create(request, costs)
 
 @router.get(
-    '/equipment/{eqp_id}',
+    routes.EQUIPMENT_PATH,
     summary='Equipment',
     description='Get equipment info.',
     response_model=schemas.APIResponse[schemas.Equipment]|schemas.APIResponse[schemas.UniqueWeapon]

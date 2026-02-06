@@ -7,10 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from aabot.crud.alias import get_all_alias, insert_alias
 from aabot.utils import api
-from aabot.utils.command_utils import LanguageOptions  # Only supported languages
 from aabot.utils.error import BotError
+
 from common.database import SessionAA
+from common.enums import LanguageOptions
 from common.models import Alias
+from common.schemas import Name
 
 
 def normalize_alias(string: str):
@@ -34,7 +36,7 @@ async def add_alias(session: AsyncSession, char_id: int, alias: str, is_custom=F
             return None
         raise BotError(f'Alias {alias} already exists.')
 
-async def auto_alias(session: AsyncSession, char_id: int, serial: int=None) -> list[str]:
+async def autoalias(session: AsyncSession, char_id: int, serial: int=None) -> list[str]:
     '''Automatically adds default alias. Add serial for quick adding alt character numbers.'''
     aliases = []
     for language in LanguageOptions:
@@ -50,6 +52,28 @@ async def auto_alias(session: AsyncSession, char_id: int, serial: int=None) -> l
             if alias_title:
                 aliases.append(alias_title.alias)
     
+    return aliases
+
+async def autoalias_all(session: AsyncSession) -> list[str]:
+    '''Reruns autoalias for all characters. Used for new languages or missed chars.'''
+    aliases = []
+    name_count = {}
+    resp = await api.fetch_api(
+        api.STRING_CHARACTER_PATH,
+        response_model=dict[int, Name]
+    )
+    ids = resp.data.keys()
+    
+    for char_id in ids:
+        name = resp.data[char_id].name
+        if name in name_count:
+            name_count[name] += 1
+            serial = name_count[name]
+        else:
+            name_count[name] = 1
+            serial = None
+        new_aliases = await autoalias(session, char_id, serial)
+        aliases.extend(new_aliases)
     return aliases
 
 # transformer for id

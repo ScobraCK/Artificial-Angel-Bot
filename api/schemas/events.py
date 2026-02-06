@@ -48,7 +48,16 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
     gachaselect_data = await md.get_MB('GachaSelectListMB')
     
     gachacaseui_lookup = {item['Id']: item for item in gachacaseui_data}
-    gachaselect_lookup = {item['Id']: item for item in gachaselect_data}
+    gachaselect_lookup = {}
+    chosen_ids = set()
+    eminence_ids = set()
+    for item in gachaselect_data:
+        _id = item['Id']
+        gachaselect_lookup[_id] = item
+        if item['GachaSelectListType'] == GachaType.Chosen:
+            chosen_ids.add(_id)
+        elif item['GachaSelectListType'] == GachaType.Eminence:
+            eminence_ids.add(_id)
     fleeting_list = []
     ioc_list = []
     iosg_list = []
@@ -75,9 +84,15 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
                 filter_append_gacha(fleeting_list, gacha, char_id, is_active, include_future)
             # Chosen fleeting banner
             elif banner['GachaSelectListType'] == GachaType.Chosen:  # 4
-                banner_id = banner['Id']
-                banner_data = gachaselect_lookup.get(banner_id)
+                banner_data = None
                 run = parse_run(banner['StartTimeFixJST'], banner['EndTimeFixJST'])
+                for _id in chosen_ids:  # No link between gachacase and select list
+                    banner_data = gachaselect_lookup[_id]
+                    banner_run = parse_run(banner_data['StartTimeFixJST'], banner_data['EndTimeFixJST'])
+                    if run == banner_run:
+                        chosen_ids.remove(_id)
+                        break
+
                 if not banner_data:
                     continue
                 
@@ -86,6 +101,7 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
                     char = int(character)
                     run_count = run_counter.get_run_count(char, run)
                     gacha = schemas.GachaPickup(
+                        gacha_case_id=banner['Id'],
                         start=banner_data['StartTimeFixJST'],
                         end=banner_data['EndTimeFixJST'],
                         gacha_type=GachaType.Chosen,
@@ -95,13 +111,14 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
                     gacha_list.append(gacha)
                 chosen_group = schemas.GachaChosenGroup(
                     **banner,
+                    select_list_id=banner_data['Id'],
                     banners=gacha_list
                 )
                 filter_append_gacha(chosen_list, chosen_group, char_id, is_active, include_future)
                 
             # Chosen Eminence banner
             elif banner['GachaSelectListType'] == GachaType.Eminence:
-                eminence_data.append(banner)
+                eminence_data.append(banner)  # defer
                 
     # Parse ioc
     for banner in gachadestiny_data:
@@ -111,6 +128,7 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
         run = parse_run(start_data['StartTimeFixJST'], end_data['EndTimeFixJST'])
         run_count = run_counter.get_run_count(char, run)
         gacha = schemas.GachaPickup(
+            gacha_case_id=None,
             start=start_data['StartTimeFixJST'],
             end=end_data['EndTimeFixJST'],
             gacha_type=GachaType.IoC,
@@ -128,6 +146,7 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
             run_count = run_counter.get_run_count(char, run)
             gacha = schemas.GachaPickup(
                 **banner,
+                gacha_case_id=None,
                 char_id=char,
                 run_count=run_count
             )
@@ -135,9 +154,15 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
             
     # Parse eminence
     for banner in eminence_data:
-        banner_id = banner['Id']
-        banner_data = gachaselect_lookup.get(banner_id)
+        banner_data = None
         run = parse_run(banner['StartTimeFixJST'], banner['EndTimeFixJST'])
+        for _id in eminence_ids:  # No link between gachacase and select list
+            banner_data = gachaselect_lookup[_id]
+            banner_run = parse_run(banner_data['StartTimeFixJST'], banner_data['EndTimeFixJST'])
+            if run == banner_run:
+                eminence_ids.remove(_id)
+                break
+
         if not banner_data:
             continue
         
@@ -146,8 +171,9 @@ async def get_gacha(md: MasterData, char_id: int|None=None, is_active=True, incl
             char = int(character)
             run_count = run_counter.get_run_count(char, run)
             gacha = schemas.GachaPickup(
+                gacha_case_id=banner['Id'],
                 start=banner_data['StartTimeFixJST'],
-                end=banner_data['EndTimeFixJST'],  # different from main banner
+                end=banner_data['EndTimeFixJST'],  # select and gachacase have different endtimes
                 gacha_type=GachaType.Eminence,
                 char_id=char,
                 run_count=run_count

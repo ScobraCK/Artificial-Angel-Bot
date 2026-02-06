@@ -1,15 +1,18 @@
 import os
+from io import StringIO
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from httpx import AsyncClient
+from sqlalchemy import text
 
-from api.crud.character import upsert_chars
+from api.crud.character import upsert_chars, get_char_ids, update_alt, autoalias
 from api.crud.mentemori import update_guilds, update_players
 from api.crud.string_keys import update_and_log_strings
 from api.utils import mentemori
 from api.utils.deps import SessionDep
 from api.utils.error import MentemoriError
 from api.utils.masterdata import MasterData
+from common import routes
 
 from api.utils.logger import get_logger
 logger = get_logger(__name__)
@@ -18,7 +21,7 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 router = APIRouter(include_in_schema=False)
 
-@router.get('/admin/update')
+@router.get(routes.UPDATE_PATH)
 async def update_master(key: str, session: SessionDep, request: Request):
     '''Call only if master data had an update'''
     if key != os.getenv('API_KEY'):
@@ -37,14 +40,22 @@ async def update_master(key: str, session: SessionDep, request: Request):
         inserted_ids = []
         if 'CharacterMB' in updated:
             inserted_ids = await upsert_chars(session, md)
-            if inserted_ids is None:
-                raise HTTPException(status_code=500, detail='Failed to update characters.')
-            
+            if inserted_ids is not None:  # None is returned when exception occurs
+                for char_id in inserted_ids:
+                    await update_alt(session, char_id)
+                    await autoalias(session, char_id)
+
         files_updated = '\n'.join(updated)
-        characters_added = inserted_ids if inserted_ids else 'None'
+        
+        msg = StringIO()
+        msg.write(f"**Master version**: {md.version}\n**Files Updated**\n```\n{files_updated}```\n")
+        if inserted_ids is not None:
+            msg.write(f"**Characters Added\n**```{inserted_ids if inserted_ids else 'None'}```\n")
+        else:
+            msg.write("⚠**Failed to update characters.**⚠")
         embed = {
             "title": "🔄 Master Update",
-            "description": f"**Master version**: {md.version}\n**Files Updated**\n```\n{files_updated}```\n**Characters Added\n**```\n{characters_added}```",
+            "description": msg.getvalue(),
             "color": 0x2ecc71
         }
         async with AsyncClient() as client:
@@ -55,7 +66,7 @@ async def update_master(key: str, session: SessionDep, request: Request):
         logger.error(f"Error updating master data: {str(e)}")
         raise HTTPException(status_code=500, detail='Failed to update master data.')
 
-@router.get('/admin/update/strings')
+@router.get(routes.UPDATE_STR_PATH)
 async def update_strings(key: str, session: SessionDep, request: Request):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -72,7 +83,7 @@ async def update_strings(key: str, session: SessionDep, request: Request):
 
     return Response(status_code=204)
 
-@router.get('/admin/update/characters')
+@router.get(routes.UPDATE_CHAR_PATH)
 async def update_chars(key: str, session: SessionDep, request: Request):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -80,6 +91,9 @@ async def update_chars(key: str, session: SessionDep, request: Request):
     inserted_ids = await upsert_chars(session, md)
     if inserted_ids is None:
         raise HTTPException(status_code=500, detail='Failed to update characters.')
+    for char_id in inserted_ids:
+        await update_alt(session, char_id)
+        await autoalias(session, char_id)
     
     characters_added = inserted_ids if inserted_ids else 'None' 
     embed = {
@@ -90,9 +104,19 @@ async def update_chars(key: str, session: SessionDep, request: Request):
     async with AsyncClient() as client:
         await client.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]})
     
-    return {'new': inserted_ids}  # TODO: triger alias update
+    return {'new': inserted_ids}
 
-@router.get('/admin/mentemori')
+@router.get(routes.RESET_ALT_PATH)
+async def reset_alt(key: str, session: SessionDep):
+    if key != os.getenv('API_KEY'):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    char_ids = await get_char_ids(session)
+    await session.execute(text('TRUNCATE TABLE alt_characters;'))
+    for char_id in char_ids:
+        await update_alt(session, char_id)
+    return Response(status_code=204)
+
+@router.get(routes.UPDATE_MENTEMORI_PATH)
 async def update_mentemori(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -108,7 +132,7 @@ async def update_mentemori(key: str, session: SessionDep):
         logger.error(str(e))
         raise e
 
-@router.get('/admin/mentemori/players')
+@router.get(routes.UPDATE_API_PLAYERS_PATH)
 async def update_mentemori_players(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -122,7 +146,7 @@ async def update_mentemori_players(key: str, session: SessionDep):
         logger.error(str(e))
         raise e
     
-@router.get('/admin/mentemori/guilds')
+@router.get(routes.UPDATE_API_GUILD_PATH)
 async def update_mentemori_guilds(key: str, session: SessionDep):
     if key != os.getenv('API_KEY'):
         raise HTTPException(status_code=403, detail="Unauthorized")

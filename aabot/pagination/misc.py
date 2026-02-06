@@ -1,14 +1,26 @@
 from io import StringIO
+from itertools import dropwhile
 
-from discord import Color, Embed, Interaction
+from discord import ui
 
-from aabot.pagination.views import DropdownView
+from aabot.crud.alias import get_alias
+from aabot.pagination.view import BaseContainer
+from aabot.utils import api
+from aabot.utils.emoji import to_emoji
+from aabot.utils.error import BotError
+from aabot.utils.utils import character_title
+from common.database import SessionAA
 from common.enums import Server
-from common.models import Alias
 from common.timezones import DailyEvents, time_to_local
 
-def alias_embed(name: str, aliases: list[Alias]):
-    description = StringIO()
+async def alias_ui(character: int) -> BaseContainer:
+    name = await api.fetch_name(character)
+    container = BaseContainer(f'### Aliases for {character_title(name.title, name.name)}')
+    async with SessionAA() as session:
+        aliases = await get_alias(session, character)
+        if not aliases:
+            raise BotError(f'No alias found for character `{character}`.')
+
     default = []
     custom = []
     for alias in aliases:
@@ -17,18 +29,9 @@ def alias_embed(name: str, aliases: list[Alias]):
         else:
             default.append(alias.alias)
     
-    description.write('**Default Names**\n')
-    description.write(f'```\n{'\n'.join(default)}```\n')
-    description.write('**Aliases**\n')
-    description.write(f'```{'\n'.join(custom) if custom else 'No alias'}```')
-
-    embed = Embed(
-        title=f'Aliases for {name}',
-        description=description.getvalue(),
-        color=Color.green()
-    )
-
-    return embed
+    container.add_item(ui.TextDisplay(f'**Default Names**\n```\n{'\n'.join(default)}```'))
+    container.add_item(ui.TextDisplay(f'**Aliases**\n```{'\n'.join(custom) if custom else "No alias"}```'))
+    return container
 
 def get_dailyinfo(server: Server):
     text = StringIO()
@@ -48,20 +51,15 @@ def get_dailyinfo(server: Server):
 
     return text.getvalue()
 
-def daily_embed(server: Server):
-    server_name = server.name
+def daily_ui() -> BaseContainer:
+    option_map = {}
+    for server in Server:
+        container = BaseContainer(f'### Daily Information [{server.name}]')
+        container.add_item(ui.TextDisplay(get_dailyinfo(server)))
+        option_map[server.name] = container
+    return option_map
 
-    embed=Embed(
-        title = f'Daily Information [{server_name}]',
-        description=get_dailyinfo(server),
-        color=Color.blue()
-        )
-    return embed
-
-def daily_view(interaction: Interaction, server: Server):
-    return DropdownView(interaction.user, {s.name: [daily_embed(s)] for s in Server}, server.name) 
-
-########## levellink #################
+#levellink
 def get_sublevel(level: float)->tuple[int, int]:
     level = str(level)
     try:
@@ -74,10 +72,61 @@ def get_sublevel(level: float)->tuple[int, int]:
 
     return base, sub
 
-
 def level_predicate(leveldata, base, sub):
     if leveldata['PartyLevel'] < base:
         return True
     if leveldata['PartySubLevel'] < sub:
         return True
     return False
+
+async def levellink_ui(startlevel: float, endlevel: float|None) -> BaseContainer:
+    container = BaseContainer(f'### Level Link Costs')
+    startbase, startsub = get_sublevel(startlevel)
+    if endlevel:
+        endbase, endsub = get_sublevel(endlevel)
+    else:
+        endlevel = endbase = int((startbase+10) / 10) * 10  # next multiple of 10
+        endsub = 0
+
+    if startlevel < 240:
+        return BaseContainer("Currently only levellink(240+) is supported.")
+
+    if startlevel > endlevel:
+        raise BotError(f"`startlevel` should be lower than `endlevel`. Got `{startlevel}` and `{endlevel}`.")
+
+    link_resp = await api.fetch_api(
+        api.MASTER_PATH.format(mb='LevelLinkMB'),
+        response_model=list[dict]
+    )               
+    link_data_list = link_resp.data
+    
+    max_level = link_data_list[-1]['PartyLevel']
+    if endbase == max_level + 1:
+        endsub = 0
+
+    if startlevel > max_level or endbase > max_level+1:
+        return BaseContainer(f"Max level is {max_level}.9")
+    else:
+        level_data = dropwhile(lambda x: level_predicate(x, startbase, startsub), link_data_list)
+        total_gold = 0
+        total_gorb = 0
+        total_rorb = 0
+        for level in level_data:
+            if level['PartyLevel'] == endbase and level['PartySubLevel'] == endsub:  # end
+                break
+            costs = level['RequiredLevelUpItems']
+            total_gold += costs[0]["ItemCount"]  # gold
+            total_gorb += costs[1]["ItemCount"]  # green orbs
+            if len(costs) == 3:
+                total_rorb += costs[2]["ItemCount"]  # red orbs
+    
+    async with SessionAA() as session:
+        container.add_item(
+            ui.TextDisplay(f'**__{startbase}.{startsub} -> {endbase}.{endsub}__**')
+        ).add_item(ui.TextDisplay(
+            f'{await to_emoji(session, 'gold')}×{total_gold:,d}\n'
+            f'{await to_emoji(session, 'green_orb')}×{total_gorb:,d}\n'
+            f'{await to_emoji(session, 'red_orb')}×{total_rorb:,d}'
+        ))
+
+    return container

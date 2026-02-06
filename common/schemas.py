@@ -48,15 +48,32 @@ class Parameter(APIBaseModel):
                 data['category'] = enums.ParameterCategory.Battle
         return data
 
-# class BaseParameterModel(APIBaseModel):   
-#     type: enums.BaseParameter = Field(..., validation_alias='BaseParameterType')
-#     change_type: int = Field(..., alias='ChangeParameterType') 
-#     value: int = Field(..., alias='Value')
+class BaseParameters(APIBaseModel):
+    str: int = Field(validation_alias='Muscle')
+    dex: int = Field(validation_alias='Energy')
+    mag: int = Field(validation_alias='Intelligence')
+    sta: int = Field(validation_alias='Health')
 
-# class BattleParameterModel(APIBaseModel):
-#     type: enums.BattleParameter = Field(..., validation_alias='BattleParameterType')
-#     change_type: int = Field(..., alias='ChangeParameterType') 
-#     value: int = Field(..., alias='Value')
+class BattleParameters(APIBaseModel):
+    hp: int = Field(..., validation_alias="HP")
+    attack: int = Field(..., validation_alias="AttackPower")
+    defense: int = Field(..., validation_alias="Defense")
+    def_break: int = Field(..., validation_alias="DefensePenetration")
+    speed: int = Field(..., validation_alias="Speed")
+    pmdb: int = Field(..., validation_alias="DamageEnhance")
+    acc: int = Field(..., validation_alias="Hit")
+    crit: int = Field(..., validation_alias="Critical")
+    crit_dmg: int = Field(..., validation_alias="CriticalDamageEnhance")
+    debuff_acc: int = Field(..., validation_alias="DebuffHit")
+    counter: int = Field(..., validation_alias="DamageReflect")
+    pdef: int = Field(..., validation_alias="PhysicalDamageRelax")
+    mdef: int = Field(..., validation_alias="MagicDamageRelax")
+    evade: int = Field(..., validation_alias="Avoidance")
+    crit_res: int = Field(..., validation_alias="CriticalResist")
+    pcut: int = Field(..., validation_alias="PhysicalCriticalDamageRelax")
+    mcut: int = Field(..., validation_alias="MagicCriticalDamageRelax")
+    debuff_res: int = Field(..., validation_alias="DebuffResist")
+    hp_drain: int = Field(..., validation_alias="HpDrain")
 
 # Used to show an amount of item. Cost, reward etc
 class ItemCount(APIBaseModel):
@@ -64,7 +81,7 @@ class ItemCount(APIBaseModel):
     item_type: int = Field(..., validation_alias='ItemType', examples=[3])
     count: int = Field(..., validation_alias='ItemCount', examples=[1000])
 
-# Character
+# Character 563196 626555 703995 478716
 class Character(APIBaseModel):
     char_id: int = Field(..., validation_alias='Id')
     name: str = Field(..., validation_alias='NameKey')
@@ -72,14 +89,21 @@ class Character(APIBaseModel):
     element: enums.Element = Field(..., validation_alias='ElementType')
     rarity: enums.CharacterRarity = Field(..., validation_alias='RarityFlags')
     job: enums.Job = Field(..., validation_alias='JobFlags')
-    speed: int = Field(..., validation_alias=AliasPath('InitialBattleParameter', 'Speed'))
+    character_type: enums.CharacterType = Field(..., validation_alias='CharacterType')
+    speed: int = Field(..., validation_alias=AliasPath('InitialBattleParameter', 'Speed'), description='Shortcut for "battle_params.speed"')
     uw: str|None = Field(...)
+    base_coefficients: BaseParameters = Field(..., validation_alias='BaseParameterCoefficient', description='Base parameter coefficients')
+    gross_coefficient: int = Field(..., validation_alias='BaseParameterGrossCoefficient', description='Base parameter gross coefficient. [Stats = (total * m + b) * base / gross] ')
+    init_battle_paramters: BattleParameters = Field(..., validation_alias='InitialBattleParameter', description='Flat increases to battle parameters')
     attack_type: enums.NormalSkill = Field(..., validation_alias='NormalSkillId')
     actives: list[int] = Field(..., validation_alias='ActiveSkillIds')
     passives: list[int] = Field(..., validation_alias='PassiveSkillIds')
+    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+    end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
 
 class Profile(APIBaseModel):
     char_id: int = Field(..., validation_alias='Id')
+    description: str = Field(..., validation_alias='DescriptionKey')
     birthday: int = Field(..., validation_alias='Birthday')
     height: int = Field(..., validation_alias='Height')
     weight: int = Field(..., validation_alias='Weight')
@@ -170,6 +194,48 @@ class Arcana(APIBaseModel):
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     required_level: int = Field(..., validation_alias='RequiredPartyLv', description='Required level link to unlock arcana')
 
+class CoefficientInfo(APIBaseModel):
+    m: float
+    b: int
+
+class CharacterPotential(APIBaseModel):
+    levels: dict[str, int] = Field(
+        ...,
+        description='Dict with keys of "*Level*.*SubLevel*" and value being total parameters. Sublevels can be 0 to 9 and all levels before 240 will have sublevel of 0, e.g. "1.0", "2.0", ..., "239.0", "240.0", "240.1", ..."',
+        examples=[
+            {
+                "1.0": 2450,
+                "2.0": 2578,
+                "239.0": 884263,
+                "240.0": 894911,
+                "240.1": 901608,
+                "240.2": 908305
+            }
+        ]
+    )
+    coefficients: dict[enums.CharacterBaseRarity, dict[enums.CharacterRarity, CoefficientInfo]] = Field(
+        ...,
+        examples=[
+            {
+                enums.CharacterBaseRarity.N: {
+                    enums.CharacterRarity.N: CoefficientInfo(m=0.82875, b=0),
+                    enums.CharacterRarity.R: CoefficientInfo(m=0.975, b=0),
+                    enums.CharacterRarity.RPlus: CoefficientInfo(m=1.1199808961221092, b=1050),
+                },
+                enums.CharacterBaseRarity.R: {
+                    enums.CharacterRarity.N: CoefficientInfo(m=0.82875, b=0),
+                    enums.CharacterRarity.R: CoefficientInfo(m=0.975, b=0),
+                    enums.CharacterRarity.RPlus: CoefficientInfo(m=1.1199808961221092, b=1050),
+                },
+                enums.CharacterBaseRarity.SR: {
+                    enums.CharacterRarity.N: CoefficientInfo(m=0.82875, b=0),
+                    enums.CharacterRarity.R: CoefficientInfo(m=1.0, b=0),
+                    enums.CharacterRarity.RPlus: CoefficientInfo(m=1.148698354997035, b=1070),
+                }
+            }
+        ]
+    )
+
 # Equipment
 class Equipment(APIBaseModel):
     equip_id: int = Field(..., validation_alias='Id')
@@ -248,6 +314,7 @@ class EquipmentCosts(APIBaseModel):
 
 # Gacha
 class GachaPickup(APIBaseModel):
+    gacha_case_id: int|None = Field(..., validation_alias='Id', description='IoC and IoSG will be null due to data limitations and optimization purposes. Refer to following instead. IoC normal soul(7), IoC radiant/chaos (8), IoSG normal soul (10000), IoSG radiant/chaos (20000) ')
     start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     gacha_type: enums.GachaType = Field(..., validation_alias='GachaSelectListType')
@@ -255,18 +322,14 @@ class GachaPickup(APIBaseModel):
     char_id: int
 
 class GachaChosenGroup(APIBaseModel):
-    banner_id: int = Field(..., validation_alias='Id', description='Discriminator for grouping of chosen banners')
+    select_list_id: int = Field(..., validation_alias='Id')
     start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
     banners: list[GachaPickup]
     
-class GachaEminenceGroup(APIBaseModel):
-    banner_id: int = Field(..., validation_alias='Id', description='Discriminator for grouping of eminence banners')
-    start: str = Field(..., validation_alias='StartTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
-    end: str = Field(..., validation_alias='EndTimeFixJST', pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', description='JST')
+class GachaEminenceGroup(GachaChosenGroup):
     limit_days: int = Field(..., validation_alias='GachaLimitDay', description='Number of days the banner will be active')
     open_day: int = Field(..., validation_alias='GachaOpenDayFromCreatePlayer', description='Days from player creation the banner becomes available')
-    banners: list[GachaPickup]
 
 class GachaPickupBanners(APIBaseModel):
     fleeting: list[GachaPickup]
@@ -276,7 +339,7 @@ class GachaPickupBanners(APIBaseModel):
     eminence: list[GachaEminenceGroup]
     
 class GachaBanner(APIBaseModel):
-    # TODO for actual banners
+    # TODO for actual banners. (GachaCase/GachaCaseUI + char ids)
     pass
 
 # Groups
@@ -407,34 +470,7 @@ class CharacterItem(ItemBase):
 
 type Item = EquipmentFragment|CharacterItem|CharacterFragment|EquipmentSetMaterial|QuickTicket|Rune|TreasureChest|ItemBase
 
-# PvE
-class BaseParameters(APIBaseModel):
-    str: int = Field(validation_alias='Muscle')
-    dex: int = Field(validation_alias='Energy')
-    mag: int = Field(validation_alias='Intelligence')
-    sta: int = Field(validation_alias='Health')
-
-class BattleParameters(APIBaseModel):
-    hp: int = Field(..., validation_alias="HP")
-    attack: int = Field(..., validation_alias="AttackPower")
-    defense: int = Field(..., validation_alias="Defense")
-    def_break: int = Field(..., validation_alias="DefensePenetration")
-    speed: int = Field(..., validation_alias="Speed")
-    pmdb: int = Field(..., validation_alias="DamageEnhance")
-    acc: int = Field(..., validation_alias="Hit")
-    crit: int = Field(..., validation_alias="Critical")
-    crit_dmg: int = Field(..., validation_alias="CriticalDamageEnhance")
-    debuff_acc: int = Field(..., validation_alias="DebuffHit")
-    counter: int = Field(..., validation_alias="DamageReflect")
-    pdef: int = Field(..., validation_alias="PhysicalDamageRelax")
-    mdef: int = Field(..., validation_alias="MagicDamageRelax")
-    evade: int = Field(..., validation_alias="Avoidance")
-    crit_res: int = Field(..., validation_alias="CriticalResist")
-    pcut: int = Field(..., validation_alias="PhysicalCriticalDamageRelax")
-    mcut: int = Field(..., validation_alias="MagicCriticalDamageRelax")
-    debuff_res: int = Field(..., validation_alias="DebuffResist")
-    hp_drain: int = Field(..., validation_alias="HpDrain")
-    
+# PvE 
 class Enemy(APIBaseModel):
     enemy_id: int = Field(..., validation_alias='Id')
     name: str = Field(..., validation_alias='NameKey')
@@ -459,8 +495,9 @@ class Quest(APIBaseModel):
     gold: int = Field(..., validation_alias='GoldPerMinute')
     red_orb: int = Field(..., validation_alias='PotentialJewelPerDay')
     population: int = Field(..., validation_alias='Population')
-    # min_green_orb: int
-    # min_exp
+    min_green_orb: int = Field(..., validation_alias='MinCharacterExp', description='Note: Unknown how this affects ingame numbers')
+    min_exp: int = Field(..., validation_alias='MinPlayerExp', description='Note: Unknown how this affects ingame numbers')
+    bp: int = Field(..., validation_alias='BaseBattlePower', description='Note: Unknown how this affects ingame numbers')
 
 class Tower(APIBaseModel):
     tower_id: int = Field(..., validation_alias='Id')
@@ -604,6 +641,13 @@ class CharacterDBModel(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+
+class AltCharacter(BaseModel):
+    id: int
+    base_id: int
+
+    class Config:
+        from_attributes = True
 
 # Common Enum Strings
 class CommonStrings(BaseModel):

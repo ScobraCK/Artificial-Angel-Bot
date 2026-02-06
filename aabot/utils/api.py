@@ -4,54 +4,13 @@ from typing import TypeVar
 
 from async_lru import alru_cache
 
-from aabot.utils.error import BotError
+from aabot.utils.error import BotError, BotAPIError
 from common.enums import Language
+from common.routes import *  # All API paths moved to common
 from common.schemas import APIResponse, CommonStrings, Item, Name, StringKey
 
 from aabot.utils.logger import get_logger
 logger = get_logger(__name__)
-
-API_BASE_PATH = 'http://api:8000/'
-STRING_PATH = 'strings/{key}'
-STRING_COMMON_PATH = 'strings/common'
-STRING_CHARACTER_PATH_ALL = 'strings/character'
-STRING_CHARACTER_PATH = 'strings/character/{char_id}'
-EQUIPMENT_PATH = 'equipment/{eqp_id}'
-EQUIPMENT_NORMAL_PATH = 'equipment/search'
-EQUIPMENT_UNIQUE_PATH = 'equipment/unique/search'
-EQUIPMENT_UPGRADE_PATH = 'equipment/upgrade'
-CHARACTER_LIST_PATH = 'character/list'
-CHARACTER_PATH = 'character/{char_id}'
-CHARACTER_PROFILE_PATH = 'character/{char_id}/profile'
-CHARACTER_LAMENT_PATH = 'character/{char_id}/lament'
-CHARACTER_SKILL_PATH = 'character/{char_id}/skill'
-CHARACTER_VOICE_PATH = 'character/{char_id}/voiceline'
-CHARACTER_MEMORY_PATH = 'character/{char_id}/memory'
-ARCANA_PATH = 'arcana'
-ITEM_PATH = 'item'
-ITEM_RUNE_PATH = 'item/rune'
-ITEM_RUNE_CATEGORY_PATH = 'item/rune/{category}'
-SKILL_PATH = 'skill/{skill_id}'
-QUEST_PATH = 'quest/{quest_id}'
-TOWER_PATH = 'tower'
-GUILD_RANKING_PATH = 'guild/ranking'
-PLAYER_RANKING_PATH = 'player/ranking'
-GACHA_PATH = 'gacha'
-
-MASTER_PATH = 'master/{mb}'
-
-UPDATE_PATH = 'admin/update'
-UPDATE_STR_PATH = 'admin/update/strings'
-UPDATE_CHAR_PATH = 'admin/update/characters'
-UPDATE_API_GUILD_PATH = 'admin/mentemori/guilds'
-UPDATE_API_PLAYERS_PATH = 'admin/mentemori/players'
-
-MENTEMORI_BASE_PATH = 'https://api.mentemori.icu/'
-MENTEMORI_WORLD_PATH = 'worlds'
-MENTEMORI_TEMPLE_PATH = '{world_id}/temple/latest'
-MENTEMORI_GROUP_PATH = 'wgroups'
-MENTEMORI_GACHA_PATH = '{server_id}/{gacha}/latest'
-MENTEMORI_RAID_EVENT_PATH = '{world_id}/guild_raid/latest'
 
 T = TypeVar('T')
 
@@ -80,11 +39,18 @@ async def fetch_api(
             
         except httpx.HTTPStatusError as e:
             if response:
-                if response.status_code != 500:
-                    error = response.json()  # TODO fix in case of 500
+                if response.status_code == 500:
+                    detail = 'Internal Server Error'
                 else:
-                    error = {"detail": "Internal Server Error"}
-                raise BotError(f"Error in API: {response.status_code} - {html2text.HTML2Text().handle(str(error.get('detail', 'No details')))}")
+                    error = response.json()
+                    error_detail = error.get('detail')
+                    if error_detail is None:
+                        detail = 'No Details'
+                    elif isinstance(error_detail, dict):
+                        detail = error_detail.get('msg') if error_detail.get('msg') else 'No Details'
+                    else:
+                        detail = error_detail
+                raise BotAPIError(response.status_code, detail)
             else:
                 raise BotError(f"Error in API: Details unknown.")
         except httpx.RequestError as e:
@@ -103,7 +69,7 @@ async def fetch(
             return response
             
         except httpx.HTTPStatusError as e:
-            raise BotError(f"Error in external API: {url} - {response.status_code}")
+            raise BotAPIError(response.status_code, f"Error in external API: {url} - {response.status_code}")
         except httpx.TimeoutException as e:
             logger.error(f'Timeout fetching {url}: {e}')
             raise e  # Want to get notifications for now
@@ -118,7 +84,7 @@ async def fetch_string(key: str) -> APIResponse[StringKey]:
 async def fetch_name(char_id: int, language: Language = Language.enus) -> Name:
     '''Does not return APIResponse[Name]. Use for quick access to a single name.'''
     name_data = await fetch_api(
-        STRING_CHARACTER_PATH.format(char_id=char_id),
+        STRING_CHARACTER_ID_PATH.format(char_id=char_id),
         response_model=Name,
         query_params={'language': language}
     )

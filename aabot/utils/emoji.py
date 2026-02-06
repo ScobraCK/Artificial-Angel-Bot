@@ -21,7 +21,7 @@ def _get_emoji_name(
     elif isinstance(obj, str):  
         return emoji_list.get(obj.lower())
     elif isinstance(obj, Rune):
-        return f'SPH_{obj.icon:04}'
+        return f'SPH_{obj.icon:04}'  # TODO add other runes
     elif isinstance(obj, EquipmentFragment):
         return 'fragment'
     elif isinstance(obj, QuickTicket):
@@ -54,7 +54,7 @@ async def to_emoji(
             return f'{_emoji_cache[name]}({obj.hours}h)'
         else:
             return _emoji_cache[name]
-    elif name.startswith(':') and name.endswith(':'):  # default emoji
+    elif isinstance(name, str) and name.startswith(':') and name.endswith(':'):  # default emoji
         _emoji_cache[name] = name
         return name
     else:
@@ -68,6 +68,8 @@ async def to_emoji(
 async def char_ele_emoji(char_id: int) -> str:
     async with SessionAA() as session:
         char = await get_character(session, char_id)
+        if not char:
+            raise ValueError(f'Character with id {char_id} not found in characters table')
         emoji = await to_emoji(session, Element(char.element))
     return emoji
 
@@ -138,6 +140,9 @@ emoji_list = {
     'helmet': 'equipment_helmet_01',
     'armor': 'equipment_armor_01',
     'shoes': 'equipment_shoes_01',
+    'weapon_1': 'equipment_weapon_warrior_01',
+    'weapon_2': 'equipment_weapon_sniper_01',
+    'weapon_4': 'equipment_weapon_sorcerer_01',
     'sword': 'equipment_weapon_warrior_01',
     'pistol': 'equipment_weapon_sniper_01',
     'tome': 'equipment_weapon_sorcerer_01',
@@ -147,4 +152,7 @@ emoji_list = {
     'star2': 'battle_difficulty_02',
     'x': 'close',
     'check': 'check_03',
+    'resonance': 'CSK_000035004',
+    'down': 'arrow_parameter_down',
+    'up': 'arrow_parameter_up',
 }

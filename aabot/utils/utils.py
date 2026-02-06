@@ -2,15 +2,14 @@ import re
 from typing import Literal
 
 from table2ascii import Alignment, PresetStyle, table2ascii as t2a
-from common.enums import BattleParameter, Language, Server
-from common.schemas import Parameter, CommonStrings
+from common import enums, schemas
 
 PERCENTAGE_PARAMS = [
-    BattleParameter.CRIT_DMG_BOOST,
-    BattleParameter.M_CRIT_DMG_CUT,
-    BattleParameter.P_CRIT_DMG_CUT,
-    BattleParameter.COUNTER,
-    BattleParameter.HP_DRAIN
+    enums.BattleParameter.CRIT_DMG_BOOST,
+    enums.BattleParameter.M_CRIT_DMG_CUT,
+    enums.BattleParameter.P_CRIT_DMG_CUT,
+    enums.BattleParameter.COUNTER,
+    enums.BattleParameter.HP_DRAIN
 ]
 
 def remove_linebreaks(text: str):
@@ -46,7 +45,7 @@ def decimal_format(num: int)->str:
     decimal = 1 if num % 10 == 0 else 2
     return f'{num/100:.{decimal}f}'
 
-def param_string(param: Parameter, cs: CommonStrings):
+def param_string(param: schemas.Parameter, cs: schemas.CommonStrings):
     param_type = param.category
     if param_type == 'Base':
         param_type_dict = cs.base_param
@@ -62,13 +61,13 @@ def param_string(param: Parameter, cs: CommonStrings):
     else:  # [BattleParameterCharacterLevelConstantMultiplicationAddition]
         return f'{param_type_dict[param.type]} Chara. Lv×{param.value:,}'
 
-def to_world_id(server: Server, world: int):
+def to_world_id(server: enums.Server, world: int):
     return int(f'{server}{world:03}')
 
-def from_world_id(worldid: int) -> tuple[Server, int]:
+def from_world_id(worldid: int) -> tuple[enums.Server, int]:
     if isinstance(worldid, str):
         worldid = int(worldid)
-    server = Server(worldid // 1000)
+    server = enums.Server(worldid // 1000)
     world = worldid % 1000
     return server, world
 
@@ -158,3 +157,40 @@ def make_table(data, header: list[str], style=Literal['thin_compact', 'ascii_sim
         alignments=Alignment.LEFT,
         cell_padding=cell_padding
     )
+
+def calculate_base_stat(total, m, b, coefficient, gross):
+    return int((total * m + b) * coefficient / gross)
+
+
+def base_param_text(params: schemas.BaseParameters, cs: schemas.CommonStrings)->str:
+    text = (
+        f'```json\n'
+        f'{cs.base_param[enums.BaseParameter.STR]}: {params.str:,}\n'
+        f'{cs.base_param[enums.BaseParameter.DEX]}: {params.dex:,}\n'
+        f'{cs.base_param[enums.BaseParameter.MAG]}: {params.mag:,}\n'
+        f'{cs.base_param[enums.BaseParameter.STA]}: {params.sta:,}```'
+    )
+    return text
+
+
+def battle_param_text(params: schemas.BattleParameters, cs: schemas.CommonStrings)->str:
+    text = (
+        f'```json\n'
+        f'{cs.battle_param[enums.BattleParameter.HP]}: {params.hp:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.ATK]}: {params.attack:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.DEF]}: {params.defense:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.DEF_BREAK]}: {params.def_break:,}\n'
+        f'{cs.battle_param[enums.BattleParameter.SPD]}: {params.speed:,}\n'
+        f'```'
+        f'```json\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.PM_DEF_BREAK]}: {params.pmdb:,}":<24}{f"{cs.battle_param[enums.BattleParameter.P_DEF]}: {params.pdef:,}":<22}\n'
+        f'{"":<24}{f"{cs.battle_param[enums.BattleParameter.M_DEF]}: {params.mdef:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.ACC]}: {params.acc:,}":<24}{f"{cs.battle_param[enums.BattleParameter.EVD]}: {params.evade:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.CRIT]}: {params.crit:,}":<24}{f"{cs.battle_param[enums.BattleParameter.CRIT_RES]}: {params.crit_res:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.CRIT_DMG_BOOST]}: {decimal_format(params.crit_dmg)}%":<24}{f"{cs.battle_param[enums.BattleParameter.P_CRIT_DMG_CUT]}: {decimal_format(params.pcut)}%":<22}\n'
+        f'{"":<24}{f"{cs.battle_param[enums.BattleParameter.M_CRIT_DMG_CUT]}: {decimal_format(params.mcut)}%":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.DEBUFF_ACC]}: {params.debuff_acc:,}":<24}{f"{cs.battle_param[enums.BattleParameter.DEBUFF_RES]}: {params.debuff_res:,}":<22}\n'
+        f'{f"{cs.battle_param[enums.BattleParameter.COUNTER]}: {decimal_format(params.counter)}%":<24}{f"{cs.battle_param[enums.BattleParameter.HP_DRAIN]}: {decimal_format(params.hp_drain)}%":<22}\n'
+        f'```'
+    )
+    return text

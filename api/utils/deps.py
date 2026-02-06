@@ -6,7 +6,6 @@ from common.enums import Language
 
 language_codes = Literal['enus']
 
-# Totally not copied from atlas api 
 async def language_parameter(language: Language|None=None):
     """Dependency for the language parameter, defaults to Language.enus if none is supplied"""
     if language:

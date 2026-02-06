@@ -1,6 +1,7 @@
 from api.utils.masterdata import MasterData
 from api.utils.error import APIError
 from api.schemas.equipment import search_uw_info
+from api.schemas.string_keys import get_uw_desc_strings
 from common import schemas
 
 async def find_character_skill_ids(md: MasterData, id: int) -> tuple[list[int], list[int]]:

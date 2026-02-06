@@ -5,7 +5,7 @@ from aabot.crud.alias import delete_alias
 from aabot.crud.emoji import update_emojis
 from aabot.main import AABot
 from aabot.utils import api
-from aabot.utils.alias import add_alias, auto_alias
+from aabot.utils.alias import add_alias, autoalias, autoalias_all
 from common.database import SessionAA
 
 class AdminCommands(commands.Cog, name='Admin Commands'):
@@ -62,18 +62,7 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         '''
         await interaction.response.defer()
         await api.fetch(api.UPDATE_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=60)
-        # data = response.json()
-        # updated = data.get('data')
-        # chars = data.get('new_chars')
-
-        # aliases = []
-        # async with SessionAA() as session:
-        #     for char in chars:
-        #         aliases.extend(await auto_alias(session, char))
-
-        await interaction.followup.send(
-            'Successfully updated masterdata.'
-        )
+        await interaction.followup.send('Successfully updated masterdata.')
 
     @app_commands.command()
     async def updatestrings(
@@ -99,15 +88,24 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         response = await api.fetch(f'{api.API_BASE_PATH}{api.UPDATE_CHAR_PATH}', params={'key': self.bot.api_key}, timeout=60)
         data = response.json()
         chars = data.get('new')
-        aliases = []
-        async with SessionAA() as session:
-            for char in chars:
-                await auto_alias(session, char)
 
         await interaction.followup.send(
             'Successfully updated characters.\n'
             f'Characters added: {str(chars) if chars else 'None'}\n\n'
         )
+
+    @app_commands.command()
+    async def resetalts(
+        self,
+        interaction: Interaction
+    ):
+        '''
+        Resets or initalizes api alts. 
+        '''
+        await interaction.response.defer()
+        await api.fetch(f'{api.API_BASE_PATH}{api.RESET_ALT_PATH}', params={'key': self.bot.api_key}, timeout=60)
+
+        await interaction.followup.send('Successfully reset alts.')
     
     @app_commands.command()
     async def addalias(
@@ -134,9 +132,23 @@ class AdminCommands(commands.Cog, name='Admin Commands'):
         Auto alias
         '''
         async with SessionAA() as session:
-            results = await auto_alias(session, character, serial=serial)
-            aliases = ', '. join(results)
+            results = await autoalias(session, character, serial=serial)
+            aliases = ', '.join(results)
         await interaction.response.send_message(f'Added aliases {aliases} for character {character}')
+
+    @app_commands.command()
+    async def autoaliasall(
+        self,
+        interaction: Interaction
+    ):
+        '''
+        Rerun autoalias for all characters.
+        '''
+        await interaction.response.defer()
+        async with SessionAA() as session:
+            results = await autoalias_all(session)
+            aliases = ', '.join(results)
+        await interaction.followup.send(f'Added aliases {aliases}')
 
     @app_commands.command()
     async def deletealias(

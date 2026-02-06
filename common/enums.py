@@ -24,6 +24,22 @@ class Language(StrEnum):
     vivn = 'vivn'
     zhcn = 'zhcn'
 
+# limit language options to officially supported languages
+class LanguageOptions(StrEnum):
+    jajp = 'jajp'
+    kokr = 'kokr'
+    enus = 'enus'
+    zhtw = 'zhtw'
+    # dede = 'dede'
+    # esmx = 'esmx'
+    # frfr = 'frfr'
+    # idid = 'idid'
+    # ptbr = 'ptbr'
+    # ruru = 'ruru'
+    # thth = 'thth'
+    # vivn = 'vivn'
+    zhcn = 'zhcn'
+
 class Element(IntEnum):
     Azure = 1
     Crimson = 2
@@ -69,6 +85,11 @@ class ParameterChangeType(IntEnum):
     CharacterLevelAdd = 3  # CharacterLevelConstantMultiplicationAddition
 
 # Character
+class CharacterType(IntEnum):
+    Normal = 0
+    Qlipha = 1
+    ColorChange = 2
+
 class Job(IntFlag):
     Warrior = 1
     Sniper = 2
@@ -95,6 +116,11 @@ class CharacterRarity(IntFlag):
     LRPlus8 = 131072
     LRPlus9 = 262144
     LRPlus10 = 524288
+
+class CharacterBaseRarity(IntEnum):
+    N = 1
+    R = 2
+    SR = 8
 
 class BloodType(Enum):
     Unknown = 0   # Liz, Matilda

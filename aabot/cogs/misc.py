@@ -1,19 +1,13 @@
-from itertools import dropwhile
-
-from discord import app_commands, Color, Embed, Interaction
+from discord import Interaction, MediaGalleryItem, app_commands, ui
 from discord.ext import commands
 
-from aabot.crud.alias import get_alias
+
 from aabot.main import AABot
-from aabot.pagination import misc as misc_page
-from aabot.pagination.views import show_view
-from aabot.utils import api
+from aabot.pagination import misc as misc_ui
+from aabot.pagination.view import BaseView, BaseContainer
 from aabot.utils.alias import IdTransformer
 from aabot.utils.assets import RAW_ASSET_BASE
 from aabot.utils.command_utils import apply_user_preferences
-from aabot.utils.error import BotError
-from aabot.utils.utils import character_title
-from common.database import SessionAA
 from common.enums import Server
 
 class MiscCommands(commands.Cog, name='Misc Commands'):
@@ -25,53 +19,49 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
     @app_commands.command()
     async def awakening(self, interaction: Interaction):
         '''Awakening cost chart'''
-        embed=Embed()
+        container = BaseContainer()
         img = RAW_ASSET_BASE + 'Bot/awakening_costs.png'
-        embed.set_image(url=img)
-        await interaction.response.send_message(
-            embed=embed
-        )
+        container.add_item(ui.MediaGallery(MediaGalleryItem(img)))
+        view = BaseView(container, interaction.user)
+        await view.update_view(interaction)
 
     @app_commands.command()
     async def soulaffinity(self, interaction: Interaction):
         '''Soul affinity chart'''
-        embed=Embed()
+        container = BaseContainer()
         img = RAW_ASSET_BASE + 'Bot/soul_affinity.jpg'
-        embed.set_image(url=img)
-        await interaction.response.send_message(
-            embed=embed
-        )
+        container.add_item(ui.MediaGallery(MediaGalleryItem(img)))
+        view = BaseView(container, interaction.user)
+        await view.update_view(interaction)
 
     @app_commands.command()
     async def enhancecost(self, interaction: Interaction):
         '''Equipment enhancement cost chart'''
-        embed=Embed()
+        container = BaseContainer()
         img = RAW_ASSET_BASE + 'Bot/enhance.png'
-        embed.set_image(url=img)
-        await interaction.response.send_message(
-            embed=embed
-        )
+        container.add_item(ui.MediaGallery(MediaGalleryItem(img)))
+        view = BaseView(container, interaction.user)
+        await view.update_view(interaction)
 
     @app_commands.command()
     async def seteffect(self, interaction: Interaction):
         '''Equipment set effect chart'''
-        embed=Embed()
+        container = BaseContainer()
         img = RAW_ASSET_BASE + 'Bot/seteffects.png'
-        embed.set_image(url=img)
-        await interaction.response.send_message(
-            embed=embed
-        )
+        container.add_item(ui.MediaGallery(MediaGalleryItem(img)))
+        view = BaseView(container, interaction.user)
+        await view.update_view(interaction)
 
     @app_commands.command()
     @apply_user_preferences()
-    async def dailyinfo(self,
-                        interaction: Interaction, 
-                        server: Server|None = None):
+    async def dailyinfo(
+        self,
+        interaction: Interaction, 
+        server: Server|None = None
+    ):
         '''list of notable daily events shown in local time'''
-        
-        view = misc_page.daily_view(interaction, server)
-        await show_view(interaction, view)
-
+        view = BaseView(misc_ui.daily_ui(), interaction.user, default_option=server.name)
+        await view.update_view(interaction)
 
     # TODO redo levellink
     @app_commands.command()
@@ -87,68 +77,9 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
         '''
         Calculate level link costs.
         '''
-
-        startbase, startsub = misc_page.get_sublevel(startlevel)
-        if endlevel:
-            endbase, endsub = misc_page.get_sublevel(endlevel)
-        else:
-            endlevel = endbase = int((startbase+10) / 10) * 10
-            endsub = 0
-
-        if startlevel < 240:
-            await interaction.response.send_message(
-                "Currently only levellink(240+) is supported.",
-                ephemeral=True
-            )
-
-        elif startlevel > endlevel:
-            await interaction.response.send_message(
-                f"startlevel should be lower than baselevel. Got `{startlevel}` and `{endlevel}`.",
-                ephemeral=True
-            )       
-
-        else:
-            link_data = await api.fetch_api(
-                api.MASTER_PATH.format(mb='LevelLinkMB'),
-                response_model=list[dict]
-            )               
-            link_data_list = link_data.data
-            
-            max_level = link_data_list[-1]['PartyLevel']
-            if endbase == max_level + 1:
-                endsub = 0
-            if startlevel > max_level or endbase > max_level+1:
-                await interaction.response.send_message(
-                    f"Max level is {max_level}.9",
-                    ephemeral=True
-                )
-            else:
-                level_data = dropwhile(lambda x: misc_page.level_predicate(x, startbase, startsub), link_data_list)
-                total_gold = 0
-                total_gorb = 0
-                total_rorb = 0
-                for level in level_data:
-                    if level['PartyLevel'] == endbase and level['PartySubLevel'] == endsub:  # end
-                        break
-                    costs = level['RequiredLevelUpItems']
-                    total_gold += costs[0]["ItemCount"]  # gold
-                    total_gorb += costs[1]["ItemCount"]  # green orbs
-                    if len(costs) == 3:
-                        total_rorb += costs[2]["ItemCount"]  # red orbs      
-                
-                embed = Embed(
-                    title='Level Link Costs',
-                    description=(
-                        f"**__{startbase}.{startsub} -> {endbase}.{endsub}__**\n"
-                        f"Gold: {total_gold:,d}\n"
-                        f"Green Orbs: {total_gorb:,d}\n"
-                        f"Red Orbs: {total_rorb:,d}\n"
-                    ),
-                    color=Color.dark_gold()
-                )
-
-                await interaction.response.send_message(embed=embed)
-
+        view = BaseView(await misc_ui.levellink_ui(startlevel, endlevel), interaction.user)
+        await view.update_view(interaction)
+        
     @app_commands.command()
     @app_commands.describe(
         character = 'The name or id of the character'
@@ -158,16 +89,9 @@ class MiscCommands(commands.Cog, name='Misc Commands'):
         interaction: Interaction,
         character: app_commands.Transform[int, IdTransformer]
     ):
-        async with SessionAA() as session:
-            aliases = await get_alias(session, character)
-            if not aliases:
-                await interaction.response.send_message(f'No alias found for character `{character}`.')
-                return
-            
-            name = await api.fetch_name(character)
-
-            embed = misc_page.alias_embed(character_title(name.title, name.name), aliases)
-            await interaction.response.send_message(embed=embed)
+        '''Show aliases for a character'''
+        view = BaseView(await misc_ui.alias_ui(character), interaction.user)
+        await view.update_view(interaction)
 
 
 async def setup(bot: AABot):
