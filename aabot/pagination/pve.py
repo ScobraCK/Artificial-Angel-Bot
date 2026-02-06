@@ -55,13 +55,13 @@ def get_enemy_thumbnail(enemy: schemas.Enemy) -> str:
 async def enemy_basic_text(enemy: schemas.Enemy, session: AsyncSession) -> str:
     return (
         f'{await to_emoji(session, 'atk')} {hf(enemy.battle_params.attack)} '
-        f'{await to_emoji(session, 'hp')} {hf(enemy.battle_params.hp)} '
         f'{await to_emoji(session, 'def')} {hf(enemy.battle_params.defense)}\n'
+        f'{await to_emoji(session, 'hp')} {hf(enemy.battle_params.hp)} '
         f'{await to_emoji(session, 'spd')} {enemy.battle_params.speed}\n'
-        f'{await to_emoji(session, 'str')}{hf(enemy.base_params.str)} '
-        f'{await to_emoji(session, 'dex')}{hf(enemy.base_params.dex)} '
-        f'{await to_emoji(session, 'mag')}{hf(enemy.base_params.mag)} '
-        f'{await to_emoji(session, 'sta')}{hf(enemy.base_params.sta)}'
+        f'{await to_emoji(session, 'str')} {hf(enemy.base_params.str)} '
+        f'{await to_emoji(session, 'dex')} {hf(enemy.base_params.dex)}\n'
+        f'{await to_emoji(session, 'mag')} {hf(enemy.base_params.mag)} '
+        f'{await to_emoji(session, 'sta')} {hf(enemy.base_params.sta)}'
     )
 
 async def enemy_detail_ui(enemy: schemas.Enemy, cs: schemas.CommonStrings) -> BaseContainer:
