@@ -495,8 +495,9 @@ class Quest(APIBaseModel):
     gold: int = Field(..., validation_alias='GoldPerMinute')
     red_orb: int = Field(..., validation_alias='PotentialJewelPerDay')
     population: int = Field(..., validation_alias='Population')
-    # min_green_orb: int
-    # min_exp
+    min_green_orb: int = Field(..., validation_alias='MinCharacterExp', description='Note: Unknown how this affects ingame numbers')
+    min_exp: int = Field(..., validation_alias='MinPlayerExp', description='Note: Unknown how this affects ingame numbers')
+    bp: int = Field(..., validation_alias='BaseBattlePower', description='Note: Unknown how this affects ingame numbers')
 
 class Tower(APIBaseModel):
     tower_id: int = Field(..., validation_alias='Id')

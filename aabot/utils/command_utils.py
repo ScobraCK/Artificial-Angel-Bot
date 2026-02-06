@@ -144,3 +144,16 @@ async def itemtype_autocomplete(interaction: Interaction, current: int):
 #         app_commands.Choice(name=f'{choice[1]}-{choice[2]}', value=f'{choice[1]}-{choice[2]}')
 #         for choice in group_list if in_range(current, choice[1], choice[2])
 #     ]
+
+# rarity_color = {
+#     1: Color.default(),
+#     2: Color.default(),
+#     4: Color.default(),
+#     8: Color.default(),
+#     16: Color.default(),
+#     32: Color.from_str('#aeb5bf'),
+#     64: Color.from_str('#d9af5b'),
+#     128: Color.from_str('#8d54ab'),
+#     256: Color.from_str('#c0474e'),
+#     512: Color.from_str('#272c26'),
+# }

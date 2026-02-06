@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from aabot.main import AABot
 from aabot.pagination.help import command_help_ui, default_help_ui
-from aabot.pagination.view import BaseContainer, BaseView, to_content
+from aabot.pagination.view import BaseContainer, BaseView
 
 
 class HelpCommands(commands.Cog, name='Help Commands'):
@@ -27,7 +27,7 @@ class HelpCommands(commands.Cog, name='Help Commands'):
             else:
                 content = command_help_ui(cmd)
              
-        view = BaseView(to_content(content), interaction.user)
+        view = BaseView(content, interaction.user)
         await view.update_view(interaction)
 
 async def setup(bot: AABot):

@@ -69,7 +69,7 @@ async def fetch(
             return response
             
         except httpx.HTTPStatusError as e:
-            raise BotError(f"Error in external API: {url} - {response.status_code}")
+            raise BotAPIError(response.status_code, f"Error in external API: {url} - {response.status_code}")
         except httpx.TimeoutException as e:
             logger.error(f'Timeout fetching {url}: {e}')
             raise e  # Want to get notifications for now

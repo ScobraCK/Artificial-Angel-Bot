@@ -1,17 +1,16 @@
 from collections import Counter
-from io import StringIO
 
-from discord import Color, Embed, Interaction
+from discord import  ui
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from aabot.pagination.embeds import BaseEmbed
-from aabot.pagination.views import MixedView
+from aabot.pagination.view import BaseContainer
 from aabot.utils import api
-from aabot.utils.assets import RAW_ASSET_BASE, SOUL_BONUS
+from aabot.utils.assets import CHARACTER_THUMBNAIL, ENEMY_THUMBNAIL, SOUL_BONUS
 from aabot.utils.emoji import to_emoji
 from aabot.utils.itemcounter import ItemCounter
 from aabot.utils.utils import base_param_text, battle_param_text, from_quest_id, human_format as hf
 from common import enums, schemas
+from common.database import SessionAA
 
 def get_bonus_url(soul_list):
     c = Counter(soul_list)
@@ -32,157 +31,168 @@ def get_bonus_url(soul_list):
         bonus = '4'
     
     if dark:
-        bonus = f"{bonus}_{dark+4}"
+        bonus = f'{bonus}_{dark+4}'
         
     bonus_url = SOUL_BONUS.format(bonus=bonus)
     return bonus_url
 
-async def basic_enemy_field(enemy: schemas.Enemy, session: AsyncSession)->dict:
-    '''
-    returns a basic embed field for an enemy
-    '''
+async def get_enemy_title(enemy: schemas.Enemy, session: AsyncSession, add_reso_text: str|None=None) -> str:
     soul_emj = await to_emoji(session, enemy.element)
-    name = f"[{enums.CharacterRarity(enemy.rarity).name.replace('Plus', '+')}] Lv.{enemy.level} {enemy.name} {soul_emj}"
-    value = (
-                f"{await to_emoji(session, 'atk')}{hf(enemy.battle_params.attack)} "
-                f"{await to_emoji(session, 'hp')}{hf(enemy.battle_params.hp)} "
-                f"{await to_emoji(session, 'def')}{hf(enemy.battle_params.defense)} "
-                f"{await to_emoji(session, 'spd')}{enemy.battle_params.speed}\n"
-                f"{await to_emoji(session, 'str')}{hf(enemy.base_params.str)} "
-                f"{await to_emoji(session, 'dex')}{hf(enemy.base_params.dex)} "
-                f"{await to_emoji(session, 'mag')}{hf(enemy.base_params.mag)} "
-                f"{await to_emoji(session, 'sta')}{hf(enemy.base_params.sta)}"
-            )
-    
-    return {'name': name, 'value': value, 'inline': False}
+    name = f'{soul_emj} Lv.{enemy.level} {enemy.name} [{enums.CharacterRarity(enemy.rarity).name.replace('Plus', '+')}]'
+    if add_reso_text:
+        name += f'{add_reso_text}'
+    return name
 
-async def detailed_enemy_embed(enemy: schemas.Enemy, session: AsyncSession, cs: schemas.CommonStrings, version: str)->Embed:
-    soul_emj = await to_emoji(session, enemy.element)
-    name = f"[{enemy.rarity.name.replace('Plus', '+')}] Lv.{enemy.level} {enemy.name} {soul_emj}"
-
-    embed = BaseEmbed(
-        version,
-        title=name,
-        color=Color.red()
-    )
-
-    embed.add_field(
-        name='Base Parameters',
-        value=base_param_text(enemy.base_params, cs),
-        inline=False)
-    embed.add_field(
-        name='Battle Parameters',
-        value=battle_param_text(enemy.battle_params, cs),
-        inline=False)
-    embed.add_field(
-        name='Skills',
-        value=(
-            f'```json\n'
-            f"Actives: {enemy.actives}\n"
-            f"Passives: {enemy.passives}\n"
-            f"UW Rarity: {enums.ItemRarity(enemy.uw_rarity).name}\n"
-            f'```'
-        )
-    )
-    if (icontype := enemy.icon_type) == 0:
-        embed.set_thumbnail(
-            url=RAW_ASSET_BASE+f"Characters/Sprites/CHR_{enemy.icon_id:06}_00_s.png")
-    elif icontype == 1:
-        embed.set_thumbnail(
-            url=RAW_ASSET_BASE+f"Enemy/ENE_{enemy.icon_id:06}.png")
+def get_enemy_thumbnail(enemy: schemas.Enemy) -> str:
+    if enemy.icon_type == enums.UnitIconType.Character:
+        icon_url = CHARACTER_THUMBNAIL.format(char_id=enemy.icon_id, qlipha=False)
+    elif enemy.icon_type == enums.UnitIconType.EnemyCharacter:
+        icon_url = ENEMY_THUMBNAIL.format(enemy_id=enemy.icon_id)
     else:
-        embed.set_thumbnail(
-            url=RAW_ASSET_BASE+f"Characters/Sprites/CHR_{enemy.icon_id:06}_01_s.png")
-    return embed
+        icon_url = CHARACTER_THUMBNAIL.format(char_id=enemy.icon_id, qlipha=True)
+    return icon_url
 
-def add_resonance(embed:Embed, def_list: list):
-    '''adds resonance indication to the enemy embed'''
-    resonance = ' | <:resonance:1067010707561926696>'
-    if len(def_list) > 1:
-        min_ind = def_list.index(min(def_list))
-        min_field = embed.fields[min_ind]
-        embed.set_field_at(
-            min_ind, name=min_field.name+resonance+' (Low)', 
-            value=min_field.value, inline=min_field.inline)
-
-        max_ind = def_list.index(max(def_list))
-        max_field = embed.fields[max_ind]
-        embed.set_field_at(
-            max_ind, name=max_field.name+resonance+' (High)', 
-            value=max_field.value, inline=max_field.inline)
-
-async def quest_view(interaction: Interaction, quest_data: schemas.APIResponse[schemas.Quest], session: AsyncSession, cs: schemas.CommonStrings)->MixedView:
-    embed_dict = {}
-    quest = quest_data.data
-
-    # Quest Data
-    main_embed = BaseEmbed(
-        quest_data.version,
-        title=f"Stage {from_quest_id(quest.quest_id)} (ID: {quest.quest_id})", 
+async def enemy_basic_text(enemy: schemas.Enemy, session: AsyncSession) -> str:
+    return (
+        f'{await to_emoji(session, 'atk')} {hf(enemy.battle_params.attack)} '
+        f'{await to_emoji(session, 'hp')} {hf(enemy.battle_params.hp)} '
+        f'{await to_emoji(session, 'def')} {hf(enemy.battle_params.defense)}\n'
+        f'{await to_emoji(session, 'spd')} {enemy.battle_params.speed}\n'
+        f'{await to_emoji(session, 'str')}{hf(enemy.base_params.str)} '
+        f'{await to_emoji(session, 'dex')}{hf(enemy.base_params.dex)} '
+        f'{await to_emoji(session, 'mag')}{hf(enemy.base_params.mag)} '
+        f'{await to_emoji(session, 'sta')}{hf(enemy.base_params.sta)}'
     )
-    bp = 0
-    def_list = []
-    for enemy in quest.enemy_list:
-        main_embed.add_field(**(await basic_enemy_field(enemy, session)))
-        def_list.append(enemy.battle_params.defense)
-        bp += enemy.bp
 
-    main_embed.description = f"**BP:** {bp:,}\n{await to_emoji(session, 'red_orb')}×{quest.red_orb}/d"
-    add_resonance(main_embed, def_list)
+async def enemy_detail_ui(enemy: schemas.Enemy, cs: schemas.CommonStrings) -> BaseContainer:
+    async with SessionAA() as session:
+        container = (
+            BaseContainer(f'### {await get_enemy_title(enemy, session)}')
+            .add_item(ui.Section(
+                ui.TextDisplay(f'**Base Parameters**\n{base_param_text(enemy.base_params, cs)}'),
+                ui.TextDisplay(f'**Battle Parameters**\n{battle_param_text(enemy.battle_params, cs)}'),
+                ui.TextDisplay(
+                    f'**Skills**\n'
+                    f'```json\n'
+                    f'Actives: {enemy.actives}\n'
+                    f'Passives: {enemy.passives}\n'
+                    f'UW Rarity: {enums.ItemRarity(enemy.uw_rarity).name}\n'
+                    f'```'
+                ),
+                accessory=ui.Thumbnail(get_enemy_thumbnail(enemy))
+            ))
+        )
+    return container
+        
+def find_resonance_idx(def_list: list) -> tuple[int, int]:
+    '''returns the indices of the lowest and highest defense in the list'''
+    if len(def_list) < 2:
+        return (-1, -1)
+    min_ind = def_list.index(min(def_list))
+    max_ind = def_list.index(max(def_list))
+    return (min_ind, max_ind)
 
-    # Enemy Data
-    enemy_embeds = []
-    for enemy in quest.enemy_list:
-        enemy_embeds.append(await detailed_enemy_embed(enemy, session, cs, quest_data.version))
-
-    embed_dict['Quest Data'] = [main_embed]
-    embed_dict['Enemy Data'] = enemy_embeds
+async def quest_ui(quest_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings) -> dict:
+    content_map = {}
+    quest_resp = await api.fetch_api(
+        api.QUEST_PATH.format(quest_id=quest_id),
+        query_params={'language': language},
+        response_model=schemas.Quest,
+    )
+    quest = quest_resp.data
     
-    return MixedView(interaction.user, embed_dict, 'Quest Data')
+    async with SessionAA() as session:
+        main_container = BaseContainer(f'### Stage {from_quest_id(quest.quest_id)} (ID: {quest.quest_id})')
+        # loop once to get BP and resonance
+        bp = 0
+        def_list = []
+        for i, enemy in enumerate(quest.enemy_list):
+            def_list.append(enemy.battle_params.defense)
+            bp += enemy.bp
+        min_ind, max_ind = find_resonance_idx(def_list)
+        
+        main_container.add_item(ui.TextDisplay(f'**BP:** {bp:,}\n{await to_emoji(session, 'red_orb')}×{quest.red_orb}/d')).add_item(ui.Separator())
+        for i, enemy in enumerate(quest.enemy_list):
+            resonance_text = None
+            if min_ind == i:
+                resonance_text = f' {await to_emoji(session, 'resonance')}{await to_emoji(session, 'down')}'
+            elif max_ind == i:
+                resonance_text = f' {await to_emoji(session, 'resonance')}{await to_emoji(session, 'up')}'
+            main_container.add_item(
+                ui.Section(
+                    ui.TextDisplay(
+                        f'**{await get_enemy_title(enemy, session, resonance_text)}**\n'
+                        f'{await enemy_basic_text(enemy, session)}'
+                    ),
+                    accessory=ui.Thumbnail(get_enemy_thumbnail(enemy))
+                )
+            ).add_item(ui.Separator(visible=False))
+        content_map['Quest Overview'] = main_container.add_version(quest_resp.version)
 
-async def tower_view(interaction: Interaction, tower_data: schemas.APIResponse[schemas.Tower], session: AsyncSession, cs: schemas.CommonStrings)->MixedView:
-    embed_dict = {}
-    tower = tower_data.data
+        # Enemy Details
+        enemy_pages = []
+        for enemy in quest.enemy_list:
+            enemy_pages.append((await enemy_detail_ui(enemy, cs)).add_version(quest_resp.version))
+        content_map['Enemy Details'] = enemy_pages
+    return content_map
+
+async def tower_ui(floor: int, towertype: enums.TowerType, language: enums.LanguageOptions, cs: schemas.CommonStrings) -> dict:
+    content_map = {}
+    tower_resp = await api.fetch_api(
+        api.TOWER_PATH,
+        query_params={
+            'floor': floor,
+            'tower_type': towertype,
+            'language': language
+        },
+        response_model=schemas.Tower,
+    )
+    tower = tower_resp.data
     fixed_rewards = tower.fixed_rewards
     first_time_rewards = tower.first_rewards
 
-    description = StringIO()
+    async with SessionAA() as session:
+        main_container = BaseContainer(f'### Tower of {towertype.name} - Floor {tower.floor}')
+        # loop once to get BP and resonance
+        bp = 0
+        def_list = []
+        for i, enemy in enumerate(tower.enemy_list):
+            def_list.append(enemy.battle_params.defense)
+            bp += enemy.bp
+        min_ind, max_ind = find_resonance_idx(def_list)
 
-    main_embed = BaseEmbed(
-        tower_data.version,
-        title=f"Tower of {enums.TowerType(tower.tower_type).name} - Floor {tower.floor}",
-        color=Color.red()
-    )
-
-    bp = 0
-    def_list = []
-    for enemy in tower.enemy_list:
-        main_embed.add_field(**(await basic_enemy_field(enemy, session)))
-        def_list.append(enemy.battle_params.defense)
-        bp += enemy.bp
-
-    description.write(f"**BP:** {bp:,}\n")
-
-    ic = ItemCounter()
-    if fixed_rewards:
-        description.write('**Fixed Rewards:**\n')
-        ic.add_items(fixed_rewards)
-        description.write(f"{' '.join(await ic.get_total_strings())}\n")
-    if first_time_rewards:
-        ic.clear()
-        description.write('**First Time Rewards:**\n')
-        ic.add_items(first_time_rewards)
-        description.write(f"{' '.join(await ic.get_total_strings())}\n")
-
-    main_embed.description = description.getvalue()
-    add_resonance(main_embed, def_list)
-
-    enemy_embeds = []
-    for enemy in tower.enemy_list:
-        enemy_embeds.append(await detailed_enemy_embed(enemy, session, cs, tower_data.version))
-
-    embed_dict['Tower Data'] = [main_embed]
-    embed_dict['Enemy Data'] = enemy_embeds
-    
-    return MixedView(interaction.user, embed_dict, 'Tower Data')
-
+        main_text = f'**BP:** {bp:,}'
+        
+        ic = ItemCounter()
+        if fixed_rewards:
+            ic.add_items(fixed_rewards)
+            main_text += f'\n**Fixed Rewards:**\n{' '.join(await ic.get_total_strings())}'
+        if first_time_rewards:
+            ic.clear()
+            ic.add_items(first_time_rewards)
+            main_text += f'\n**First Time Rewards:**\n{' '.join(await ic.get_total_strings())}'
+        main_container.add_item(ui.TextDisplay(main_text)).add_item(ui.Separator())
+        
+        for i, enemy in enumerate(tower.enemy_list):
+            resonance_text = None
+            if min_ind == i:
+                resonance_text = f' {await to_emoji(session, 'resonance')}{await to_emoji(session, 'down')}'
+            elif max_ind == i:
+                resonance_text = f' {await to_emoji(session, 'resonance')}{await to_emoji(session, 'up')}'
+            main_container.add_item(
+                ui.Section(
+                    ui.TextDisplay(
+                        f'**{await get_enemy_title(enemy, session, resonance_text)}**\n'
+                        f'{await enemy_basic_text(enemy, session)}'
+                    ),
+                    accessory=ui.Thumbnail(get_enemy_thumbnail(enemy))
+                )
+            ).add_item(ui.Separator(visible=False))
+        content_map['Tower Overview'] = main_container.add_version(tower_resp.version)
+        
+        # Enemy Details
+        enemy_pages = []
+        for enemy in tower.enemy_list:
+            enemy_pages.append((await enemy_detail_ui(enemy, cs)).add_version(tower_resp.version))
+        content_map['Enemy Details'] = enemy_pages
+    return content_map

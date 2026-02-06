@@ -1,58 +1,12 @@
-from io import StringIO
-from itertools import batched
-from re import split
-
 from discord import app_commands, Interaction
 from discord.ext import commands
 
 from aabot.main import AABot
 from aabot.pagination import info as info_ui
-from aabot.pagination.embeds import BaseEmbed
-from aabot.pagination.views import ButtonView
-from aabot.pagination.view import BaseView, to_content
+from aabot.pagination.view import BaseView
 from aabot.utils.alias import IdTransformer
 from aabot.utils.command_utils import apply_user_preferences, arcana_autocomplete, ArcanaOption, ArcanaOptions
-from aabot.utils.utils import calc_buff, character_title
-from common import schemas
 from common.enums import LanguageOptions
-
-def speed_view(
-    interaction: Interaction,
-    char_data: schemas.APIResponse[list[schemas.CharacterDBModel]],
-    name_data: schemas.APIResponse[dict[int, schemas.Name]],
-    add: int, buffs: list[int]=None):
-    speed_list = reversed(char_data.data)
-
-    if add or buffs:
-        header = '__No.__ __Character__ __Speed__ __(Base)__\n'
-    else:
-        header = '__No.__ __Character__ __Speed__\n'
-
-    embeds = []
-    i = 1
-    for batch in batched(speed_list, 50):
-        description = StringIO()
-        for char in batch:
-            name = name_data.data.get(char.id)
-            char_name = character_title(name.title, name.name) if name else '[Undefined]'
-            if add or buffs:
-                speed = calc_buff(char.speed+add, buffs) if buffs else (char.speed+add)
-                description.write(f'**{i}.** {char_name} {speed} ({char.speed})\n')
-            else:
-                description.write(f'**{i}.** {char_name} {char.speed}\n')
-            i += 1
-
-        embed = BaseEmbed(char_data.version, title='Character Speeds', description=f'{header}{description.getvalue()}')
-        embed.add_field(
-            name='Bonus Parameters',
-            value=f'Rune Bonus: {add}\nBuffs: {buffs}',
-            inline=False
-        )
-
-        embeds.append(embed)
-
-    view = ButtonView(interaction.user, {'default': embeds})
-    return view
 
 class InfoCommands(commands.Cog, name='Info Commands'):
     '''Commands for uncategorized information about characters and game data'''
@@ -73,10 +27,7 @@ class InfoCommands(commands.Cog, name='Info Commands'):
         '''
         Shows character ids
         '''
-        view = BaseView(
-            to_content(await info_ui.id_list_ui(language, page_limit)), 
-            interaction.user
-        )
+        view = BaseView(await info_ui.id_list_ui(language, page_limit), interaction.user)
         await view.update_view(interaction)
     
     @app_commands.command()
@@ -94,11 +45,7 @@ class InfoCommands(commands.Cog, name='Info Commands'):
         page_limit: app_commands.Range[int, 10, 50]=20,
         language: LanguageOptions|None=None):
         '''List character speeds in decreasing order'''
-        view = BaseView(
-            to_content(await info_ui.speed_ui(language, flat=flat, mult=mult, page_limit=page_limit)), 
-            interaction.user,
-            language=language
-        )
+        view = BaseView(await info_ui.speed_ui(language, flat=flat, mult=mult, page_limit=page_limit), interaction.user, language=language)
         await view.update_view(interaction)
 
     @app_commands.command()
@@ -114,11 +61,7 @@ class InfoCommands(commands.Cog, name='Info Commands'):
         language: LanguageOptions|None=None):
         '''Shows character skills and details'''
 
-        view = BaseView(
-            to_content(await info_ui.skill_detail_ui(character, language)),
-            interaction.user,
-            language=language
-        )
+        view = BaseView(await info_ui.skill_detail_ui(character, language), interaction.user, language=language)
         await view.update_view(interaction)
 
     @app_commands.command()
@@ -152,11 +95,11 @@ class InfoCommands(commands.Cog, name='Info Commands'):
         await interaction.response.defer()
 
         view = BaseView(
-            to_content(await info_ui.arcana_search_ui(character, option, self.bot.common_strings[language], language)),
+            await info_ui.arcana_search_ui(character, option, self.bot.common_strings[language], language),
             interaction.user,
             language=language,
             cs=self.bot.common_strings[language]
-        )
+        )  
         
         await view.update_view(interaction)
 

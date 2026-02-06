@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get(
     routes.QUEST_PATH,
     summary='Quest search',
-    description='Returns main quest data',
+    description='Returns main quest data. While green orb, player exp, and BP is included as is from the data, the numbers may not reflect ingame values accurately.',
     response_model=schemas.APIResponse[schemas.Quest]
 )
 async def quest(

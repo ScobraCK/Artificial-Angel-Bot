@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from aabot.main import AABot
 from aabot.pagination import events as event_page
-from aabot.pagination.view import BaseView, to_content
+from aabot.pagination.view import BaseView
 from aabot.utils.alias import IdTransformer
 from common.enums import LanguageOptions
 
@@ -23,7 +23,7 @@ class EventCommands(commands.Cog, name='Event Commands'):
         interaction: Interaction,
         language: LanguageOptions|None=None):
         '''Shows gacha banners'''
-        view = BaseView(to_content(await event_page.gacha_banner_ui(language)), interaction.user)
+        view = BaseView(await event_page.gacha_banner_ui(language), interaction.user)
         await view.update_view(interaction)
     
     @app_commands.command()
@@ -37,7 +37,7 @@ class EventCommands(commands.Cog, name='Event Commands'):
         character: app_commands.Transform[int, IdTransformer],
         language: LanguageOptions|None=None):
         '''Shows gacha history of a character'''
-        view = BaseView(to_content(await event_page.gacha_banner_ui(language, character)), interaction.user)
+        view = BaseView(await event_page.gacha_banner_ui(language, character), interaction.user)
         await view.update_view(interaction)
 
 async def setup(bot: AABot):

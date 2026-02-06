@@ -107,7 +107,7 @@ def _to_content_page(
     return ContentPage(pages=pages)
 
 def to_content(raw: dict[str, list] | list | ui.Container | Callable[..., ui.Container | Awaitable[ui.Container]]) -> ContentMap:
-    """Convert raw contents (or factories) into a ContentMap. WARNING: Content cannot be a callable that returns a ContentPage or list"""
+    """Convert raw contents (or factories) into a ContentMap. WARNING: Top level content cannot be a callable that returns a ContentPage or list"""
     if isinstance(raw, ContentMap):
         return raw
     if isinstance(raw, dict):
@@ -135,7 +135,7 @@ def to_content(raw: dict[str, list] | list | ui.Container | Callable[..., ui.Con
                 options[key] = _to_content_page(value)
         return ContentMap(content=ContentSelect(options=options))
 
-    if isinstance(raw, list) or isinstance(raw, ui.Container) or callable(raw):
+    if isinstance(raw, list) or isinstance(raw, ui.Container) or callable(raw):  # if ContentPage callable it will think it is a Content callable
         return ContentMap(content=_to_content_page(raw))
 
     raise TypeError('Unsupported raw content type for to_content()')
@@ -158,9 +158,12 @@ class BaseView(ui.LayoutView):
         self.language = language
         self.cs = cs
         self.original_response = original_response
-        self.content_map = content_map
+        if isinstance(content_map, ContentMap):
+            self.content_map = content_map
+        else:
+            self.content_map = to_content(content_map)
         self.page = default_page
-        self.option = default_option or content_map.keys[0] if content_map.keys else None  # Given default or first option is default. None if no options.
+        self.option = default_option or self.content_map.keys[0] if self.content_map.keys else None  # Given default or first option is default. None if no options.
         self._nav_cache: dict = {}
         self._option_cache: dict[str, ContentPage] = {}
         self.main_content = MainContent(id=MAIN_CONTAINER_ID)
@@ -400,6 +403,10 @@ class BaseContainer(ui.Container):
     def add_version(self, version: str):
         self.add_item(ui.TextDisplay(f'-# Master Version - {version}'))
         return self
+
+    def to_content(self) -> ContentMap:
+        '''Quick convert to content for single containers'''
+        return to_content(self)
 
 def create_content_button(content, label: str, page: int = 0, option: str|None = None, save_state: bool = False, load_state: bool = False) -> ui.Button:
     button = ui.Button(label=label)

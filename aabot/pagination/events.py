@@ -42,7 +42,10 @@ async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup
         ongoing = (await to_emoji(session, "check")) if check_active(chosen.start, chosen.end, Server.Japan) else (await to_emoji(session, "x"))
 
         banner_text.write(f"**Date:** <t:{convert_from_jst(chosen.start)}> ~ <t:{convert_from_jst(chosen.end)}>\n")
-        banner_text.write(f"**Ongoing:** {ongoing}\n\n")  # TODO add limit_day
+        if isinstance(chosen, schemas.GachaEminenceGroup):
+            banner_text.write(f"**Ongoing:** {ongoing} | **Limit:** {chosen.limit_days} days\n\n")
+        else:
+            banner_text.write(f"**Ongoing:** {ongoing}\n\n")
 
     return banner_text.getvalue()
 

@@ -1,14 +1,8 @@
 from io import StringIO
-from itertools import chain
-
-from discord import Color, Interaction, ui
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from aabot.pagination.embeds import BaseEmbed
-from aabot.pagination.views import DropdownView, MixedView
-from aabot.utils.assets import RAW_ASSET_BASE
 from aabot.utils.emoji import to_emoji
-from aabot.utils.utils import character_title, possessive_form, remove_linebreaks
+from aabot.utils.utils import remove_linebreaks
 from common import enums, schemas
 
 async def get_skill_name(skill: schemas.ActiveSkill|schemas.PassiveSkill, uw_name: str) -> str:
@@ -76,100 +70,3 @@ async def skill_description(skills: list[schemas.ActiveSkill|schemas.PassiveSkil
             description.write('\n')
 
     return description.getvalue()
-
-
-
-async def skill_detail_view(
-    interaction: Interaction,
-    skill_data: schemas.APIResponse[schemas.Skills],
-    char_data: schemas.APIResponse[schemas.Character],
-    session: AsyncSession
-):
-    skills = skill_data.data
-    char = char_data.data
-    embed_dict = {}
-
-    for skill in chain(skills.actives, skills.passives):
-        embeds = []
-        icon_url = RAW_ASSET_BASE + f"Characters/Skills/CSK_00{skill.id:07}.png"
-        description = await skill_description([skill], skills.uw_descriptions, char.uw, session)
-
-        if skill.name == '*' or not skill.name:
-            # Alt skills such as Rosalie(SR), Paladea
-            if (uw_rarity := skill.skill_infos[0].uw_rarity) == 0 and skill.skill_infos[0].level in {1, 21, 41, 81, 121, 161, 181}:  # active skill levels
-                title = 'Alternative Skill Trigger'
-            elif uw_rarity > 0 and isinstance(skill, schemas.PassiveSkill):
-                title = f'Unique Weapon Passive'
-            else:
-                title = 'Unknown Skill'
-        else:
-            title = skill.name
-        
-        if isinstance(skill, schemas.ActiveSkill):
-            main_description = f'**CD:** {skill.max_cooltime}\n\n{description}'
-        else:
-            main_description = description
-        
-        
-        embeds.append( # Main Embed
-            BaseEmbed(
-                skill_data.version,
-                title=title,
-                description=main_description,
-                color=Color.blue()
-            ).set_thumbnail(url=icon_url)
-        )
-
-        # Skill level details
-        for info in skill.skill_infos:
-            uw_rarity_str = enums.ItemRarity(info.uw_rarity).name
-            # Common
-            if uw_rarity_str:
-                if skills.uw_descriptions:
-                    info_description = f'{getattr(skills.uw_descriptions, uw_rarity_str)}\n\n'
-                else:  # Unreleased char
-                    info_description = 'Description unavaliable.\n\n'
-            else:
-                info_description = f'{info.description}\n\n'
-
-            info_description += (
-                '**Details**\n' 
-                f'```json\n'
-                f"Order Number: {info.order_number}\n"
-                f"Character Level: {info.level}\n"
-                f"Equipment Rarity: {uw_rarity_str}```"
-            )
-            # Active
-            if isinstance(skill, schemas.ActiveSkill):
-                info_description += (
-                    '**Cooldown Info**\n'
-                    f'```json\n'
-                    f'Init CD: {skill.init_cooltime}\n'
-                    f'Max CD: {skill.max_cooltime}```'
-                    '**Subskills**\n'
-                    f"```json\n{'\n'.join(map(str, info.subskill))}```"
-                )
-            # Passive
-            else:
-                info_description += '**Subskills**\n'
-                subskills: list[schemas.PassiveSubSkill] = info.subskill
-                for sub in subskills:
-                    info_description += (
-                        '```json\n'
-                        f'Passive Trigger: {enums.PassiveTrigger(sub.trigger).name}({sub.trigger})\n'
-                        f'Initial CD: {sub.init_cooltime}\n'
-                        f'Max CD: {sub.max_cooltime}\n'
-                        f'Group Id: {sub.group_id}\n'
-                        f'Subskill Id: {sub.subskill_id}```'
-                    )       
-            embeds.append(
-                BaseEmbed(
-                    skill_data.version,
-                    title=title,
-                    description=info_description,
-                    color=Color.blue()
-                ).set_thumbnail(url=icon_url)
-            )
-        embed_dict[title] = embeds
-    
-    return MixedView(interaction.user, embed_dict, key=skills.actives[0].name)

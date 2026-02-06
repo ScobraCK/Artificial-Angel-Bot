@@ -4,7 +4,7 @@ from itertools import batched, chain
 
 from discord import ButtonStyle, Interaction, ui
 
-from aabot.pagination.skills import get_skill_name, get_skill_text
+from aabot.pagination.skills import get_skill_text
 from aabot.pagination.view import BaseContainer, BaseView, to_content
 from aabot.utils import api
 from aabot.utils.assets import SKILL_THUMBNAIL
