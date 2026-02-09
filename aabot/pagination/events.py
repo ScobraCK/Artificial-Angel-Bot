@@ -76,6 +76,10 @@ async def gacha_banner_ui(language: Language, character: int = None):
         query_params=query_params
     )
     gacha_data = gacha_resp.data
+    
+    if not any([gacha_data.fleeting, gacha_data.chosen, gacha_data.eminence, gacha_data.ioc, gacha_data.iosg]):
+        container.find_item(TEMP_TEXT).content = f'No gacha banner data found.'
+        return container
 
     async with SessionAA() as session:
         # Fleeting field (select_list_type == 1)
