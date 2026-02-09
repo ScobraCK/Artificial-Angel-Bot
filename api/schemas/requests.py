@@ -75,7 +75,7 @@ class GachaRequest(BaseModel):
 # Item
 class ItemRequest(BaseModel):
     item_id: int = Field(Query())
-    item_type: enums.ItemType = Field(Query())
+    item_type: int = Field(Query())  # enums.ItemType
 
 class RuneRequest(BaseModel):
     category: enums.RuneType = Field(..., description='Rune type')

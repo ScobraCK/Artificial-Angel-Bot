@@ -8,7 +8,7 @@ from aabot.utils.utils import make_table, param_string, remove_html
 from common import enums, schemas
 from common.database import SessionAA
 
-async def item_ui(item_id: int, item_type: enums.ItemType, language: enums.Language, cs: schemas.CommonStrings) -> BaseContainer:
+async def item_ui(item_id: int, item_type: int, language: enums.Language, cs: schemas.CommonStrings) -> BaseContainer:
     container = BaseContainer()
     TITLE_TEXT = 1
     item_response = await api.fetch_item(item_id, item_type, language)
@@ -19,7 +19,7 @@ async def item_ui(item_id: int, item_type: enums.ItemType, language: enums.Langu
     basic_text = (
         f'**Id:** {item_data.id}\n'
         f'**Item id:** {item_data.item_id}\n'
-        f'**Item type:** {item_type.name}({item_type.value})\n'
+        f'**Item type:** {enums.ItemType(item_type).name}({item_type})\n'
         f'**Max:** {item_data.max_count if item_data.max_count else "No limit"}\n'
     )
 

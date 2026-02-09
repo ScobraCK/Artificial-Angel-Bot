@@ -242,8 +242,23 @@ class ItemType(IntEnum):
     PopularityVote = 39
     LuckyChanceGachaTicket = 40
     ChatBalloon = 41
+    EquipmentSetMaterialBox = 42
+    BookSortGridCellUnlockItem = 43
+    BookSortEventExchangePlaceItem = 44
+    ChatEmoticon = 45
+    MissionPassPoint = 46
+    SweepstakesTicket = 47
+    GroupVotingTicket = 48
+    BookSortEventAddAssistanceItem = 49
     EventExchangePlaceItem = 50
+    IconEffect = 51
+    SynchroCellUnlockItem = 52
     StripeCoupon = 1001
+    MissingData = -1
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.MissingData
 
 # class SecondaryFrameType(IntEnum):
 #     ElementIcon = 1
@@ -320,6 +335,7 @@ class PassiveTrigger(IntEnum):
     NextCheckReceiveDamageSelf = 43
     NextCheckReceiveDamage = 44
     AlwaysEnemyDead = 45
+    EnemyRemoveBuff = 46
     EnemyAttack = 50
     RecoveryFromInstantDeathDamage = 52
     InstantDeathDamageIgnoreFixDamage = 53

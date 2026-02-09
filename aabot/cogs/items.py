@@ -31,12 +31,8 @@ class ItemCommands(commands.Cog, name='Item Commands'):
         '''
         Command for quick searching from ItemId and ItemType
         '''
-        if item_type not in enums.ItemType:
-            await interaction.response.send_message(f"Invalid item type. See below:\n{'\n'.join([f'{item.value} - {item.name}' for item in enums.ItemType])}", ephemeral=True)
-            return
-
         view = BaseView(
-            await item_ui.item_ui(item_id, enums.ItemType(item_type), language, self.bot.common_strings[language]),
+            await item_ui.item_ui(item_id, item_type, language, self.bot.common_strings[language]),
             interaction.user
         )
         await view.update_view(interaction)
