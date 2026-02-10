@@ -11,10 +11,10 @@ from aabot.utils.emoji import to_emoji
 from aabot.utils.utils import character_title
 from common import schemas
 from common.database import SessionAA
-from common.enums import Element, Language, Server
+from common.enums import Element, LanguageOptions, Server
 from common.timezones import check_active, convert_from_jst
 
-async def generate_banner_text(gacha_list: list[schemas.GachaPickup], session: AsyncSession, language: Language) -> str:
+async def generate_banner_text(gacha_list: list[schemas.GachaPickup], session: AsyncSession, language: LanguageOptions) -> str:
     banner_text = StringIO()
     for gacha in gacha_list:
         char_name = await api.fetch_name(gacha.char_id, language)
@@ -30,7 +30,7 @@ async def generate_banner_text(gacha_list: list[schemas.GachaPickup], session: A
 
     return banner_text.getvalue()
 
-async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup], session: AsyncSession, language: Language) -> str:
+async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup], session: AsyncSession, language: LanguageOptions) -> str:
     banner_text = StringIO()
     for chosen in chosen_list:
         for gacha in chosen.banners:
@@ -49,7 +49,7 @@ async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup
 
     return banner_text.getvalue()
 
-async def gacha_banner_ui(language: Language, character: int = None):
+async def gacha_banner_ui(language: LanguageOptions, character: int = None):
     TEMP_TEXT = 1
     container = BaseContainer()
     if character:
@@ -79,6 +79,7 @@ async def gacha_banner_ui(language: Language, character: int = None):
     
     if not any([gacha_data.fleeting, gacha_data.chosen, gacha_data.eminence, gacha_data.ioc, gacha_data.iosg]):
         container.find_item(TEMP_TEXT).content = f'No gacha banner data found.'
+        container.add_version(gacha_resp.version)
         return container
 
     async with SessionAA() as session:
@@ -138,4 +139,5 @@ async def gacha_banner_ui(language: Language, character: int = None):
             max_run = max(banner.run_count for banner in gacha_data.ioc)
         container.find_item(TEMP_TEXT).content = f'**Total runs:** {max_run}'
 
+    container.add_version(gacha_resp.version)
     return container

@@ -8,9 +8,10 @@ from html2text import HTML2Text
 
 from aabot.crud.character import get_character
 from aabot.pagination.equipment import get_uw, equipment_detail_ui
+from aabot.pagination.events import gacha_banner_ui
 from aabot.pagination.info import arcana_basic_text
 from aabot.pagination.skills import get_skill_name, get_skill_text
-from aabot.pagination.view import create_content_button, to_content, BaseContainer, BaseView, ContentMap
+from aabot.pagination.view import create_content_button, to_content, BaseContainer, BaseView, ContentMap, VERSION_ID
 from aabot.utils import api
 from aabot.utils.assets import CHARACTER_THUMBNAIL, SKILL_THUMBNAIL
 from aabot.utils.emoji import to_emoji
@@ -28,6 +29,7 @@ class CharacterOptions(Enum):
     SKILL = 'Skills'
     UW = 'Unique Weapon'
     ARCANA = 'Arcana'
+    GACHA = 'Gacha Banners'
     VOICELINES = 'Voicelines'
     MEMORIES = 'Memories'
     LAMENT = 'Lament'
@@ -132,6 +134,7 @@ async def character_option_map(char_id: int) -> ContentMap:
         CharacterOptions.SKILL.value: partial(character_skill_ui, char_id, released=released),
         CharacterOptions.UW.value: partial(character_uw_ui, char_id, released=released),
         CharacterOptions.ARCANA.value: partial(character_arcana_ui, char_id, released=released),
+        CharacterOptions.GACHA.value: partial(character_gacha_ui, char_id),
         CharacterOptions.VOICELINES.value: partial(character_voiceline_ui, char_id, released=released),
         CharacterOptions.MEMORIES.value: partial(character_memory_ui, char_id, released=released),
         CharacterOptions.LAMENT.value: partial(character_lament_ui, char_id, released=released),
@@ -565,4 +568,17 @@ async def character_stats_ui(char_id: int, language: enums.LanguageOptions, cs: 
 
     await container.add_alt_section(char_id, language, cs)
     container.add_version(char_resp.version)
+    return container
+
+async def character_gacha_ui(char_id: int, language: enums.LanguageOptions, cs: schemas.CommonStrings) -> BaseContainer:
+    container = CharacterContainer()
+    gacha_container = await gacha_banner_ui(language, character=char_id)
+    for item in gacha_container.children:
+        if item.id == VERSION_ID:
+            version_item = item
+            continue
+        container.add_item(item)
+
+    await container.add_alt_section(char_id, language, cs)
+    container.add_item(version_item)
     return container

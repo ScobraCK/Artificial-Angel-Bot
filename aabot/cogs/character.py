@@ -213,5 +213,27 @@ class CharacterCommands(commands.Cog, name='Character Commands'):
         )
         await view.update_view(interaction)
 
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        language='Text language. Defaults to English.'
+    )
+    @apply_user_preferences()
+    async def gachahistory(
+        self, 
+        interaction: Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        language: LanguageOptions|None=None):
+        '''Shows gacha history of a character'''
+        content = await char_ui.character_option_map(character)
+        view = BaseView(
+            content,
+            interaction.user,
+            language,
+            self.bot.common_strings[language],
+            default_option=char_ui.CharacterOptions.GACHA.value
+        )
+        await view.update_view(interaction)
+
 async def setup(bot: AABot):
 	await bot.add_cog(CharacterCommands(bot))

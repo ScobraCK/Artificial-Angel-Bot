@@ -13,6 +13,7 @@ from aabot.utils.logger import get_logger
 logger = get_logger(__name__)
 
 MAIN_CONTAINER_ID = 1000
+VERSION_ID = 999
 PAGE_ROW_ID = 1100
 BUTTON1_ID = 1101
 BUTTON2_ID = 1102
@@ -401,7 +402,7 @@ class BaseContainer(ui.Container):
             self.add_item(ui.TextDisplay(message))
 
     def add_version(self, version: str):
-        self.add_item(ui.TextDisplay(f'-# Master Version - {version}'))
+        self.add_item(ui.TextDisplay(f'-# Master Version - {version}', id=VERSION_ID))
         return self
 
     def to_content(self) -> ContentMap:
