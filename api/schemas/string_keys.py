@@ -46,7 +46,7 @@ async def get_uw_desc_strings(session: AsyncSession, char_id: int, language: enu
         return None
 
     uw_descriptions = schemas.UWDescriptions(
-        SR=descriptions.get(desc1_key, ''),  # Empty strings in unlikely scenario where only partial descriptions exist
+        SSR=descriptions.get(desc1_key, ''),  # Empty strings in unlikely scenario where only partial descriptions exist
         UR=descriptions.get(desc2_key, ''),
         LR=descriptions.get(desc3_key, '')
     )
