@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get(
     routes.GACHA_PATH,
     summary='Gacha Banner Info',
-    description='Returns gacha banner information',
+    description='Returns gacha banner information. Does not check if character ID is valid.',
     response_model=schemas.APIResponse[schemas.GachaPickupBanners],
 )
 async def gacha(

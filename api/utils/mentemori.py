@@ -19,7 +19,7 @@ async def fetch_mentemori(path: str):
             return data
         except httpx.HTTPStatusError as e:
             logger.error(f'HTTP error fetching {API_BASE}{path}: {e}')
-            raise MentemoriError(f"Failed to get response for {API_BASE}{path}", e)  # Internal error for custom logging
+            raise MentemoriError(f"Failed to get response for {API_BASE}{path}")
         except httpx.TimeoutException as e:
             logger.error(f'Timeout fetching {API_BASE}{path}: {e}')
             raise e
