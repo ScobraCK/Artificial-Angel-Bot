@@ -28,16 +28,12 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
         msg = f'**Auto Update**\n<t:{get_current()}:f>\n'
         
         try:
-            if await api.check_mentemori_status() != 200:
-                msg += 'Mentemori API is currently unavailable, skipping update.'
-                await ch.send(msg)
-                return
             await api.fetch(api.UPDATE_API_GUILD_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=120)
             await api.fetch(api.UPDATE_API_PLAYERS_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=120)
             
         except Exception as e:
             logger.error(f'Ranking auto update error: {e}')
-            msg += f'Failed to update player and guild rankings\n<@{self.bot.owner_id}>'
+            msg += f'<@{self.bot.owner_id}>\nFailed to update player and guild rankings'
             await ch.send(msg)
              
     @update_ranking.before_loop

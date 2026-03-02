@@ -127,7 +127,8 @@ async def update_mentemori(key: str, session: SessionDep):
         await update_guilds(session, guilds)
         return Response(status_code=204)
     except MentemoriError as e:
-        return Response(status_code=500, content=e.response)  # TODO recheck error handling in this case
+        logger.error(f'Mentemori API error: {e.response}')
+        return Response(status_code=500)
     except Exception as e:
         logger.error(str(e))
         raise e
@@ -141,7 +142,8 @@ async def update_mentemori_players(key: str, session: SessionDep):
         await update_players(session, players)
         return Response(status_code=204)
     except MentemoriError as e:
-        return Response(status_code=500, content=e.response)
+        logger.error(f'Mentemori API error: {e.response}')
+        return Response(status_code=500)
     except Exception as e:
         logger.error(str(e))
         raise e
@@ -155,7 +157,8 @@ async def update_mentemori_guilds(key: str, session: SessionDep):
         await update_guilds(session, guilds)
         return Response(status_code=204)
     except MentemoriError as e:
-        return Response(status_code=500, content=e.response)
+        logger.error(f'Mentemori API error: {e.response}')
+        return Response(status_code=500)
     except Exception as e:
         logger.error(str(e))
         raise e

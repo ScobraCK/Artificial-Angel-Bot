@@ -69,10 +69,12 @@ async def fetch(
             return response
             
         except httpx.HTTPStatusError as e:
-            if base_url == MENTEMORI_BASE_PATH:
-                check_response = await check_mentemori_status()
-                if check_response == 500 or check_response == 503:
-                    raise BotAPIError(check_response, "Mentemori API is currently unavailable.")
+            if base_url == MENTEMORI_BASE_PATH:  # Mentemori doesn't show actual status with status code
+                resp_json = response.json()
+                if isinstance(resp_json, dict):
+                    status = resp_json.get('status')
+                    if 500 <= status < 600:
+                        raise BotAPIError(status, "Mentemori API is currently unavailable.")
             raise BotAPIError(response.status_code, f"Error in external API: {url} - {response.status_code}")
         except httpx.TimeoutException as e:
             logger.error(f'Timeout fetching {url}: {e}')
@@ -113,11 +115,3 @@ async def fetch_common_strings() -> dict[Language, CommonStrings]:
         )
         data[lang] = lang_data.data
     return data
-
-async def check_mentemori_status():
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f'{MENTEMORI_BASE_PATH}')
-        resp_json = response.json()
-        if isinstance(resp_json, dict) and 'status' in resp_json:
-            return resp_json.get('status')
-        return response.status_code
