@@ -5,8 +5,10 @@ from discord.ext import commands, tasks
 
 from aabot.main import AABot
 from aabot.utils import api
-from aabot.utils.error import BotError
 from common.timezones import get_current
+
+from aabot.utils.logger import get_logger
+logger = get_logger(__name__)
 
 class TimerCog(commands.Cog, name = 'Timer Cog'):
     def __init__(self, bot: AABot):
@@ -24,16 +26,18 @@ class TimerCog(commands.Cog, name = 'Timer Cog'):
     async def update_ranking(self):
         ch = self.bot.get_channel(self.bot.log_channel)
         msg = f'**Auto Update**\n<t:{get_current()}:f>\n'
-        if api.check_mentemori_status() != 200:
-            msg += 'Mentemori API is currently unavailable, skipping update.'
-            await ch.send(msg)
-            return
+        
         try:
+            if await api.check_mentemori_status() != 200:
+                msg += 'Mentemori API is currently unavailable, skipping update.'
+                await ch.send(msg)
+                return
             await api.fetch(api.UPDATE_API_GUILD_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=120)
             await api.fetch(api.UPDATE_API_PLAYERS_PATH, base_url=api.API_BASE_PATH, params={'key': self.bot.api_key}, timeout=120)
             
         except Exception as e:
-            msg += f'Failed to update player and guild rankings\n<@{self.bot.owner_id}>\n{e}'
+            logger.error(f'Ranking auto update error: {e}')
+            msg += f'Failed to update player and guild rankings\n<@{self.bot.owner_id}>'
             await ch.send(msg)
              
     @update_ranking.before_loop

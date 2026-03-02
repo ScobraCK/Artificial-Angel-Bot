@@ -117,7 +117,7 @@ async def fetch_common_strings() -> dict[Language, CommonStrings]:
 async def check_mentemori_status():
     async with httpx.AsyncClient() as client:
         response = await client.get(f'{MENTEMORI_BASE_PATH}')
-        status = response.json().get('status')
-        if not status:
-            return response.status_code
-        return status
+        resp_json = response.json()
+        if isinstance(resp_json, dict) and 'status' in resp_json:
+            return resp_json.get('status')
+        return response.status_code
