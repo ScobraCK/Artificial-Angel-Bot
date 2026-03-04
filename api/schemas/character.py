@@ -29,6 +29,7 @@ async def get_voicelines(md: MasterData, id: int):
     voicelines = list(await md.search_filter('CharacterDetailVoiceMB', CharacterId=id))
     if not voicelines:
         raise APIError(f'Could not find voiceline info with id {id}')
+    voicelines.sort(key=lambda x: x['SortOrder'])
     return schemas.CharacterVoicelines(char_id=id, voicelines=voicelines)
 
 async def get_memories(md: MasterData, id: int):
