@@ -9,14 +9,13 @@ from html2text import HTML2Text
 from aabot.crud.character import get_character
 from aabot.pagination.equipment import get_uw, equipment_detail_ui
 from aabot.pagination.events import gacha_banner_ui
-from aabot.pagination.info import arcana_basic_text
+from aabot.pagination.info import arcana_basic_text, get_base_stats
 from aabot.pagination.skills import get_skill_name, get_skill_text
 from aabot.pagination.view import create_content_button, to_content, BaseContainer, BaseView, ContentMap, VERSION_ID
 from aabot.utils import api
 from aabot.utils.assets import CHARACTER_THUMBNAIL, SKILL_THUMBNAIL
 from aabot.utils.emoji import to_emoji
-from aabot.utils.error import BotError
-from aabot.utils.utils import base_param_text, battle_param_text, calculate_base_stat, character_title, possessive_form
+from aabot.utils.utils import base_param_text, battle_param_text, character_title, possessive_form
 from common import enums, schemas, timezones
 from common.database import SessionAA
 
@@ -67,31 +66,6 @@ async def get_release_status(char_id: int) -> bool:
         response_model=schemas.Character
     )
     return timezones.check_active(resp.data.start, timezones.END_TIME, enums.Server.Japan)
-
-async def get_base_stats(level: str, rarity: enums.CharacterRarity, character: schemas.Character|int, potential: schemas.CharacterPotential|None = None) -> schemas.BaseParameters:
-    if isinstance(character, int):
-        character = (await api.fetch_api(
-            api.CHARACTER_INFO_PATH.format(char_id=character),
-            response_model=schemas.Character
-        )).data
-    if not potential:
-        potential = (await api.fetch_api(
-            api.CHARACTER_POTENTIAL_PATH,
-            response_model=schemas.CharacterPotential
-        )).data
-        
-    total_stats = potential.levels.get(level)
-    if not total_stats:
-        raise BotError(f'No data for level {level}.')
-    base_rarity = character.rarity
-    coeffs = potential.coefficients[base_rarity][rarity]
-
-    return schemas.BaseParameters(
-        str=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.str, character.gross_coefficient),
-        dex=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.dex, character.gross_coefficient),
-        mag=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.mag, character.gross_coefficient),
-        sta=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.sta, character.gross_coefficient)
-    )
 
 async def switch_char_ui(chars: list[int], language: enums.LanguageOptions, cs: schemas.CommonStrings) -> BaseContainer:
     container = BaseContainer()

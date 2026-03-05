@@ -6,7 +6,7 @@ from aabot.pagination import info as info_ui
 from aabot.pagination.view import BaseView
 from aabot.utils.alias import IdTransformer
 from aabot.utils.command_utils import apply_user_preferences, arcana_autocomplete, ArcanaOption, ArcanaOptions
-from common.enums import LanguageOptions
+from common.enums import  CharacterRarity, LanguageOptions
 
 class InfoCommands(commands.Cog, name='Info Commands'):
     '''Commands for uncategorized information about characters and game data'''
@@ -99,6 +99,30 @@ class InfoCommands(commands.Cog, name='Info Commands'):
             interaction.user,
             language=language,
             cs=self.bot.common_strings[language]
+        )  
+        
+        await view.update_view(interaction)
+        
+    @app_commands.command()
+    @app_commands.describe(
+        character='The name or id of the character',
+        level='Character level',
+        rarity='Character rarity',
+        language='Text language. Defaults to English.'
+    )
+    @apply_user_preferences()
+    async def calcstat(
+        self,
+        interaction: Interaction,
+        character: app_commands.Transform[int, IdTransformer],
+        level: str,
+        rarity: CharacterRarity,
+        language: LanguageOptions|None=None
+    ):
+        '''Calculate character stats based on level and rarity'''
+        view = BaseView(
+            await info_ui.basestat_ui(character, level, rarity, language, self.bot.common_strings[language]),
+            interaction.user
         )  
         
         await view.update_view(interaction)

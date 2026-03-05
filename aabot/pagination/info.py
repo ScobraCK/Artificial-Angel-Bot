@@ -1,6 +1,7 @@
 from asyncio import gather
 from io import StringIO
 from itertools import batched, chain
+from re import fullmatch
 
 from discord import ButtonStyle, Interaction, ui
 
@@ -10,8 +11,10 @@ from aabot.utils import api
 from aabot.utils.assets import SKILL_THUMBNAIL
 from aabot.utils.command_utils import ArcanaOption
 from aabot.utils.emoji import character_string, char_ele_emoji, to_emoji
+from aabot.utils.error import BotError
 from aabot.utils.itemcounter import ItemCounter
-from aabot.utils.utils import character_title, param_string
+from aabot.utils.utils import base_param_text, calculate_base_stat, character_title, param_string
+from aabot.utils.assets import CHARACTER_THUMBNAIL
 from common import enums, schemas
 from common.database import SessionAA
 
@@ -329,6 +332,51 @@ async def skill_detail_ui(character: int, language: enums.LanguageOptions):
                 content_map[skill.name] = pages
     return content_map
 
+async def get_base_stats(level: str, rarity: enums.CharacterRarity, character: schemas.Character|int, potential: schemas.CharacterPotential|None = None) -> schemas.BaseParameters:
+    if isinstance(character, int):
+        character = (await api.fetch_api(
+            api.CHARACTER_INFO_PATH.format(char_id=character),
+            response_model=schemas.Character
+        )).data
+    if not potential:
+        potential = (await api.fetch_api(
+            api.CHARACTER_POTENTIAL_PATH,
+            response_model=schemas.CharacterPotential
+        )).data
 
+    if level.isdigit():
+        level = f'{int(level)}.0'
+    if fullmatch(r'^[1-9]\d*\.\d$', level) is None:
+        raise BotError(f'Level {level} is not valid. Example valid inputs. 1, 1.0, 240, 240.0, 240.1...')
+    
+    total_stats = potential.levels.get(level)
+    if not total_stats:
+        raise BotError(f'No data for level {level}.')
+    base_rarity = character.rarity
+    coeffs = potential.coefficients[base_rarity][rarity]
 
-            
+    return schemas.BaseParameters(
+        str=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.str, character.gross_coefficient),
+        dex=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.dex, character.gross_coefficient),
+        mag=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.mag, character.gross_coefficient),
+        sta=calculate_base_stat(total_stats, coeffs.m, coeffs.b, character.base_coefficients.sta, character.gross_coefficient)
+    )
+
+async def basestat_ui(character_id: int, level: str, rarity: enums.CharacterRarity, language: enums.LanguageOptions, cs: schemas.CommonStrings) -> BaseContainer:
+    char_resp = await api.fetch_api(
+        api.CHARACTER_INFO_PATH.format(char_id=character_id),
+        query_params={'language': language},
+        response_model=schemas.Character
+    )
+    char_data = char_resp.data
+    base_stats = await get_base_stats(level, rarity, char_data)
+    
+    container = BaseContainer()
+    container.add_item(ui.Section(
+        ui.TextDisplay(f'### {character_title(char_data.title, char_data.name)}\'s Stats'),
+        ui.TextDisplay(f'**{rarity.name.replace('Plus', '+')} Lv. {level}**'),
+        accessory=ui.Thumbnail(CHARACTER_THUMBNAIL.format(char_id=character_id, qlipha=False))
+    )).add_item(ui.TextDisplay(base_param_text(base_stats, cs))).add_version(char_resp.version)
+    
+    return container
+    
