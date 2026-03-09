@@ -14,19 +14,26 @@ from common.database import SessionAA
 from common.enums import Element, LanguageOptions, Server
 from common.timezones import check_active, convert_from_jst
 
+def gacha_status(start: str, end: str, server: Server) -> str:
+    if check_active(start, end, server):
+        return "Ongoing"
+    elif check_active(start, end, server, include_future=True):
+        return "Upcoming"
+    else:
+        return "Finished"
+
 async def generate_banner_text(gacha_list: list[schemas.GachaPickup], session: AsyncSession, language: LanguageOptions) -> str:
     banner_text = StringIO()
     for gacha in gacha_list:
         char_name = await api.fetch_name(gacha.char_id, language)
         element = Element((await get_character(session, gacha.char_id)).element)
         name = character_title(char_name.title, char_name.name)
-        ongoing = (await to_emoji(session, "check")) if check_active(gacha.start, gacha.end, Server.Japan) else (await to_emoji(session, "x"))
         rerun_count = gacha.run_count
 
         # Format the text for each banner using StringIO
         banner_text.write(f"{await to_emoji(session, element)} **{name}**\n")
         banner_text.write(f"**Date:** <t:{convert_from_jst(gacha.start)}> ~ <t:{convert_from_jst(gacha.end)}>\n")
-        banner_text.write(f"**Ongoing:** {ongoing} | **Run {rerun_count}**\n\n")
+        banner_text.write(f"**{gacha_status(gacha.start, gacha.end, Server.Japan)}** | **Run {rerun_count}**\n\n")
 
     return banner_text.getvalue()
 
@@ -39,13 +46,11 @@ async def generate_chosen_banner_text(chosen_list: list[schemas.GachaChosenGroup
             name = character_title(char_name.title, char_name.name)
             banner_text.write(f"- {await to_emoji(session, element)} **{name}** | **Run {gacha.run_count}**\n")
 
-        ongoing = (await to_emoji(session, "check")) if check_active(chosen.start, chosen.end, Server.Japan) else (await to_emoji(session, "x"))
-
         banner_text.write(f"**Date:** <t:{convert_from_jst(chosen.start)}> ~ <t:{convert_from_jst(chosen.end)}>\n")
         if isinstance(chosen, schemas.GachaEminenceGroup):
-            banner_text.write(f"**Ongoing:** {ongoing} | **Limit:** {chosen.limit_days} days\n\n")
+            banner_text.write(f"**{gacha_status(chosen.start, chosen.end, Server.Japan)}** | **Limit:** {chosen.limit_days} days\n\n")
         else:
-            banner_text.write(f"**Ongoing:** {ongoing}\n\n")
+            banner_text.write(f"**{gacha_status(chosen.start, chosen.end, Server.Japan)}**\n\n")
 
     return banner_text.getvalue()
 
