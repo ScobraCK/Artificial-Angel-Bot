@@ -253,7 +253,10 @@ class ItemType(IntEnum):
     EventExchangePlaceItem = 50
     IconEffect = 51
     SynchroCellUnlockItem = 52
+    RealPrizeC = 54
+    MiningQuestEventRewardItem = 56
     StripeCoupon = 1001
+    WebCrystal = 2001
     MissingData = -1
 
     @classmethod
@@ -336,6 +339,7 @@ class PassiveTrigger(IntEnum):
     NextCheckReceiveDamage = 44
     AlwaysEnemyDead = 45
     EnemyRemoveBuff = 46
+    AllyGiveDeBuff = 47
     EnemyAttack = 50
     RecoveryFromInstantDeathDamage = 52
     InstantDeathDamageIgnoreFixDamage = 53
