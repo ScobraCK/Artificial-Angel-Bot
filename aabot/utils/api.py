@@ -69,8 +69,11 @@ async def fetch(
             return response
             
         except httpx.HTTPStatusError as e:
-            if base_url == MENTEMORI_BASE_PATH:  # Mentemori doesn't show actual status with status code
-                resp_json = response.json()
+            if base_url == MENTEMORI_BASE_PATH:  # Mentemori doesn't show actual status with status code (could have changed)
+                try:
+                    resp_json = response.json()
+                except json.JSONDecodeError:
+                    raise BotAPIError(response.status_code, "Failed to decode API response.")
                 if isinstance(resp_json, dict):
                     status = resp_json.get('status')
                     if 500 <= status < 600:

@@ -81,11 +81,25 @@ async def temple_ui(server: Server, world: int):
             api.MENTEMORI_TEMPLE_PATH.format(world_id=to_world_id(server, world)),
             base_url=api.MENTEMORI_BASE_PATH
         )
-    except BotAPIError as e:
-        if e.status_code == 404:
-            raise BotError(f'Temple data not found for {server.name} W{world}. Check if the server and world is correct. New worlds may take a while for data to appear.')
-        else:
+    except Exception as e:
+        try:  # Check world for temple status
+            world_resp = await api.fetch(
+                api.MENTEMORI_WORLD_PATH,
+                base_url=api.MENTEMORI_BASE_PATH
+            )
+            world_data = world_resp.json()['data']
+        except Exception:  # Likely mentemori issue
             raise e
+        world_info = list(filter(lambda x: x['world_id'] == to_world_id(server, world), world_data))
+        if len(world_info) == 0:
+            raise BotError(f'{server.name} W{world} Does not exist.')
+        else:
+            temple_flag = world_info[0]['temple']
+            if temple_flag:  # Temple data is available, should not error
+                raise e
+            else:
+                raise BotError(f'{server.name} W{world} does not yet have a temple data available.')
+
     data = resp.json()
     quests = data['data']['quests']
 
