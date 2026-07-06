@@ -92,13 +92,13 @@ async def temple_ui(server: Server, world: int):
             raise e
         world_info = list(filter(lambda x: x['world_id'] == to_world_id(server, world), world_data))
         if len(world_info) == 0:
-            raise BotError(f'{server.name} W{world} Does not exist.')
+            raise BotError(f'{server.name} W{world} does not exist.')
         else:
             temple_flag = world_info[0]['temple']
             if temple_flag:  # Temple data is available, should not error
                 raise e
             else:
-                raise BotError(f'{server.name} W{world} does not yet have a temple data available.')
+                raise BotError(f'{server.name} W{world} does not yet have temple data available.')
 
     data = resp.json()
     quests = data['data']['quests']
