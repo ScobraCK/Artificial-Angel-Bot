@@ -127,7 +127,7 @@ class Profile(APIBaseModel):
 class Name(BaseModel):
     '''Simple model for only character name'''
     char_id: int
-    name: str
+    name: str|None
     title: str|None
 
 class Lament(APIBaseModel):
@@ -618,14 +618,14 @@ class StringKey(BaseModel):
     kokr: str|None = Field(None, example="모니카")
     enus: str|None = Field(None, example="Monica")
     zhtw: str|None = Field(None, example="莫妮卡")
-    dede: str|None = Field(None, example="Monica")
-    esmx: str|None = Field(None, example="Mónica")
-    frfr: str|None = Field(None, example="Monica")
-    idid: str|None = Field(None, example="Monica")
-    ptbr: str|None = Field(None, example="Mônica")
-    ruru: str|None = Field(None, example="Моника")
-    thth: str|None = Field(None, example="โมนิก้า")
-    vivn: str|None = Field(None, example="Monica")
+    # dede: str|None = Field(None, example="Monica")
+    # esmx: str|None = Field(None, example="Mónica")
+    # frfr: str|None = Field(None, example="Monica")
+    # idid: str|None = Field(None, example="Monica")
+    # ptbr: str|None = Field(None, example="Mônica")
+    # ruru: str|None = Field(None, example="Моника")
+    # thth: str|None = Field(None, example="โมนิก้า")
+    # vivn: str|None = Field(None, example="Monica")
     zhcn: str|None = Field(None, example="莫妮卡")
 
     class Config:
@@ -662,7 +662,40 @@ class CommonStrings(BaseModel):
         'arcana awaken': '[ArcanaRarityBonusLabel]',  # Arcana Group Max Awaken.
         'arcana target': '[ArcanaStatusBonusTargetLabel]',  # Enhanced Targets
         'arcana target all': '[ArcanaStatusBonusTargetAll]',  # All Characters
-        'arcana target group': '[ArcanaStatusBonusTargetArcana]'  # Arcana Group
+        'arcana target group': '[ArcanaStatusBonusTargetArcana]',  # Arcana Group
+        ####################
+        # Common
+        "Character ID": "[CharacterSortTypeRootCharacterId]",
+        "Rarity": "[CharacterSortTypeRarity]",
+        "Character Type": "[CharacterSortTypeCharacterType]",
+        "Soul Type": "[CharacterSortTypeCharacterAttribute]",
+        "BP": "[CommonBattlePowerLabel]",
+        "Runes": "[CommonSphereLabel]",
+        "Status": "[CommonBaseParameterLabel]",
+        "Potential": "[CommonPotentialParameterLabel]",
+        "Attributes": "[CommonStatusLabel]",
+        "Characters": "[CommonHeaderCharacterListLabel]",
+        "Arcana": "[ArcanaTitle]",
+        "Unique Weapon": "[ExclusiveWeaponDetailTitle]",
+        "Stats": "[DialogCharacterStatusDetailTitle]",
+        "Active Skill": "[SkillCategoryActive]",
+        "Passive Skill": "[SkillCategoryPassive]",
+        "Lv {0}": "[CommonLevelFormat]",
+
+
+        # Arcana
+        "{0}'s Arcana": "[ArcanaTitleAndCharacterName]",
+        "{1} {0}'s Arcana": "[ArcanaTitleAndCharacterNameAndName2]",
+        "Max Party Lv": "[ArcanaStatusBonusPartyLevelLabel]",
+        "Unlocked at Party Lv 300.": "[ArcanaNotRankRelease]",
+        "Arcana Group Max Awaken.": "[ArcanaRarityBonusLabel]",
+        "Enhanced Targets": "[ArcanaStatusBonusTargetLabel]",
+        "All Characters": "[ArcanaStatusBonusTargetAll]",
+        "Arcana Group": "[ArcanaStatusBonusTargetArcana]",
+
+        # Extra (Not intended use)
+        "Switch": "[EquipmentComparisonChangeTargetEquipmentInfoLabel]",
+
     }, description='Only contains partial data. More may be added later.')
     base_param: dict[enums.BaseParameter, str] = Field({
         1: '[BaseParameterTypeMuscle]',

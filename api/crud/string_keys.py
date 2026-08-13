@@ -18,20 +18,41 @@ CHARACTER_NAME_KEY = '[CharacterName{}]'
 CHARACTER_TITLE_KEY = '[CharacterSubName{}]'
 UW_DESCRIPTION_KEY = '[EquipmentExclusiveSkill{}Description{}]'
 
+SUPPORTED_STRING_LANGUAGES = {
+    Language.jajp,
+    Language.kokr,
+    Language.enus,
+    Language.zhtw,
+    Language.zhcn,
+}
+
+
+def _resolve_string_language(language: Language | str) -> Language | None:
+    if isinstance(language, Language):
+        return language if language in SUPPORTED_STRING_LANGUAGES else None
+
+    try:
+        resolved = Language(language)
+    except ValueError:
+        return None
+
+    return resolved if resolved in SUPPORTED_STRING_LANGUAGES else None
+
+
 async def upsert_string_keys(session: AsyncSession, md: MasterData, update_list=None):
     languages = {
         'JaJp': 'jajp', 
         'KoKr': 'kokr',
         'EnUs': 'enus', 
         'ZhTw': 'zhtw',
-        'DeDe': 'dede',
-        'EsMx': 'esmx', 
-        'FrFr': 'frfr',
-        'IdId': 'idid',
-        'PtBr': 'ptbr', 
-        'RuRu': 'ruru',
-        'ThTh': 'thth',
-        'ViVn': 'vivn', 
+        # 'DeDe': 'dede',
+        # 'EsMx': 'esmx', 
+        # 'FrFr': 'frfr',
+        # 'IdId': 'idid',
+        # 'PtBr': 'ptbr', 
+        # 'RuRu': 'ruru',
+        # 'ThTh': 'thth',
+        # 'ViVn': 'vivn', 
         'ZhCn': 'zhcn'
     }
 
@@ -87,18 +108,21 @@ async def read_string_key(session: AsyncSession, key: str) -> StringORM|None:
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
-async def read_string_key_language(session: AsyncSession, key: str, language: Language) -> str|None:
-    if not isinstance(language, Language):
-        raise ValueError(f'{language} is not a recognized language')
-    stmt = select(getattr(StringORM, language)).where(StringORM.key==key)
+async def read_string_key_language(session: AsyncSession, key: str, language: Language | str) -> str|None:
+    resolved_language = _resolve_string_language(language)
+    if resolved_language is None:
+        return None
+
+    stmt = select(getattr(StringORM, resolved_language.value)).where(StringORM.key == key)
     result = await session.execute(stmt)
     return result.scalar_one_or_none()
 
-async def read_string_key_language_bulk(session: AsyncSession, keys: set[str], language: Language) -> dict[str, str]:
-    if not isinstance(language, Language):
-        raise ValueError(f'{language} is not a recognized language')
+async def read_string_key_language_bulk(session: AsyncSession, keys: set[str], language: Language | str) -> dict[str, str]:
+    resolved_language = _resolve_string_language(language)
+    if resolved_language is None:
+        return {key: key for key in keys}
 
-    stmt = select(StringORM.key, getattr(StringORM, language)).where(StringORM.key.in_(keys))
+    stmt = select(StringORM.key, getattr(StringORM, resolved_language.value)).where(StringORM.key.in_(keys))
     results = await session.execute(stmt)
     return {key: value for key, value in results.all()}
 
