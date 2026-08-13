@@ -10,7 +10,7 @@ from api.crud.mentemori import update_guilds, update_players
 from api.crud.string_keys import update_and_log_strings
 from api.utils import mentemori
 from api.utils.deps import SessionDep
-from api.utils.error import MentemoriError
+from api.utils.error import APIError, MentemoriError
 from api.utils.masterdata import MasterData
 from common import routes
 
@@ -38,21 +38,25 @@ async def update_master(key: str, session: SessionDep, request: Request):
             updated = await md._preload()
 
         inserted_ids = []
+        error_flag = False
         if 'CharacterMB' in updated:
             inserted_ids = await upsert_chars(session, md)
             if inserted_ids is not None:  # None is returned when exception occurs
                 for char_id in inserted_ids:
-                    await update_alt(session, char_id)
-                    await autoalias(session, char_id)
+                    try:
+                        await update_alt(session, char_id)
+                        await autoalias(session, char_id)
+                    except APIError as e:  # text not updated
+                        error_flag = True
 
         files_updated = '\n'.join(updated)
         
         msg = StringIO()
         msg.write(f"**Master version**: {md.version}\n**Files Updated**\n```\n{files_updated}```\n")
-        if inserted_ids is not None:
+        if inserted_ids is not None and not error_flag:
             msg.write(f"**Characters Added\n**```{inserted_ids if inserted_ids else 'None'}```\n")
         else:
-            msg.write("⚠**Failed to update characters.**⚠")
+            msg.write(f"⚠**Failed to update characters: {inserted_ids if inserted_ids else 'None'}**⚠")
         embed = {
             "title": "🔄 Master Update",
             "description": msg.getvalue(),
@@ -128,7 +132,7 @@ async def update_mentemori(key: str, session: SessionDep):
         return Response(status_code=204)
     except MentemoriError as e:
         logger.error(f'Mentemori API error: {e.response}')
-        return Response(status_code=500)
+        raise HTTPException(status_code=500, detail='Failed to fetch data from mentemori API.')
     except Exception as e:
         logger.error(str(e))
         raise e
@@ -143,7 +147,7 @@ async def update_mentemori_players(key: str, session: SessionDep):
         return Response(status_code=204)
     except MentemoriError as e:
         logger.error(f'Mentemori API error: {e.response}')
-        return Response(status_code=500)
+        raise HTTPException(status_code=500, detail='Failed to fetch data from mentemori API.')
     except Exception as e:
         logger.error(str(e))
         raise e
@@ -158,7 +162,7 @@ async def update_mentemori_guilds(key: str, session: SessionDep):
         return Response(status_code=204)
     except MentemoriError as e:
         logger.error(f'Mentemori API error: {e.response}')
-        return Response(status_code=500)
+        raise HTTPException(status_code=500, detail='Failed to fetch data from mentemori API.')
     except Exception as e:
         logger.error(str(e))
         raise e
