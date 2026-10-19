@@ -30,7 +30,7 @@ async def alias_ui(character: int) -> BaseContainer:
             default.append(alias.alias)
     
     container.add_item(ui.TextDisplay(f'**Default Names**\n```\n{'\n'.join(default)}```'))
-    container.add_item(ui.TextDisplay(f'**Aliases**\n```{'\n'.join(custom) if custom else "No alias"}```'))
+    container.add_item(ui.TextDisplay(f'**Aliases**\n```\n{'\n'.join(custom) if custom else "No alias"}```'))
     return container
 
 def get_dailyinfo(server: Server):
