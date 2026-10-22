@@ -8,5 +8,5 @@ pynacl
 html2text
 pydantic
 psycopg[binary]
-sqlalchemy
+sqlalchemy[asyncio]
 async-lru

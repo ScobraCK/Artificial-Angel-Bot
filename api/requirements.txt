@@ -4,6 +4,6 @@ msgpack
 psycopg[binary]
 pydantic
 pytz
-sqlalchemy
+sqlalchemy[asyncio]
 uvicorn
 passlib
